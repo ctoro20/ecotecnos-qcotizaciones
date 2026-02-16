@@ -1,0 +1,2894 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGS - Ficha Técnico Comercial</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 14px;
+            color: #2c2c2c;
+            background-color: #f4f3ef;
+        }
+
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 260px;
+            background: linear-gradient(to bottom, #5a5a5a 0%, #3c3c3c 100%);
+            z-index: 1000;
+        }
+
+        .sidebar .logo {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sidebar .logo-top-line {
+            width: 80px;
+            height: 4px;
+            background: #ef8157;
+            margin-bottom: 5px;
+        }
+
+        .sidebar .logo-text {
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 2px;
+        }
+
+        .sidebar .user {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar .user-name {
+            color: #fff;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar .app-version {
+            color: rgba(255,255,255,0.5);
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .sidebar .nav {
+            list-style: none;
+            padding: 15px 0;
+        }
+
+        .sidebar .nav li {
+            margin: 2px 15px;
+        }
+
+        .sidebar .nav li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        .sidebar .nav li a:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .sidebar .nav li.active a {
+            color: #ef8157;
+        }
+
+        .sidebar .nav li a i {
+            width: 30px;
+            font-size: 16px;
+            text-align: center;
+            margin-right: 10px;
+        }
+
+        /* MAIN PANEL */
+        .main-panel {
+            width: calc(100% - 260px);
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* PAGE HEADER */
+        .page-header {
+            background: #fff;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e9e9e9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .page-header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-header .header-icon {
+            width: 30px;
+            height: 30px;
+            background: #ef8157;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .page-header h1 {
+            font-size: 18px;
+            font-weight: 400;
+            color: #66615b;
+            margin: 0;
+        }
+
+        .page-header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ficha-status-label {
+            font-size: 10px;
+            font-weight: 500;
+            color: #9a9a9a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* CONTENT */
+        .content {
+            flex: 1;
+            padding: 30px;
+        }
+
+        /* CARD CONTAINER (matches cotizacion-detalle) */
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        /* SECTION TITLE (matches cotizacion-detalle) */
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #66615b;
+            margin-top: 35px;
+            margin-bottom: 20px;
+        }
+
+        .section-title:first-child,
+        .card > .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .section-title i {
+            margin-right: 10px;
+            color: #ef8157;
+        }
+
+        /* FORM SECTION CARD (matches cotizacion-detalle) */
+        .form-section-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-left: 3px solid #ef8157;
+            border-radius: 6px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            font-weight: 600;
+            color: #66615b;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+
+        /* BUTTONS */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-default {
+            background: #66615b;
+            color: #fff;
+        }
+
+        .btn-default:hover {
+            background: #524d48;
+        }
+
+        .btn-success {
+            background: #6bd098;
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: #59c786;
+        }
+
+        .btn-danger {
+            background: #ef8157;
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #e5734a;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 11px;
+        }
+
+        .btn-outline-danger {
+            background: transparent;
+            color: #ef8157;
+            border: 1px solid #ef8157;
+        }
+
+        .btn-outline-danger:hover {
+            background: #ef8157;
+            color: #fff;
+        }
+
+        /* FORM GRID (matches cotizacion-detalle) */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px 15px;
+        }
+
+        .form-grid.cols-1 { grid-template-columns: 1fr; }
+        .form-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+
+        .form-grid .span-2 { grid-column: span 2; }
+        .form-grid .span-3 { grid-column: span 3; }
+        .form-grid .span-4 { grid-column: span 4; }
+
+        /* COMPACT FORM GROUP (matches cotizacion-detalle) */
+        .compact-form-group {
+            margin-bottom: 0;
+        }
+
+        .compact-form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: #9a9a9a;
+            margin-bottom: 4px;
+            text-transform: capitalize;
+        }
+
+        .compact-form-group .form-control {
+            padding: 8px 10px;
+            font-size: 12px;
+            background: #fafafa;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+        }
+
+        .compact-form-group .form-control:focus {
+            background: #fff;
+            border-color: #ef8157;
+        }
+
+        .compact-form-group textarea.form-control {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 12px;
+            color: #66615b;
+            background: #fafafa;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #ef8157;
+            background: #fff;
+        }
+
+        .form-control::placeholder {
+            color: #bbb;
+            font-size: 11px;
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        textarea.form-control {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        /* RADIO TOGGLE (matches cotizacion-detalle) */
+        .radio-toggle {
+            display: inline-flex;
+            background: #f5f5f5;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #e8e8e8;
+        }
+
+        .radio-toggle input[type="radio"] {
+            display: none;
+        }
+
+        .radio-toggle label {
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #66615b;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0;
+            border-right: 1px solid #e8e8e8;
+        }
+
+        .radio-toggle label:last-of-type {
+            border-right: none;
+        }
+
+        .radio-toggle input[type="radio"]:checked + label {
+            background: #ef8157;
+            color: #fff;
+        }
+
+        /* ROW LAYOUT (fallback) */
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -15px;
+        }
+
+        .col-md-3, .col-md-4, .col-md-6, .col-md-12 {
+            padding: 0 15px;
+        }
+
+        .col-md-3 { flex: 0 0 25%; max-width: 25%; }
+        .col-md-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }
+        .col-md-6 { flex: 0 0 50%; max-width: 50%; }
+        .col-md-12 { flex: 0 0 100%; max-width: 100%; }
+
+        @media (max-width: 1200px) {
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .form-grid .span-3,
+            .form-grid .span-4 {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-grid .span-2,
+            .form-grid .span-3,
+            .form-grid .span-4 {
+                grid-column: span 1;
+            }
+        }
+
+
+        /* CHECKBOX GROUP */
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #66615b;
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            accent-color: #ef8157;
+        }
+
+        /* INSTRUMENT ROW */
+        .instrument-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            margin-bottom: 10px;
+        }
+
+        .instrument-row .form-group {
+            margin-bottom: 0;
+        }
+
+        /* TABLE */
+        .ficha-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .ficha-table thead th {
+            padding: 10px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #66615b;
+            text-align: left;
+            border-bottom: 2px solid #e9e9e9;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .ficha-table tbody td {
+            padding: 10px 12px;
+            font-size: 13px;
+            color: #66615b;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .ficha-table tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .ficha-table .btn-remove {
+            background: none;
+            border: none;
+            color: #ef8157;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+            transition: color 0.2s;
+        }
+
+        .ficha-table .btn-remove:hover {
+            color: #d9534f;
+        }
+
+        .ficha-table .link-param {
+            color: #51bcda;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .ficha-table .link-param:hover {
+            text-decoration: underline;
+        }
+
+        .ficha-table .badge-sub {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 9px;
+            font-weight: 600;
+            color: #999;
+            background: #f0f0f0;
+            border-radius: 3px;
+            margin-left: 5px;
+            text-transform: uppercase;
+        }
+
+        /* ADD ROW INLINE */
+        .add-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            padding: 15px 0;
+            border-top: 1px dashed #e0e0e0;
+        }
+
+        .add-row .form-group {
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        .add-row .btn {
+            flex-shrink: 0;
+        }
+
+        /* TOTALS BOX */
+        .totals-box {
+            border: 2px solid #ef8157;
+            border-radius: 8px;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .totals-box .totals-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c2c2c;
+        }
+
+        .totals-box .totals-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ef8157;
+        }
+
+        /* DYNAMIC ITEM ROW */
+        .dynamic-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .dynamic-item .form-control {
+            flex: 1;
+        }
+
+        .dynamic-item .btn-eliminar {
+            padding: 10px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #66615b;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .dynamic-item .btn-eliminar:hover {
+            background: #ef8157;
+        }
+
+        .btn-add-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #ef8157;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+            margin-top: 5px;
+        }
+
+        .btn-add-item:hover {
+            background: #e5734a;
+        }
+
+        /* QUOTE SUMMARY (matches cotizacion-detalle) */
+        .quote-summary {
+            background: #fff;
+            border: 1px solid #ece8e2;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 22px rgba(44, 44, 44, 0.06);
+            position: sticky;
+            top: 12px;
+            z-index: 8;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .quote-summary.expanded {
+            max-height: calc(100vh - 30px);
+            overflow-y: auto;
+        }
+
+        .quote-summary.expanded::-webkit-scrollbar { width: 5px; }
+        .quote-summary.expanded::-webkit-scrollbar-track { background: transparent; }
+        .quote-summary.expanded::-webkit-scrollbar-thumb { background: #d9d4ce; border-radius: 10px; }
+
+        .quote-summary-bar {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 14px 18px;
+            cursor: pointer;
+            gap: 16px;
+            background: linear-gradient(135deg, #fff 0%, #fbfaf8 100%);
+        }
+
+        .quote-summary-bar:hover {
+            background: #fdfbf8;
+        }
+
+        .quote-summary-left {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .summary-topline {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .quote-number {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .quote-number-label {
+            font-size: 10px;
+            color: #9a9a9a;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .quote-number-value {
+            font-size: 17px;
+            font-weight: 700;
+            color: #ef8157;
+        }
+
+        .summary-badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #ef8157;
+            color: #fff;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .status-pill i {
+            font-size: 11px;
+        }
+
+        .status-pill.approved {
+            background: #6bd098;
+        }
+
+        .status-pill.pending {
+            background: #fbc658;
+            color: #fff;
+        }
+
+        .status-pill.completed {
+            background: #6bd098;
+            color: #fff;
+        }
+
+        .status-pill.notified {
+            background: #51bcda;
+            color: #fff;
+        }
+
+        .status-pill.subtle {
+            background: #f4f1ee;
+            color: #6d655d;
+            font-weight: 500;
+            text-transform: none;
+        }
+
+        .status-pill.subtle strong {
+            color: #ef8157;
+            font-weight: 600;
+        }
+
+        .summary-bottomline {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .summary-item-label {
+            font-size: 10px;
+            color: #9a9a9a;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .summary-item-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: #5a534c;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .quote-summary-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .quote-expand-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #e6e1db;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #a29b94;
+            font-size: 12px;
+        }
+
+        .quote-expand-btn:hover {
+            background: #ef8157;
+            border-color: #ef8157;
+            color: #fff;
+        }
+
+        .quote-expand-btn i {
+            transition: transform 0.3s;
+        }
+
+        .quote-summary.expanded .quote-expand-btn i {
+            transform: rotate(180deg);
+        }
+
+        .quote-summary-details {
+            display: none;
+            padding: 0 18px 16px;
+            border-top: 1px solid #f0ece8;
+            background: #fff;
+        }
+
+        .quote-summary.expanded .quote-summary-details {
+            display: block;
+        }
+
+        .quote-details-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            padding-top: 14px;
+        }
+
+        .quote-detail-section {
+            padding: 12px 14px;
+            background: #f9f7f4;
+            border: 1px solid #f0ece8;
+            border-radius: 8px;
+        }
+
+        .quote-detail-section h6 {
+            font-size: 11px;
+            font-weight: 600;
+            color: #ef8157;
+            text-transform: uppercase;
+            margin: 0 0 10px 0;
+            letter-spacing: 0.3px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 3px 0;
+        }
+
+        .detail-row span:first-child {
+            color: #9a9a9a;
+        }
+
+        .detail-row span:last-child {
+            color: #5a534c;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        @media (max-width: 1200px) {
+            .summary-bottomline {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .quote-details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 820px) {
+            .quote-summary-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .quote-summary-right {
+                justify-content: space-between;
+            }
+        }
+
+        /* SAMPLING INPUTS */
+        .sampling-inputs .form-control {
+            background: #eafaf1;
+            border-color: #c3e6cb;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* SECTION DIVIDER */
+        .section-divider {
+            border: none;
+            border-top: 1px solid #e9e9e9;
+            margin: 25px 0;
+        }
+
+        /* FOOTER ACTIONS */
+        .footer-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .footer-actions .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* MODAL */
+        .simple-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        .simple-modal {
+            width: min(680px, 92vw);
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .simple-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .simple-modal-header h4 {
+            font-size: 13px;
+            margin: 0;
+            color: #66615b;
+        }
+
+        .simple-modal-body {
+            padding: 14px 16px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .simple-modal-list {
+            max-height: 320px;
+            overflow-y: auto;
+            display: grid;
+            gap: 8px;
+        }
+
+        .simple-modal-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #fafafa;
+            font-size: 12px;
+            color: #66615b;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .simple-modal-item:hover {
+            background: #f0ece8;
+        }
+
+        .simple-modal-item input {
+            width: 14px;
+            height: 14px;
+            accent-color: #ef8157;
+        }
+
+        .modal-search {
+            position: relative;
+        }
+
+        .modal-search i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+            color: #b5b0a8;
+        }
+
+        .modal-search input {
+            width: 100%;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 7px 10px 7px 28px;
+            font-size: 11px;
+            background: #fafafa;
+            font-family: inherit;
+        }
+
+        .modal-search input:focus {
+            outline: none;
+            border-color: #ef8157;
+            background: #fff;
+        }
+
+        /* FICHA TABLE INLINE CONTROLS */
+        .ficha-table .form-control-inline {
+            padding: 5px 8px;
+            font-size: 11px;
+            background: #fafafa;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            color: #66615b;
+            font-family: inherit;
+            width: 100%;
+        }
+
+        .ficha-table .form-control-inline:focus {
+            outline: none;
+            border-color: #ef8157;
+            background: #fff;
+        }
+
+        .ficha-table select.form-control-inline[data-field="matriz"] {
+            min-width: 220px;
+        }
+
+        .bio-spec-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: flex-start;
+            background: #fcfcfc;
+            border: 1px solid #ececec;
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .bio-spec-left {
+            flex: 0 0 28%;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #66615b;
+        }
+
+        .bio-spec-left strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: #3f3b36;
+        }
+
+        .bio-spec-right {
+            flex: 1;
+        }
+
+        .bio-mini-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .bio-mini-table th,
+        .bio-mini-table td {
+            border: 1px solid #d8d8d8;
+            padding: 5px 8px;
+            font-size: 11px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .bio-mini-table th {
+            background: #f6f7f9;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .bio-mini-table input {
+            width: 14px;
+            height: 14px;
+            accent-color: #ef8157;
+        }
+
+        /* PRINT STYLES */
+        @media print {
+            .sidebar, .page-header, .footer-actions, .btn, .btn-remove, .btn-add-item, .btn-eliminar, .add-row, .simple-modal-overlay {
+                display: none !important;
+            }
+            .main-panel {
+                margin-left: 0;
+                width: 100%;
+            }
+            .content {
+                padding: 10px;
+            }
+            .card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+            .form-section-card {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-container">
+                    <div class="logo-top-line"></div>
+                    <div class="logo-text">SGS</div>
+                </div>
+            </div>
+
+            <div class="user">
+                <div class="user-name">
+                    <i class="fa fa-user"></i>
+                    Bienvenido <span>Cristian Toro</span>
+                </div>
+                <div class="app-version">V.1.0.0</div>
+            </div>
+
+            <ul class="nav">
+                <li>
+                    <a href="#">
+                        <i class="fas fa-home"></i>
+                        <span>Inicio</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="far fa-square"></i>
+                        <span>Tarifario</span>
+                    </a>
+                </li>
+                <li class="active">
+                    <a href="cotizaciones-sgs.html">
+                        <i class="far fa-circle"></i>
+                        <span>Listado Cotizaciones/Propuestas</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-check"></i>
+                        <span>Aprobar cotizaciones</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Salir</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- MAIN PANEL -->
+        <div class="main-panel">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <div class="header-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h1>Ficha Técnico Comercial</h1>
+                </div>
+                <div class="page-header-right">
+                    <span class="ficha-status-label">Estado ficha:</span>
+                    <span class="status-pill pending" id="fichaStatusPill">
+                        <i class="fas fa-clock"></i>
+                        <span id="fichaStatusText">Pendiente de Completar</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <!-- Back Button -->
+                <div style="margin-bottom: 20px;">
+                    <a href="cotizaciones-sgs.html" class="btn btn-default">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+
+                <!-- Quote Summary Header -->
+                <div class="quote-summary" id="quoteSummary">
+                    <div class="quote-summary-bar" onclick="toggleQuoteSummary()">
+                        <div class="quote-summary-left">
+                            <div class="summary-topline">
+                                <div class="quote-number">
+                                    <span class="quote-number-label">Cotización</span>
+                                    <span class="quote-number-value">650953-1</span>
+                                </div>
+                                <div class="summary-badges">
+                                    <span class="status-pill approved">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Aprobado</span>
+                                    </span>
+                                    <span class="status-pill subtle">
+                                        <i class="fas fa-file-signature"></i>
+                                        <span>Propuesta</span>
+                                        <strong>N° 1</strong>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="summary-bottomline">
+                                <div class="summary-item">
+                                    <span class="summary-item-label">Cliente</span>
+                                    <span class="summary-item-value">Celulosa Arauco SpA</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-item-label">Atención a</span>
+                                    <span class="summary-item-value">Carolina Soto</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-item-label">Fecha cotización</span>
+                                    <span class="summary-item-value">30/01/2026</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="quote-summary-right">
+                            <div class="quote-expand-btn">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quote-summary-details">
+                        <div class="quote-details-grid">
+                            <div class="quote-detail-section">
+                                <h6><i class="fas fa-building"></i> Cliente</h6>
+                                <div class="detail-row">
+                                    <span>Razón social</span>
+                                    <span>Celulosa Arauco SpA</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>RUT</span>
+                                    <span>76.536.080-0</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>Dirección</span>
+                                    <span>Av. El Golf 150, Las Condes, Santiago</span>
+                                </div>
+                            </div>
+                            <div class="quote-detail-section">
+                                <h6><i class="fas fa-user"></i> Contacto</h6>
+                                <div class="detail-row">
+                                    <span>Nombre</span>
+                                    <span>Carolina Soto</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>Email</span>
+                                    <span>csoto@arauco.cl</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>Teléfono</span>
+                                    <span>+56 9 7777 8888</span>
+                                </div>
+                            </div>
+                            <div class="quote-detail-section">
+                                <h6><i class="fas fa-file-invoice"></i> Cotización</h6>
+                                <div class="detail-row">
+                                    <span>Vendedor</span>
+                                    <span>PABLO FRANCISCO SAAVEDRA</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>Vigencia</span>
+                                    <span>30/01/2026 - 28/02/2026</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>Cond. Pago</span>
+                                    <span>OC con pago a 30 días</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD CONTAINER -->
+                <div class="card">
+
+                <!-- ================================================
+                     SECCIÓN 1: DATOS GENERALES DEL SERVICIO/PROPUESTA
+                     ================================================ -->
+                <h4 class="section-title"><i class="fas fa-building"></i> Datos Generales del Servicio/Propuesta</h4>
+                <div class="form-section-card">
+                    <div class="form-grid">
+                        <div class="compact-form-group span-2">
+                            <label>Nombre cliente / titular *</label>
+                            <input type="text" class="form-control" id="NombreCliente" placeholder="Nombre del cliente o titular" value="Celulosa Arauco SpA">
+                        </div>
+                        <div class="compact-form-group span-2">
+                            <label>RUT cliente *</label>
+                            <input type="text" class="form-control" id="RutCliente" placeholder="12.345.678-9" value="76.536.080-0">
+                        </div>
+                        <div class="compact-form-group span-2">
+                            <label>Nombre representante legal *</label>
+                            <input type="text" class="form-control" id="RepresentanteLegal" placeholder="Nombre del representante legal">
+                        </div>
+                        <div class="compact-form-group span-2">
+                            <label>RUT representante legal *</label>
+                            <input type="text" class="form-control" id="RutRepresentante" placeholder="12.345.678-9">
+                        </div>
+                        <div class="compact-form-group span-2">
+                            <label>Celular o teléfono *</label>
+                            <input type="text" class="form-control" id="Telefono" placeholder="+56 9 1234 5678">
+                        </div>
+                        <div class="compact-form-group span-2">
+                            <label>Correo electrónico *</label>
+                            <input type="email" class="form-control" id="Correo" placeholder="correo@empresa.cl">
+                        </div>
+                        <div class="compact-form-group span-4">
+                            <label>Dirección del cliente *</label>
+                            <input type="text" class="form-control" id="Direccion" placeholder="Dirección completa">
+                        </div>
+                        <div class="compact-form-group span-4">
+                            <label>Nombre del proyecto *</label>
+                            <input type="text" class="form-control" id="NombreProyecto" placeholder="Nombre del proyecto" value="Análisis ambiental - planta sur 2026">
+                        </div>
+                        <div class="compact-form-group span-4">
+                            <label>Localidad o ubicación del proyecto *</label>
+                            <input type="text" class="form-control" id="LocalidadProyecto" placeholder="Localidad, región">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================================================
+                     SECCIÓN 2: ALCANCES DEL SERVICIO
+                     ================================================ -->
+                <h4 class="section-title"><i class="fas fa-bullseye"></i> Alcances del Servicio</h4>
+                <div class="form-section-card">
+                    <div class="form-grid">
+                        <div class="compact-form-group span-2">
+                            <label>Frecuencia de la campaña</label>
+                            <select class="form-control" id="FrecuenciaCampana">
+                                <option value="">Seleccionar...</option>
+                                <option value="MENSUAL">Mensual</option>
+                                <option value="BIMENSUAL">Bimensual</option>
+                                <option value="TRIMESTRAL">Trimestral</option>
+                                <option value="SEMESTRAL">Semestral</option>
+                                <option value="ANUAL">Anual</option>
+                                <option value="PUNTUAL">Puntual</option>
+                            </select>
+                        </div>
+                        <div class="compact-form-group">
+                            <label>Número de campañas</label>
+                            <input type="number" class="form-control" id="NumeroCampanas" value="1" min="1">
+                        </div>
+                        <div class="compact-form-group">
+                            <label>¿Afecta a ETFA?</label>
+                            <div class="radio-toggle">
+                                <input type="radio" name="AfectaETFA" value="SI" id="etfaSi">
+                                <label for="etfaSi">Sí</label>
+                                <input type="radio" name="AfectaETFA" value="NO" id="etfaNo" checked>
+                                <label for="etfaNo">No</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Instrumentos de Carácter Ambiental -->
+                    <div class="card-subtitle">Instrumentos de Carácter Ambiental</div>
+
+                    <table class="ficha-table" id="tablaInstrumentos">
+                        <thead>
+                            <tr>
+                                <th>Tipo de Instrumento</th>
+                                <th>Código</th>
+                                <th style="width:60px;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <select class="form-control">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="RCA">RCA (Resolución de Calificación Ambiental)</option>
+                                        <option value="DIA">DIA (Declaración de Impacto Ambiental)</option>
+                                        <option value="EIA">EIA (Estudio de Impacto Ambiental)</option>
+                                        <option value="PAS">PAS (Permiso Ambiental Sectorial)</option>
+                                        <option value="OTRO">Otro</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control" placeholder="Ej: 123/2018">
+                                </td>
+                                <td><button class="btn-remove" onclick="removeInstrumento(this)"><i class="fas fa-times"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <button class="btn-add-item" onclick="addInstrumento()">
+                        <i class="fas fa-plus"></i> Agregar Instrumento
+                    </button>
+
+                    <hr class="section-divider">
+
+                    <!-- Componentes y Matrices -->
+                    <div class="card-subtitle">Componentes y Matrices</div>
+
+                    <div class="form-grid cols-3">
+                        <div class="compact-form-group">
+                            <label>Componente químico</label>
+                            <select class="form-control" id="ComponenteQuimico">
+                                <option value="NO_APLICA">No aplica</option>
+                                <option value="AGUA">Agua</option>
+                                <option value="SUELO">Suelo</option>
+                                <option value="AIRE">Aire</option>
+                                <option value="SEDIMENTO">Sedimento</option>
+                            </select>
+                        </div>
+                        <div class="compact-form-group">
+                            <label>Componente biológico</label>
+                            <select class="form-control" id="ComponenteBiologico">
+                                <option value="NO_APLICA">No aplica</option>
+                                <option value="FLORA">Flora</option>
+                                <option value="FAUNA">Fauna</option>
+                                <option value="HIDROBIOLOGIA">Hidrobiología</option>
+                                <option value="LIMNOLOGIA">Limnología</option>
+                            </select>
+                        </div>
+                        <div class="compact-form-group">
+                            <label>Componente físico</label>
+                            <select class="form-control" id="ComponenteFisico">
+                                <option value="NO_APLICA">No aplica</option>
+                                <option value="RUIDO">Ruido</option>
+                                <option value="VIBRACIONES">Vibraciones</option>
+                                <option value="LUMINOSIDAD">Luminosidad</option>
+                                <option value="GEOMORFOLOGIA">Geomorfología</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================================================
+                     SECCIÓN 3: ALCANCE TÉCNICO
+                     ================================================ -->
+                <h4 class="section-title"><i class="fas fa-flask"></i> Alcance Fisico-Quimico</h4>
+                <div class="form-section-card">
+
+                    <!-- Lista de Parámetros / Mediciones de Terreno -->
+                    <div class="card-subtitle">Lista de Parámetros / Mediciones de Terreno (deben venir de la cotización)</div>
+
+                    <div style="margin-bottom:12px;">
+                        <button class="btn btn-danger btn-sm" id="btnOpenParamModal">
+                            <i class="fas fa-search"></i> Seleccionar parámetros de terreno
+                        </button>
+                    </div>
+
+                    <table class="ficha-table" id="tablaParametros">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;">#</th>
+                                <th>Parámetro</th>
+                                <th>Metodología (auto)</th>
+                                <th style="width:220px;">Matriz</th>
+                                <th style="width:120px;">¿Afecta a ETFA?</th>
+                                <th class="etfa-validation-col" style="width:160px;display:none;">Validación ETFA</th>
+                                <th style="width:160px;">Instrumento/Equipo</th>
+                                <th style="width:60px;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaParametrosBody">
+                            <!-- Se llena dinámicamente desde el modal -->
+                        </tbody>
+                    </table>
+
+                    <hr class="section-divider">
+
+                    <!-- Lista de Parámetros / Laboratorio -->
+                    <div class="card-subtitle">Lista de Parámetros/Laboratorio (deben venir de la cotización)</div>
+
+                    <div style="margin-bottom:12px;">
+                        <button class="btn btn-danger btn-sm" id="btnOpenLabModal">
+                            <i class="fas fa-search"></i> Seleccionar análisis de laboratorio
+                        </button>
+                    </div>
+
+                    <table class="ficha-table" id="tablaLaboratorio">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;">#</th>
+                                <th>Parámetro</th>
+                                <th>Metodología (auto)</th>
+                                <th style="width:220px;">Matriz</th>
+                                <th style="width:120px;">¿Afecta a ETFA?</th>
+                                <th class="etfa-validation-col" style="width:160px;display:none;">Validación ETFA</th>
+                                <th style="width:180px;">Laboratorio</th>
+                                <th style="width:60px;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaLaboratorioBody">
+                            <!-- Se llena dinámicamente desde el modal -->
+                        </tbody>
+                    </table>
+
+                    <hr class="section-divider">
+
+                    <!-- Lista de Puntos de Muestreo / Estaciones -->
+                    <div class="card-subtitle">Lista de Puntos de Muestreo / Estaciones</div>
+
+                    <div class="form-grid cols-3 sampling-inputs" style="margin-bottom:15px;">
+                        <div class="compact-form-group">
+                            <label>Número de puntos de muestreo</label>
+                            <input type="number" class="form-control" id="numPuntos" value="2" min="1" onchange="calcularMuestras()">
+                        </div>
+                        <div class="compact-form-group">
+                            <label>Número de estratos</label>
+                            <input type="number" class="form-control" id="numEstratos" value="1" min="1" onchange="calcularMuestras()">
+                        </div>
+                        <div class="compact-form-group">
+                            <label>Número de réplicas</label>
+                            <input type="number" class="form-control" id="numReplicas" value="1" min="1" onchange="calcularMuestras()">
+                        </div>
+                    </div>
+
+                    <div class="totals-box">
+                        <span class="totals-label">Cantidad de Muestras (Estaciones &times; Estratos &times; Réplicas):</span>
+                        <span class="totals-value" id="cantidadMuestras">2</span>
+                    </div>
+
+                    <table class="ficha-table" id="tablaEstaciones">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;">#</th>
+                                <th>Nombre del punto muestreo/estacion</th>
+                                <th>Lugar de Muestreo</th>
+                                <th style="width:180px;">Matriz</th>
+                                <th>Latitud</th>
+                                <th>Longitud</th>
+                                <th style="width:90px;">Estratos</th>
+                                <th style="width:90px;">Réplicas</th>
+                                <th style="width:90px;">Muestras</th>
+                                <th style="width:60px;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>EST-01</td>
+                                <td>Punto de descarga principal</td>
+                                <td>Agua Superficial (D)</td>
+                                <td>-33.4569</td>
+                                <td>-70.6483</td>
+                                <td><input type="number" class="form-control-inline est-estratos-input" value="1" min="1" onchange="actualizarMuestrasFila(this)"></td>
+                                <td><input type="number" class="form-control-inline est-replicas-input" value="1" min="1" onchange="actualizarMuestrasFila(this)"></td>
+                                <td class="est-muestras">1</td>
+                                <td><button class="btn-remove" onclick="removeEstacion(this)"><i class="fas fa-times"></i></button></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>EST-02</td>
+                                <td>Aguas arriba (control)</td>
+                                <td>Agua de Mar (E)</td>
+                                <td>-33.4512</td>
+                                <td>-70.6501</td>
+                                <td><input type="number" class="form-control-inline est-estratos-input" value="1" min="1" onchange="actualizarMuestrasFila(this)"></td>
+                                <td><input type="number" class="form-control-inline est-replicas-input" value="1" min="1" onchange="actualizarMuestrasFila(this)"></td>
+                                <td class="est-muestras">1</td>
+                                <td><button class="btn-remove" onclick="removeEstacion(this)"><i class="fas fa-times"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Agregar Nuevo Punto -->
+                    <div class="card-subtitle">Agregar Nuevo Punto de Muestreo / Estación</div>
+                    <div class="add-row">
+                        <div class="compact-form-group" style="flex:1;">
+                            <label>Nombre estación *</label>
+                            <input type="text" class="form-control" id="newEstNombre" placeholder="Ej: EST-03">
+                        </div>
+                        <div class="compact-form-group" style="flex:1;">
+                            <label>Lugar de muestreo *</label>
+                            <input type="text" class="form-control" id="newEstLugar" placeholder="Ej: Punto de control sur">
+                        </div>
+                        <div class="compact-form-group" style="flex:1;">
+                            <label>Matriz *</label>
+                            <select class="form-control" id="newEstMatriz">
+                                <option value="">Seleccionar</option>
+                                <option value="Agua de Mar (E)">Agua de Mar (E)</option>
+                                <option value="Agua para fines industriales (G)">Agua para fines industriales (G)</option>
+                                <option value="Agua Residual (F)">Agua Residual (F)</option>
+                                <option value="Agua Superficial (D)">Agua Superficial (D)</option>
+                                <option value="Biotas (U)">Biotas (U)</option>
+                                <option value="Sedimentos Acuáticos Submareales">Sedimentos Acuáticos Submareales</option>
+                                <option value="Sedimentos Acuáticos Intermareales">Sedimentos Acuáticos Intermareales</option>
+                                <option value="Sedimentos Marinos Submareales">Sedimentos Marinos Submareales</option>
+                                <option value="Sedimentos Marinos Intermareales">Sedimentos Marinos Intermareales</option>
+                            </select>
+                        </div>
+                        <div class="compact-form-group" style="flex:1;">
+                            <label>Latitud</label>
+                            <input type="text" class="form-control" id="newEstLatitud" placeholder="Ej: -33.4569">
+                        </div>
+                        <div class="compact-form-group" style="flex:1;">
+                            <label>Longitud</label>
+                            <input type="text" class="form-control" id="newEstLongitud" placeholder="Ej: -70.6483">
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="agregarEstacion()">
+                            <i class="fas fa-plus"></i> Agregar
+                        </button>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Total de Muestras del Servicio -->
+                    <div class="card-subtitle">Cantidad Total de Muestras del Servicio</div>
+
+                    <div class="totals-box">
+                        <span class="totals-label">Total de Muestras Asociadas a este Servicio:</span>
+                        <span class="totals-value" id="totalMuestrasServicio">2</span>
+                    </div>
+
+                </div>
+
+                <!-- ================================================
+                     SECCIÓN 4: ALCANCE BIOLÓGICOS
+                     ================================================ -->
+                <h4 class="section-title"><i class="fas fa-leaf"></i> Alcance Biológicos</h4>
+                <div class="form-section-card">
+                    <div class="bio-spec-row">
+                        <div class="bio-spec-left">
+                            <strong>Censo Aves, Mamíferos Marinos y Reptiles</strong>
+                            <div>Mar</div>
+                            <div>Tierra</div>
+                        </div>
+                        <div class="bio-spec-right">
+                            <table class="bio-mini-table">
+                                <thead>
+                                    <tr>
+                                        <th>Diurno</th>
+                                        <th>Nocturno</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="checkbox" aria-label="Censo Mar Diurno"></td>
+                                        <td><input type="checkbox" aria-label="Censo Mar Nocturno"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" aria-label="Censo Tierra Diurno"></td>
+                                        <td><input type="checkbox" aria-label="Censo Tierra Nocturno"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bio-spec-row">
+                        <div class="bio-spec-left">
+                            <strong>Fitoplancton</strong>
+                        </div>
+                        <div class="bio-spec-right">
+                            <table class="bio-mini-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cualitativo</th>
+                                        <th>Cuantitativo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="checkbox" aria-label="Fitoplancton Cualitativo"></td>
+                                        <td><input type="checkbox" aria-label="Fitoplancton Cuantitativo"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bio-spec-row" style="margin-bottom:0;">
+                        <div class="bio-spec-left">
+                            <strong>Zooplancton</strong>
+                            <div>Arrastre Vertical</div>
+                            <div>Arrastre Horizontal</div>
+                        </div>
+                        <div class="bio-spec-right">
+                            <table class="bio-mini-table">
+                                <thead>
+                                    <tr>
+                                        <th>Diurno</th>
+                                        <th>Nocturno</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="checkbox" aria-label="Zooplancton Vertical Diurno"></td>
+                                        <td><input type="checkbox" aria-label="Zooplancton Vertical Nocturno"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" aria-label="Zooplancton Horizontal Diurno"></td>
+                                        <td><input type="checkbox" aria-label="Zooplancton Horizontal Nocturno"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================================================
+                     SECCIÓN 5: ALCANCE FÍSICO
+                     ================================================ -->
+                <h4 class="section-title"><i class="fas fa-wind"></i> Alcance Fisico</h4>
+                <div class="form-section-card">
+                    <div class="compact-form-group">
+                        <label>Modelaciones (describir)</label>
+                        <textarea class="form-control" id="ModelacionesFisico" placeholder="Describa las modelaciones físicas requeridas"></textarea>
+                    </div>
+                </div>
+
+                <!-- ================================================
+                     SECCIÓN 6: MATERIALES
+                     ================================================ -->
+                <h4 class="section-title"><i class="fas fa-boxes"></i> Materiales</h4>
+                <div class="form-section-card">
+                    <div style="margin-bottom:12px;">
+                        <button class="btn btn-danger btn-sm" id="btnOpenMaterialModal">
+                            <i class="fas fa-search"></i> Seleccionar materiales
+                        </button>
+                    </div>
+
+                    <table class="ficha-table" id="tablaMateriales">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;">#</th>
+                                <th>Material</th>
+                                <th style="width:60px;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaMaterialesBody">
+                            <!-- Se llena dinámicamente desde el modal -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ================================================
+                     SECCIÓN 7: PERMISOLOGÍA
+                     ================================================ -->
+                <h4 class="section-title"><i class="fas fa-id-card"></i> Permisología</h4>
+                <div class="form-section-card">
+                    <div style="margin-bottom:12px;">
+                        <button class="btn btn-danger btn-sm" id="btnOpenPermisosModal">
+                            <i class="fas fa-search"></i> Seleccionar autorizaciones
+                        </button>
+                    </div>
+
+                    <table class="ficha-table" id="tablaPermisos">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;">#</th>
+                                <th style="width:220px;">Permiso / Autorización</th>
+                                <th>Descripción</th>
+                                <th style="width:60px;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaPermisosBody">
+                            <!-- Se llena dinámicamente desde el modal -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ================================================
+                     SECCIÓN 8: OBSERVACIONES
+                     ================================================ -->
+                <h4 class="section-title"><i class="fas fa-comment-alt"></i> Observaciones</h4>
+                <div class="form-section-card">
+
+                    <div class="compact-form-group">
+                        <label>Requerimientos normativos relevantes</label>
+                        <textarea class="form-control" id="RequerimientosNormativos" placeholder="Detalle de normativas aplicables (D.S., NCh, Res, Ex., etc.)"></textarea>
+                    </div>
+                </div>
+
+                </div><!-- /.card -->
+
+                <!-- Footer Actions -->
+                <div class="footer-actions">
+                    <a href="cotizaciones-sgs.html" class="btn btn-default">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                    <div class="btn-group">
+                        <button class="btn btn-default" onclick="window.print()">
+                            <i class="fas fa-print"></i> Imprimir
+                        </button>
+                        <!-- Estado: Pendiente -->
+                        <button class="btn btn-success" id="btnGuardar" onclick="guardarFicha()">
+                            <i class="fas fa-save"></i> Guardar Ficha
+                        </button>
+                        <button class="btn btn-success" id="btnCompletar" onclick="completarFicha()">
+                            <i class="fas fa-check-circle"></i> Marcar como Completado
+                        </button>
+                        <!-- Estado: Completado -->
+                        <button class="btn btn-danger" id="btnReabrir" onclick="reabrirFicha()" style="display:none;">
+                            <i class="fas fa-undo"></i> Reabrir
+                        </button>
+                        <button class="btn" id="btnNotificar" onclick="notificarFicha()" style="display:none;background:#51bcda;color:#fff;">
+                            <i class="fas fa-paper-plane"></i> Notificar
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Seleccionar Parámetros de Terreno -->
+    <div class="simple-modal-overlay" id="paramModal">
+        <div class="simple-modal" role="dialog" aria-modal="true">
+            <div class="simple-modal-header">
+                <h4><i class="fas fa-flask" style="color:#ef8157;margin-right:8px;"></i> Seleccionar parámetros de terreno</h4>
+                <button class="btn btn-default btn-sm" id="paramModalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="simple-modal-body">
+                <div class="modal-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="paramModalSearch" placeholder="Buscar parámetro de terreno...">
+                </div>
+                <div class="simple-modal-list" id="paramModalList"></div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;">
+                    <button class="btn btn-default btn-sm" id="paramModalCancel">Cancelar</button>
+                    <button class="btn btn-danger btn-sm" id="paramModalApply"><i class="fas fa-check"></i> Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Seleccionar Análisis de Laboratorio -->
+    <div class="simple-modal-overlay" id="labModal">
+        <div class="simple-modal" role="dialog" aria-modal="true">
+            <div class="simple-modal-header">
+                <h4><i class="fas fa-vial" style="color:#ef8157;margin-right:8px;"></i> Seleccionar análisis de laboratorio</h4>
+                <button class="btn btn-default btn-sm" id="labModalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="simple-modal-body">
+                <div class="modal-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="labModalSearch" placeholder="Buscar análisis de laboratorio...">
+                </div>
+                <div class="simple-modal-list" id="labModalList"></div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;">
+                    <button class="btn btn-default btn-sm" id="labModalCancel">Cancelar</button>
+                    <button class="btn btn-danger btn-sm" id="labModalApply"><i class="fas fa-check"></i> Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Seleccionar Materiales -->
+    <div class="simple-modal-overlay" id="materialModal">
+        <div class="simple-modal" role="dialog" aria-modal="true">
+            <div class="simple-modal-header">
+                <h4><i class="fas fa-boxes" style="color:#ef8157;margin-right:8px;"></i> Seleccionar materiales</h4>
+                <button class="btn btn-default btn-sm" id="materialModalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="simple-modal-body">
+                <div class="modal-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="materialModalSearch" placeholder="Buscar material...">
+                </div>
+                <div class="simple-modal-list" id="materialModalList"></div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;">
+                    <button class="btn btn-default btn-sm" id="materialModalCancel">Cancelar</button>
+                    <button class="btn btn-danger btn-sm" id="materialModalApply"><i class="fas fa-check"></i> Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Seleccionar Autorizaciones -->
+    <div class="simple-modal-overlay" id="permisosModal">
+        <div class="simple-modal" role="dialog" aria-modal="true">
+            <div class="simple-modal-header">
+                <h4><i class="fas fa-id-card" style="color:#ef8157;margin-right:8px;"></i> Seleccionar autorizaciones</h4>
+                <button class="btn btn-default btn-sm" id="permisosModalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="simple-modal-body">
+                <div class="modal-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="permisosModalSearch" placeholder="Buscar autorización">
+                </div>
+                <div class="simple-modal-list" id="permisosModalList"></div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;">
+                    <button class="btn btn-default btn-sm" id="permisosModalCancel">Cancelar</button>
+                    <button class="btn btn-danger btn-sm" id="permisosModalApply"><i class="fas fa-check"></i> Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // QUOTE SUMMARY TOGGLE
+        // =============================================
+        function toggleQuoteSummary() {
+            var summary = document.getElementById('quoteSummary');
+            summary.classList.toggle('expanded');
+        }
+
+        // =============================================
+        // CATÁLOGO DE PARÁMETROS DE TERRENO
+        // =============================================
+        var paramCatalog = [
+            { parametro: 'Conductividad', metodo: 'PI A&S-2 (Versión 3) / IGEN-2.5 versión 0 medidor multiparámetro' },
+            { parametro: 'Oxígeno disuelto', metodo: 'PI A&S-2 (Versión 3) / IGEN-2.5 versión 0 medidor multiparámetro' },
+            { parametro: 'Temperatura', metodo: 'PI A&S-2 (Versión 3) / IGEN-2.5 versión 0 medidor multiparámetro' },
+            { parametro: 'pH', metodo: 'PI A&S-1 (Versión 2) / IGEN-2.2 versión 0 uso pH-metro' },
+            { parametro: 'Potencial redox', metodo: 'PI A&S-1 (Versión 2) / IGEN-2.2 versión 2 uso potenciómetros' },
+            { parametro: 'Cloro libre', metodo: 'PI A&S-1 (Versión 2) / IGEN-2.3 versión 2 medidor de cloro libre y total' },
+            { parametro: 'Saturación de oxígeno', metodo: 'PI A&S-2 Versión 3 / Uso CTDO' },
+            { parametro: 'Densidad', metodo: 'PI A&S-2 Versión 3 / Uso CTDO' },
+            { parametro: 'Salinidad', metodo: 'PI A&S-2 Versión 3 / Uso CTDO' },
+            { parametro: 'Turbiedad', metodo: 'PI A&S-2 Versión 3 / IGEN-2.4 versión 0 medidor de turbidez' },
+            { parametro: 'Cloro total', metodo: 'IGEN-2.3 Versión 2 medidor de cloro libre y total' },
+            { parametro: 'Transparencia', metodo: 'I.AS-1.5 Versión 0 / Uso de disco Secchi' }
+        ];
+
+        // Parámetros seleccionados (simulación de prellenado desde cotización)
+        var parametrosSeleccionados = [
+            {
+                parametro: 'Conductividad',
+                metodo: 'PI A&S-2 (Versión 3) / IGEN-2.5 versión 0 medidor multiparámetro',
+                afectaETFA: 'SI',
+                etfaCode: '1002451',
+                matriz: 'AGUA_SUPERFICIAL_D',
+                instrumento: 'MULTIPARAMETRO'
+            },
+            {
+                parametro: 'pH',
+                metodo: 'PI A&S-1 (Versión 2) / IGEN-2.2 versión 0 uso pH-metro',
+                afectaETFA: 'NO',
+                etfaCode: '1003184',
+                matriz: 'AGUA_RESIDUAL_F',
+                instrumento: 'POTENCIOMETROS'
+            },
+            {
+                parametro: 'Turbiedad',
+                metodo: 'PI A&S-2 Versión 3 / IGEN-2.4 versión 0 medidor de turbidez',
+                afectaETFA: 'SI',
+                etfaCode: '1005220',
+                matriz: 'AGUA_MAR_E',
+                instrumento: 'MEDIDOR_TURBIDEZ'
+            }
+        ];
+
+        // =============================================
+        // CATÁLOGO DE ANÁLISIS DE LABORATORIO
+        // =============================================
+        var labCatalog = [
+            { parametro: 'Recuento Algal', metodo: 'Standard Methods 22th Ed. 10200F. Fluorescencia.', laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV', etfaCode: '1000862' },
+            { parametro: 'Razón Adsorción Sodio Abs. Atómica', metodo: 'NCH1333. Of 87 Punto 3.7 (Cálculo).', laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV' },
+            { parametro: 'Clorato', metodo: 'I-ENV-LAB-320 Ed00 Basado en EPA 300.1-1', laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV', etfaCode: '1000869' },
+            { parametro: 'Carbono Total', metodo: 'SM 5310 B Ed.24, 2023', laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV' },
+            { parametro: 'Nitrato', metodo: 'SM 4500-NO3 B Ed.24, 2023', laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV', etfaCode: '1011151' },
+            { parametro: 'Nitrito', metodo: 'SM 4500-NO2 B Ed.24, 2023', laboratorio: 'Lab. Santiago - ENV' },
+            { parametro: 'Sulfato', metodo: 'SM 4500-SO4 E Ed.24, 2023', laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV' }
+        ];
+
+        // Análisis de laboratorio seleccionados (simulación de prellenado desde cotización)
+        var analisisLaboratorioSeleccionados = [
+            {
+                parametro: 'Recuento Algal',
+                metodo: 'Standard Methods 22th Ed. 10200F. Fluorescencia.',
+                afectaETFA: 'SI',
+                etfaCode: '1000862',
+                matriz: 'AGUA_MAR_E',
+                laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV'
+            },
+            {
+                parametro: 'Nitrato',
+                metodo: 'SM 4500-NO3 B Ed.24, 2023',
+                afectaETFA: 'SI',
+                etfaCode: '1011151',
+                matriz: 'AGUA_SUPERFICIAL_D',
+                laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV'
+            },
+            {
+                parametro: 'Sulfato',
+                metodo: 'SM 4500-SO4 E Ed.24, 2023',
+                afectaETFA: 'NO',
+                etfaCode: '2004310',
+                matriz: 'AGUA_RESIDUAL_F',
+                laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV'
+            }
+        ];
+
+        // =============================================
+        // CATÁLOGO DE MATERIALES
+        // =============================================
+        var materialCatalog = [
+            { nombre: 'Botella oceanográfica' },
+            { nombre: 'Red de Fitoplancton' },
+            { nombre: 'Disco Secchi' },
+            { nombre: 'Red de Zooplancton' },
+            { nombre: 'Clinómetro' },
+            { nombre: 'Cámara Fotográfica' },
+            { nombre: 'Binocular' },
+            { nombre: 'Contador manual' },
+            { nombre: 'Draga' },
+            { nombre: 'Winche' },
+            { nombre: 'CORE' },
+            { nombre: 'Cuadrata' },
+            { nombre: 'Balanza digital' },
+            { nombre: 'Generador' },
+            { nombre: 'Botella buceo' },
+            { nombre: 'Mensajero' },
+            { nombre: 'Cronometro' }
+        ];
+
+        var materialesSeleccionados = [];
+
+        // =============================================
+        // CATÁLOGO DE AUTORIZACIONES (PASO 3 TÉCNICO)
+        // =============================================
+        var permisosCatalog = [
+            {
+                nombre: 'Autorización SHOA',
+                descripcion: 'Se solicitará la autorización del Servicio Hidrográfico y Oceanográfico de la Armada de Chile (SHOA), de acuerdo con el Decreto Supremo N° 711.'
+            },
+            {
+                nombre: 'Autorización SUBPESCA',
+                descripcion: 'Se tramitará la Solicitud de Pesca de Investigación para proyectos sometidos al SEIA, conforme al D.S. N° 430 de 1991.'
+            }
+        ];
+
+        // Permisos seleccionados (simulación de prellenado desde cotización)
+        var permisosSeleccionados = [
+            {
+                nombre: 'Autorización SHOA',
+                descripcion: 'Se solicitará la autorización del Servicio Hidrográfico y Oceanográfico de la Armada de Chile (SHOA), de acuerdo con el Decreto Supremo N° 711.'
+            },
+            {
+                nombre: 'Autorización SUBPESCA',
+                descripcion: 'Se tramitará la Solicitud de Pesca de Investigación para proyectos sometidos al SEIA, conforme al D.S. N° 430 de 1991.'
+            }
+        ];
+
+        function generarCodigoETFA(nombre, base) {
+            var hash = 0;
+            for (var i = 0; i < nombre.length; i++) {
+                hash = (hash * 31 + nombre.charCodeAt(i)) % 900000;
+            }
+            return String((base || 1000000) + hash);
+        }
+
+        function toggleEtfaValidationColumn(tableId, visible) {
+            var table = document.getElementById(tableId);
+            if (!table) return;
+            table.querySelectorAll('.etfa-validation-col').forEach(function(cell) {
+                cell.style.display = visible ? 'table-cell' : 'none';
+            });
+        }
+
+        // =============================================
+        // MODAL DE PARÁMETROS
+        // =============================================
+        var paramModal = document.getElementById('paramModal');
+        var paramModalSearch = document.getElementById('paramModalSearch');
+        var paramModalList = document.getElementById('paramModalList');
+
+        function openParamModal() {
+            paramModal.style.display = 'flex';
+            paramModalSearch.value = '';
+            renderParamModalList('');
+        }
+
+        function closeParamModal() {
+            paramModal.style.display = 'none';
+        }
+
+        function renderParamModalList(filterText) {
+            var filter = (filterText || '').toLowerCase().trim();
+            var items = paramCatalog.slice();
+            if (filter) {
+                items = items.filter(function(item) {
+                    return (item.parametro + ' ' + item.metodo).toLowerCase().indexOf(filter) !== -1;
+                });
+            }
+
+            if (items.length === 0) {
+                paramModalList.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:12px;">Sin resultados.</div>';
+                return;
+            }
+
+            paramModalList.innerHTML = items.map(function(item) {
+                var checked = parametrosSeleccionados.some(function(sel) { return sel.parametro === item.parametro; }) ? ' checked' : '';
+                return '<label class="simple-modal-item">' +
+                    '<input type="checkbox" data-param-name="' + item.parametro + '"' + checked + '>' +
+                    '<span><strong>' + item.parametro + '</strong><br><span style="font-size:10px;color:#9a9a9a;">' + item.metodo + '</span></span>' +
+                '</label>';
+            }).join('');
+
+            // Event listeners para checkboxes
+            paramModalList.querySelectorAll('input[type="checkbox"]').forEach(function(box) {
+                box.addEventListener('change', function() {
+                    var paramName = this.getAttribute('data-param-name');
+                    var catalogItem = paramCatalog.find(function(c) { return c.parametro === paramName; });
+                    if (!catalogItem) return;
+
+                    var pos = parametrosSeleccionados.findIndex(function(sel) { return sel.parametro === paramName; });
+                    if (this.checked && pos === -1) {
+                        parametrosSeleccionados.push({
+                            parametro: catalogItem.parametro,
+                            metodo: catalogItem.metodo,
+                            afectaETFA: '',
+                            etfaCode: catalogItem.etfaCode || generarCodigoETFA(catalogItem.parametro, 1000000),
+                            matriz: '',
+                            instrumento: ''
+                        });
+                    }
+                    if (!this.checked && pos !== -1) {
+                        parametrosSeleccionados.splice(pos, 1);
+                    }
+                });
+            });
+        }
+
+        // Event listeners del modal
+        document.getElementById('btnOpenParamModal').addEventListener('click', function(e) {
+            e.preventDefault();
+            openParamModal();
+        });
+
+        document.getElementById('paramModalClose').addEventListener('click', closeParamModal);
+        document.getElementById('paramModalCancel').addEventListener('click', closeParamModal);
+
+        paramModal.addEventListener('click', function(e) {
+            if (e.target === paramModal) closeParamModal();
+        });
+
+        paramModalSearch.addEventListener('input', function() {
+            renderParamModalList(this.value);
+        });
+
+        document.getElementById('paramModalApply').addEventListener('click', function() {
+            closeParamModal();
+            renderParametrosTable();
+        });
+
+        // =============================================
+        // MODAL DE ANÁLISIS DE LABORATORIO
+        // =============================================
+        var labModal = document.getElementById('labModal');
+        var labModalSearch = document.getElementById('labModalSearch');
+        var labModalList = document.getElementById('labModalList');
+
+        function openLabModal() {
+            labModal.style.display = 'flex';
+            labModalSearch.value = '';
+            renderLabModalList('');
+        }
+
+        function closeLabModal() {
+            labModal.style.display = 'none';
+        }
+
+        function renderLabModalList(filterText) {
+            var filter = (filterText || '').toLowerCase().trim();
+            var items = labCatalog.slice();
+            if (filter) {
+                items = items.filter(function(item) {
+                    return (item.parametro + ' ' + item.metodo + ' ' + item.laboratorio).toLowerCase().indexOf(filter) !== -1;
+                });
+            }
+
+            if (items.length === 0) {
+                labModalList.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:12px;">Sin resultados.</div>';
+                return;
+            }
+
+            labModalList.innerHTML = items.map(function(item) {
+                var checked = analisisLaboratorioSeleccionados.some(function(sel) { return sel.parametro === item.parametro; }) ? ' checked' : '';
+                return '<label class="simple-modal-item">' +
+                    '<input type="checkbox" data-lab-name="' + item.parametro + '"' + checked + '>' +
+                    '<span><strong>' + item.parametro + '</strong><br><span style="font-size:10px;color:#9a9a9a;">' + item.metodo + '</span></span>' +
+                '</label>';
+            }).join('');
+
+            labModalList.querySelectorAll('input[type="checkbox"]').forEach(function(box) {
+                box.addEventListener('change', function() {
+                    var labName = this.getAttribute('data-lab-name');
+                    var catalogItem = labCatalog.find(function(c) { return c.parametro === labName; });
+                    if (!catalogItem) return;
+
+                    var pos = analisisLaboratorioSeleccionados.findIndex(function(sel) { return sel.parametro === labName; });
+                    if (this.checked && pos === -1) {
+                        analisisLaboratorioSeleccionados.push({
+                            parametro: catalogItem.parametro,
+                            metodo: catalogItem.metodo,
+                            afectaETFA: '',
+                            etfaCode: catalogItem.etfaCode || generarCodigoETFA(catalogItem.parametro, 2000000),
+                            matriz: '',
+                            laboratorio: catalogItem.laboratorio
+                        });
+                    }
+                    if (!this.checked && pos !== -1) {
+                        analisisLaboratorioSeleccionados.splice(pos, 1);
+                    }
+                });
+            });
+        }
+
+        document.getElementById('btnOpenLabModal').addEventListener('click', function(e) {
+            e.preventDefault();
+            openLabModal();
+        });
+
+        document.getElementById('labModalClose').addEventListener('click', closeLabModal);
+        document.getElementById('labModalCancel').addEventListener('click', closeLabModal);
+
+        labModal.addEventListener('click', function(e) {
+            if (e.target === labModal) closeLabModal();
+        });
+
+        labModalSearch.addEventListener('input', function() {
+            renderLabModalList(this.value);
+        });
+
+        document.getElementById('labModalApply').addEventListener('click', function() {
+            closeLabModal();
+            renderLaboratorioTable();
+        });
+
+        // =============================================
+        // MODAL DE MATERIALES
+        // =============================================
+        var materialModal = document.getElementById('materialModal');
+        var materialModalSearch = document.getElementById('materialModalSearch');
+        var materialModalList = document.getElementById('materialModalList');
+
+        function openMaterialModal() {
+            materialModal.style.display = 'flex';
+            materialModalSearch.value = '';
+            renderMaterialModalList('');
+        }
+
+        function closeMaterialModal() {
+            materialModal.style.display = 'none';
+        }
+
+        function renderMaterialModalList(filterText) {
+            var filter = (filterText || '').toLowerCase().trim();
+            var items = materialCatalog.slice();
+            if (filter) {
+                items = items.filter(function(item) {
+                    return item.nombre.toLowerCase().indexOf(filter) !== -1;
+                });
+            }
+
+            if (items.length === 0) {
+                materialModalList.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:12px;">Sin resultados.</div>';
+                return;
+            }
+
+            materialModalList.innerHTML = items.map(function(item) {
+                var checked = materialesSeleccionados.some(function(sel) { return sel.nombre === item.nombre; }) ? ' checked' : '';
+                return '<label class="simple-modal-item">' +
+                    '<input type="checkbox" data-material-name="' + item.nombre + '"' + checked + '>' +
+                    '<span><strong>' + item.nombre + '</strong></span>' +
+                '</label>';
+            }).join('');
+
+            materialModalList.querySelectorAll('input[type="checkbox"]').forEach(function(box) {
+                box.addEventListener('change', function() {
+                    var materialName = this.getAttribute('data-material-name');
+                    var pos = materialesSeleccionados.findIndex(function(sel) { return sel.nombre === materialName; });
+                    if (this.checked && pos === -1) {
+                        materialesSeleccionados.push({ nombre: materialName });
+                    }
+                    if (!this.checked && pos !== -1) {
+                        materialesSeleccionados.splice(pos, 1);
+                    }
+                });
+            });
+        }
+
+        document.getElementById('btnOpenMaterialModal').addEventListener('click', function(e) {
+            e.preventDefault();
+            openMaterialModal();
+        });
+
+        document.getElementById('materialModalClose').addEventListener('click', closeMaterialModal);
+        document.getElementById('materialModalCancel').addEventListener('click', closeMaterialModal);
+
+        materialModal.addEventListener('click', function(e) {
+            if (e.target === materialModal) closeMaterialModal();
+        });
+
+        materialModalSearch.addEventListener('input', function() {
+            renderMaterialModalList(this.value);
+        });
+
+        document.getElementById('materialModalApply').addEventListener('click', function() {
+            closeMaterialModal();
+            renderMaterialesTable();
+        });
+
+        // =============================================
+        // MODAL DE PERMISOS / AUTORIZACIONES
+        // =============================================
+        var permisosModal = document.getElementById('permisosModal');
+        var permisosModalSearch = document.getElementById('permisosModalSearch');
+        var permisosModalList = document.getElementById('permisosModalList');
+
+        function openPermisosModal() {
+            permisosModal.style.display = 'flex';
+            permisosModalSearch.value = '';
+            renderPermisosModalList('');
+        }
+
+        function closePermisosModal() {
+            permisosModal.style.display = 'none';
+        }
+
+        function renderPermisosModalList(filterText) {
+            var filter = (filterText || '').toLowerCase().trim();
+            var items = permisosCatalog.slice();
+            if (filter) {
+                items = items.filter(function(item) {
+                    return (item.nombre + ' ' + item.descripcion).toLowerCase().indexOf(filter) !== -1;
+                });
+            }
+
+            if (items.length === 0) {
+                permisosModalList.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:12px;">Sin resultados.</div>';
+                return;
+            }
+
+            permisosModalList.innerHTML = items.map(function(item) {
+                var checked = permisosSeleccionados.some(function(sel) { return sel.nombre === item.nombre; }) ? ' checked' : '';
+                return '<label class="simple-modal-item">' +
+                    '<input type="checkbox" data-permiso-name="' + item.nombre + '"' + checked + '>' +
+                    '<span><strong>' + item.nombre + '</strong><br><span style="font-size:10px;color:#9a9a9a;">' + item.descripcion + '</span></span>' +
+                '</label>';
+            }).join('');
+
+            permisosModalList.querySelectorAll('input[type="checkbox"]').forEach(function(box) {
+                box.addEventListener('change', function() {
+                    var permisoName = this.getAttribute('data-permiso-name');
+                    var catalogItem = permisosCatalog.find(function(c) { return c.nombre === permisoName; });
+                    if (!catalogItem) return;
+                    var pos = permisosSeleccionados.findIndex(function(sel) { return sel.nombre === permisoName; });
+                    if (this.checked && pos === -1) {
+                        permisosSeleccionados.push({ nombre: catalogItem.nombre, descripcion: catalogItem.descripcion });
+                    }
+                    if (!this.checked && pos !== -1) {
+                        permisosSeleccionados.splice(pos, 1);
+                    }
+                });
+            });
+        }
+
+        document.getElementById('btnOpenPermisosModal').addEventListener('click', function(e) {
+            e.preventDefault();
+            openPermisosModal();
+        });
+
+        document.getElementById('permisosModalClose').addEventListener('click', closePermisosModal);
+        document.getElementById('permisosModalCancel').addEventListener('click', closePermisosModal);
+
+        permisosModal.addEventListener('click', function(e) {
+            if (e.target === permisosModal) closePermisosModal();
+        });
+
+        permisosModalSearch.addEventListener('input', function() {
+            renderPermisosModalList(this.value);
+        });
+
+        document.getElementById('permisosModalApply').addEventListener('click', function() {
+            closePermisosModal();
+            renderPermisosTable();
+        });
+
+        // =============================================
+        // TABLA DE PARÁMETROS SELECCIONADOS
+        // =============================================
+        function renderParametrosTable() {
+            var tbody = document.getElementById('tablaParametrosBody');
+            tbody.innerHTML = '';
+
+            if (parametrosSeleccionados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:20px;">No hay parámetros seleccionados. Use el botón "Seleccionar parámetros de terreno" para agregar.</td></tr>';
+                toggleEtfaValidationColumn('tablaParametros', false);
+                return;
+            }
+
+            parametrosSeleccionados.forEach(function(item, idx) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + (idx + 1) + '</td>' +
+                    '<td>' + item.parametro + '</td>' +
+                    '<td style="font-size:11px;color:#9a9a9a;">' + item.metodo + '</td>' +
+                    '<td>' +
+                        '<select class="form-control-inline" data-param-idx="' + idx + '" data-field="matriz">' +
+                            '<option value="">Seleccionar</option>' +
+                            '<option value="AGUA_MAR_E"' + (item.matriz === 'AGUA_MAR_E' ? ' selected' : '') + '>Agua de Mar (E)</option>' +
+                            '<option value="AGUA_INDUSTRIAL_G"' + (item.matriz === 'AGUA_INDUSTRIAL_G' ? ' selected' : '') + '>Agua para fines industriales (G)</option>' +
+                            '<option value="AGUA_RESIDUAL_F"' + (item.matriz === 'AGUA_RESIDUAL_F' ? ' selected' : '') + '>Agua Residual (F)</option>' +
+                            '<option value="AGUA_SUPERFICIAL_D"' + (item.matriz === 'AGUA_SUPERFICIAL_D' ? ' selected' : '') + '>Agua Superficial (D)</option>' +
+                            '<option value="BIOTAS_U"' + (item.matriz === 'BIOTAS_U' ? ' selected' : '') + '>Biotas (U)</option>' +
+                            '<option value="SED_ACUATICOS_SUB"' + (item.matriz === 'SED_ACUATICOS_SUB' ? ' selected' : '') + '>Sedimentos Acuáticos Submareales</option>' +
+                            '<option value="SED_ACUATICOS_INTER"' + (item.matriz === 'SED_ACUATICOS_INTER' ? ' selected' : '') + '>Sedimentos Acuáticos Intermareales</option>' +
+                            '<option value="SED_MARINOS_SUB"' + (item.matriz === 'SED_MARINOS_SUB' ? ' selected' : '') + '>Sedimentos Marinos Submareales</option>' +
+                            '<option value="SED_MARINOS_INTER"' + (item.matriz === 'SED_MARINOS_INTER' ? ' selected' : '') + '>Sedimentos Marinos Intermareales</option>' +
+                        '</select>' +
+                    '</td>' +
+                    '<td>' +
+                        '<select class="form-control-inline" data-param-idx="' + idx + '" data-field="afectaETFA">' +
+                            '<option value="">Seleccionar</option>' +
+                            '<option value="SI"' + (item.afectaETFA === 'SI' ? ' selected' : '') + '>Sí</option>' +
+                            '<option value="NO"' + (item.afectaETFA === 'NO' ? ' selected' : '') + '>No</option>' +
+                        '</select>' +
+                    '</td>' +
+                    '<td class="etfa-validation-col" style="display:none;">' +
+                        (item.afectaETFA === 'SI' && item.matriz
+                            ? '<span style="display:inline-flex;align-items:center;gap:6px;color:#2dce89;font-weight:600;"><i class="fas fa-check-circle"></i> ' + item.etfaCode + '</span>'
+                            : '<span style="color:#b0b0b0;">-</span>') +
+                    '</td>' +
+                    '<td>' +
+                        '<select class="form-control-inline" data-param-idx="' + idx + '" data-field="instrumento">' +
+                            '<option value="">Seleccionar</option>' +
+                            '<option value="CTDO"' + (item.instrumento === 'CTDO' ? ' selected' : '') + '>CTDO</option>' +
+                            '<option value="MEDIDOR_TURBIDEZ"' + (item.instrumento === 'MEDIDOR_TURBIDEZ' ? ' selected' : '') + '>Medidor de turbidez</option>' +
+                            '<option value="MULTIPARAMETRO"' + (item.instrumento === 'MULTIPARAMETRO' ? ' selected' : '') + '>Multiparámetro</option>' +
+                            '<option value="POTENCIOMETROS"' + (item.instrumento === 'POTENCIOMETROS' ? ' selected' : '') + '>Potenciómetros (pH y ORP)</option>' +
+                            '<option value="CLORIMETRO"' + (item.instrumento === 'CLORIMETRO' ? ' selected' : '') + '>Clorímetro</option>' +
+                            '<option value="CORRENTOMETRO"' + (item.instrumento === 'CORRENTOMETRO' ? ' selected' : '') + '>Correntómetro</option>' +
+                            '<option value="ADCP"' + (item.instrumento === 'ADCP' ? ' selected' : '') + '>ADCP</option>' +
+                            '<option value="ESTACION_MET"' + (item.instrumento === 'ESTACION_MET' ? ' selected' : '') + '>Estación meteorológica</option>' +
+                            '<option value="MAREOGRAFO"' + (item.instrumento === 'MAREOGRAFO' ? ' selected' : '') + '>Mareógrafo</option>' +
+                            '<option value="GPS"' + (item.instrumento === 'GPS' ? ' selected' : '') + '>GPS</option>' +
+                            '<option value="ROV"' + (item.instrumento === 'ROV' ? ' selected' : '') + '>ROV</option>' +
+                            '<option value="ECOSONDA_MULTIHAZ"' + (item.instrumento === 'ECOSONDA_MULTIHAZ' ? ' selected' : '') + '>Ecosonda Multihaz</option>' +
+                        '</select>' +
+                    '</td>' +
+                    '<td><button class="btn-remove" data-remove-param="' + idx + '"><i class="fas fa-times"></i></button></td>';
+                tbody.appendChild(tr);
+            });
+
+            // Event listeners para campos editables inline
+            tbody.querySelectorAll('select[data-param-idx], input[data-param-idx]').forEach(function(el) {
+                el.addEventListener('change', function() {
+                    var idx = parseInt(this.getAttribute('data-param-idx'), 10);
+                    var field = this.getAttribute('data-field');
+                    if (!isNaN(idx) && parametrosSeleccionados[idx]) {
+                        parametrosSeleccionados[idx][field] = this.value;
+                        if (field === 'afectaETFA' || field === 'matriz') {
+                            renderParametrosTable();
+                        }
+                    }
+                });
+            });
+
+            // Event listeners para botón eliminar
+            tbody.querySelectorAll('button[data-remove-param]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var idx = parseInt(this.getAttribute('data-remove-param'), 10);
+                    if (!isNaN(idx)) {
+                        parametrosSeleccionados.splice(idx, 1);
+                        renderParametrosTable();
+                    }
+                });
+            });
+
+            var showEtfaValidation = parametrosSeleccionados.some(function(item) {
+                return item.afectaETFA === 'SI' && !!item.matriz;
+            });
+            toggleEtfaValidationColumn('tablaParametros', showEtfaValidation);
+        }
+
+        // =============================================
+        // TABLA DE ANÁLISIS DE LABORATORIO SELECCIONADOS
+        // =============================================
+        function renderLaboratorioTable() {
+            var tbody = document.getElementById('tablaLaboratorioBody');
+            tbody.innerHTML = '';
+
+            if (analisisLaboratorioSeleccionados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:20px;">No hay análisis seleccionados. Use el botón "Seleccionar análisis de laboratorio" para agregar.</td></tr>';
+                toggleEtfaValidationColumn('tablaLaboratorio', false);
+                return;
+            }
+
+            analisisLaboratorioSeleccionados.forEach(function(item, idx) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + (idx + 1) + '</td>' +
+                    '<td>' + item.parametro + '</td>' +
+                    '<td style="font-size:11px;color:#9a9a9a;">' + item.metodo + '</td>' +
+                    '<td>' +
+                        '<select class="form-control-inline" data-lab-idx="' + idx + '" data-field="matriz">' +
+                            '<option value="">Seleccionar</option>' +
+                            '<option value="AGUA_MAR_E"' + (item.matriz === 'AGUA_MAR_E' ? ' selected' : '') + '>Agua de Mar (E)</option>' +
+                            '<option value="AGUA_INDUSTRIAL_G"' + (item.matriz === 'AGUA_INDUSTRIAL_G' ? ' selected' : '') + '>Agua para fines industriales (G)</option>' +
+                            '<option value="AGUA_RESIDUAL_F"' + (item.matriz === 'AGUA_RESIDUAL_F' ? ' selected' : '') + '>Agua Residual (F)</option>' +
+                            '<option value="AGUA_SUPERFICIAL_D"' + (item.matriz === 'AGUA_SUPERFICIAL_D' ? ' selected' : '') + '>Agua Superficial (D)</option>' +
+                            '<option value="BIOTAS_U"' + (item.matriz === 'BIOTAS_U' ? ' selected' : '') + '>Biotas (U)</option>' +
+                            '<option value="SED_ACUATICOS_SUB"' + (item.matriz === 'SED_ACUATICOS_SUB' ? ' selected' : '') + '>Sedimentos Acuáticos Submareales</option>' +
+                            '<option value="SED_ACUATICOS_INTER"' + (item.matriz === 'SED_ACUATICOS_INTER' ? ' selected' : '') + '>Sedimentos Acuáticos Intermareales</option>' +
+                            '<option value="SED_MARINOS_SUB"' + (item.matriz === 'SED_MARINOS_SUB' ? ' selected' : '') + '>Sedimentos Marinos Submareales</option>' +
+                            '<option value="SED_MARINOS_INTER"' + (item.matriz === 'SED_MARINOS_INTER' ? ' selected' : '') + '>Sedimentos Marinos Intermareales</option>' +
+                        '</select>' +
+                    '</td>' +
+                    '<td>' +
+                        '<select class="form-control-inline" data-lab-idx="' + idx + '" data-field="afectaETFA">' +
+                            '<option value="">Seleccionar</option>' +
+                            '<option value="SI"' + (item.afectaETFA === 'SI' ? ' selected' : '') + '>Sí</option>' +
+                            '<option value="NO"' + (item.afectaETFA === 'NO' ? ' selected' : '') + '>No</option>' +
+                        '</select>' +
+                    '</td>' +
+                    '<td class="etfa-validation-col" style="display:none;">' +
+                        (item.afectaETFA === 'SI' && item.matriz
+                            ? '<span style="display:inline-flex;align-items:center;gap:6px;color:#2dce89;font-weight:600;"><i class="fas fa-check-circle"></i> ' + item.etfaCode + '</span>'
+                            : '<span style="color:#b0b0b0;">-</span>') +
+                    '</td>' +
+                    '<td>' + item.laboratorio + '</td>' +
+                    '<td><button class="btn-remove" data-remove-lab="' + idx + '"><i class="fas fa-times"></i></button></td>';
+                tbody.appendChild(tr);
+            });
+
+            tbody.querySelectorAll('select[data-lab-idx]').forEach(function(el) {
+                el.addEventListener('change', function() {
+                    var idx = parseInt(this.getAttribute('data-lab-idx'), 10);
+                    var field = this.getAttribute('data-field');
+                    if (!isNaN(idx) && analisisLaboratorioSeleccionados[idx]) {
+                        analisisLaboratorioSeleccionados[idx][field] = this.value;
+                        if (field === 'afectaETFA' || field === 'matriz') {
+                            renderLaboratorioTable();
+                        }
+                    }
+                });
+            });
+
+            tbody.querySelectorAll('button[data-remove-lab]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var idx = parseInt(this.getAttribute('data-remove-lab'), 10);
+                    if (!isNaN(idx)) {
+                        analisisLaboratorioSeleccionados.splice(idx, 1);
+                        renderLaboratorioTable();
+                    }
+                });
+            });
+
+            var showEtfaValidation = analisisLaboratorioSeleccionados.some(function(item) {
+                return item.afectaETFA === 'SI' && !!item.matriz;
+            });
+            toggleEtfaValidationColumn('tablaLaboratorio', showEtfaValidation);
+        }
+
+        // =============================================
+        // TABLA DE MATERIALES SELECCIONADOS
+        // =============================================
+        function renderMaterialesTable() {
+            var tbody = document.getElementById('tablaMaterialesBody');
+            tbody.innerHTML = '';
+
+            if (materialesSeleccionados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#aaa;padding:20px;">No hay materiales seleccionados. Use el botón "Seleccionar materiales" para agregar.</td></tr>';
+                return;
+            }
+
+            materialesSeleccionados.forEach(function(item, idx) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + (idx + 1) + '</td>' +
+                    '<td>' + item.nombre + '</td>' +
+                    '<td><button class="btn-remove" data-remove-material="' + idx + '"><i class="fas fa-times"></i></button></td>';
+                tbody.appendChild(tr);
+            });
+
+            tbody.querySelectorAll('button[data-remove-material]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var idx = parseInt(this.getAttribute('data-remove-material'), 10);
+                    if (!isNaN(idx)) {
+                        materialesSeleccionados.splice(idx, 1);
+                        renderMaterialesTable();
+                    }
+                });
+            });
+        }
+
+        // =============================================
+        // TABLA DE PERMISOS / AUTORIZACIONES
+        // =============================================
+        function renderPermisosTable() {
+            var tbody = document.getElementById('tablaPermisosBody');
+            tbody.innerHTML = '';
+
+            if (permisosSeleccionados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#aaa;padding:20px;">No hay permisos seleccionados. Use el botón "Seleccionar autorizaciones" para agregar.</td></tr>';
+                return;
+            }
+
+            permisosSeleccionados.forEach(function(item, idx) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + (idx + 1) + '</td>' +
+                    '<td>' + item.nombre + '</td>' +
+                    '<td style="font-size:11px;color:#777;">' + item.descripcion + '</td>' +
+                    '<td><button class="btn-remove" data-remove-permiso="' + idx + '"><i class="fas fa-times"></i></button></td>';
+                tbody.appendChild(tr);
+            });
+
+            tbody.querySelectorAll('button[data-remove-permiso]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var idx = parseInt(this.getAttribute('data-remove-permiso'), 10);
+                    if (!isNaN(idx)) {
+                        permisosSeleccionados.splice(idx, 1);
+                        renderPermisosTable();
+                    }
+                });
+            });
+        }
+
+        // Render inicial
+        renderParametrosTable();
+        renderLaboratorioTable();
+        renderMaterialesTable();
+        renderPermisosTable();
+
+        // =============================================
+        // ESTACIONES / PUNTOS DE MUESTREO
+        // =============================================
+        function removeEstacion(btn) {
+            var row = btn.closest('tr');
+            row.remove();
+            renumerarTabla('tablaEstaciones');
+            calcularMuestras();
+        }
+
+        function agregarEstacion() {
+            var nombre = document.getElementById('newEstNombre').value.trim();
+            var lugar = document.getElementById('newEstLugar').value.trim();
+            var matriz = document.getElementById('newEstMatriz').value.trim();
+            var latitud = document.getElementById('newEstLatitud').value.trim();
+            var longitud = document.getElementById('newEstLongitud').value.trim();
+            var estratos = parseInt(document.getElementById('numEstratos').value, 10) || 1;
+            var replicas = parseInt(document.getElementById('numReplicas').value, 10) || 1;
+            var muestras = estratos * replicas;
+            if (!nombre || !lugar || !matriz) return;
+
+            var tbody = document.querySelector('#tablaEstaciones tbody');
+            var num = tbody.rows.length + 1;
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td>' + num + '</td>' +
+                '<td>' + nombre + '</td>' +
+                '<td>' + lugar + '</td>' +
+                '<td>' + matriz + '</td>' +
+                '<td>' + (latitud || '-') + '</td>' +
+                '<td>' + (longitud || '-') + '</td>' +
+                '<td><input type="number" class="form-control-inline est-estratos-input" value="' + estratos + '" min="1" onchange="actualizarMuestrasFila(this)"></td>' +
+                '<td><input type="number" class="form-control-inline est-replicas-input" value="' + replicas + '" min="1" onchange="actualizarMuestrasFila(this)"></td>' +
+                '<td class="est-muestras">' + muestras + '</td>' +
+                '<td><button class="btn-remove" onclick="removeEstacion(this)"><i class="fas fa-times"></i></button></td>';
+            tbody.appendChild(tr);
+
+            document.getElementById('newEstNombre').value = '';
+            document.getElementById('newEstLugar').value = '';
+            document.getElementById('newEstMatriz').value = '';
+            document.getElementById('newEstLatitud').value = '';
+            document.getElementById('newEstLongitud').value = '';
+
+            document.getElementById('numPuntos').value = tbody.rows.length;
+            calcularMuestras();
+        }
+
+        function actualizarMuestrasFila(inputEl) {
+            var row = inputEl.closest('tr');
+            if (!row) return;
+            var estratosInput = row.querySelector('.est-estratos-input');
+            var replicasInput = row.querySelector('.est-replicas-input');
+            var muestrasCell = row.querySelector('.est-muestras');
+            var estratos = parseInt(estratosInput ? estratosInput.value : '0', 10) || 0;
+            var replicas = parseInt(replicasInput ? replicasInput.value : '0', 10) || 0;
+            if (estratos < 1) estratos = 1;
+            if (replicas < 1) replicas = 1;
+            if (estratosInput) estratosInput.value = estratos;
+            if (replicasInput) replicasInput.value = replicas;
+            if (muestrasCell) muestrasCell.textContent = estratos * replicas;
+            calcularMuestras();
+        }
+
+        function actualizarDetalleEstaciones() {
+            var rows = document.querySelectorAll('#tablaEstaciones tbody tr');
+
+            rows.forEach(function(row) {
+                var estratosInput = row.querySelector('.est-estratos-input');
+                var replicasInput = row.querySelector('.est-replicas-input');
+                var celdaMuestras = row.querySelector('.est-muestras');
+                var estratos = parseInt(estratosInput ? estratosInput.value : '0', 10) || 0;
+                var replicas = parseInt(replicasInput ? replicasInput.value : '0', 10) || 0;
+                if (estratos < 1) estratos = 1;
+                if (replicas < 1) replicas = 1;
+                if (estratosInput) estratosInput.value = estratos;
+                if (replicasInput) replicasInput.value = replicas;
+                if (celdaMuestras) celdaMuestras.textContent = estratos * replicas;
+            });
+        }
+
+        function calcularMuestras() {
+            actualizarDetalleEstaciones();
+            var rows = document.querySelectorAll('#tablaEstaciones tbody tr');
+            var puntos = rows.length;
+            var total = 0;
+            rows.forEach(function(row) {
+                var celdaMuestras = row.querySelector('.est-muestras');
+                total += parseInt(celdaMuestras ? celdaMuestras.textContent : '0', 10) || 0;
+            });
+
+            document.getElementById('numPuntos').value = puntos;
+            document.getElementById('cantidadMuestras').textContent = total;
+            document.getElementById('totalMuestrasServicio').textContent = total;
+        }
+
+        // =============================================
+        // RENUMERAR TABLA
+        // =============================================
+        function renumerarTabla(tableId) {
+            var rows = document.querySelectorAll('#' + tableId + ' tbody tr');
+            rows.forEach(function(row, i) {
+                row.cells[0].textContent = i + 1;
+            });
+        }
+
+        // =============================================
+        // INSTRUMENTOS DE CARÁCTER AMBIENTAL
+        // =============================================
+        function addInstrumento() {
+            var tbody = document.querySelector('#tablaInstrumentos tbody');
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td>' +
+                    '<select class="form-control">' +
+                        '<option value="">Seleccionar...</option>' +
+                        '<option value="RCA">RCA (Resolución de Calificación Ambiental)</option>' +
+                        '<option value="DIA">DIA (Declaración de Impacto Ambiental)</option>' +
+                        '<option value="EIA">EIA (Estudio de Impacto Ambiental)</option>' +
+                        '<option value="PAS">PAS (Permiso Ambiental Sectorial)</option>' +
+                        '<option value="OTRO">Otro</option>' +
+                    '</select>' +
+                '</td>' +
+                '<td><input type="text" class="form-control" placeholder="Ej: 123/2018"></td>' +
+                '<td><button class="btn-remove" onclick="removeInstrumento(this)"><i class="fas fa-times"></i></button></td>';
+            tbody.appendChild(tr);
+        }
+
+        function removeInstrumento(btn) {
+            var row = btn.closest('tr');
+            row.remove();
+        }
+
+        // =============================================
+        // INSTRUMENTOS Y EQUIPOS (DINÁMICA)
+        // =============================================
+        function addInstrumentoEquipo() {
+            var container = document.getElementById('instrumentosEquiposContainer');
+            var count = container.children.length + 1;
+            var div = document.createElement('div');
+            div.className = 'dynamic-item';
+            div.innerHTML =
+                '<input type="text" class="form-control" placeholder="Instrumento/Equipo" value="Instrumento/Equipo ' + count + '">' +
+                '<button class="btn-eliminar" onclick="removeDynamicItem(this)">Eliminar</button>';
+            container.appendChild(div);
+        }
+
+        // =============================================
+        // REMOVER ITEM DINÁMICO GENÉRICO
+        // =============================================
+        function removeDynamicItem(btn) {
+            var item = btn.closest('.dynamic-item');
+            item.remove();
+        }
+
+        // =============================================
+        // ESTADO DE LA FICHA
+        // =============================================
+        var fichaEstado = 'PENDIENTE'; // PENDIENTE | COMPLETADO | NOTIFICADO
+
+        function actualizarEstadoUI() {
+            var pill = document.getElementById('fichaStatusPill');
+            var text = document.getElementById('fichaStatusText');
+            var icon = pill.querySelector('i');
+
+            var btnGuardar = document.getElementById('btnGuardar');
+            var btnCompletar = document.getElementById('btnCompletar');
+            var btnReabrir = document.getElementById('btnReabrir');
+            var btnNotificar = document.getElementById('btnNotificar');
+
+            // Reset clases del pill
+            pill.className = 'status-pill';
+
+            if (fichaEstado === 'PENDIENTE') {
+                pill.classList.add('pending');
+                icon.className = 'fas fa-clock';
+                text.textContent = 'Pendiente de Completar';
+                btnGuardar.style.display = '';
+                btnCompletar.style.display = '';
+                btnReabrir.style.display = 'none';
+                btnNotificar.style.display = 'none';
+                toggleFormulario(true);
+            } else if (fichaEstado === 'COMPLETADO') {
+                pill.classList.add('completed');
+                icon.className = 'fas fa-check-circle';
+                text.textContent = 'Completado';
+                btnGuardar.style.display = 'none';
+                btnCompletar.style.display = 'none';
+                btnReabrir.style.display = '';
+                btnNotificar.style.display = '';
+                toggleFormulario(false);
+            } else if (fichaEstado === 'NOTIFICADO') {
+                pill.classList.add('notified');
+                icon.className = 'fas fa-paper-plane';
+                text.textContent = 'Notificado';
+                btnGuardar.style.display = 'none';
+                btnCompletar.style.display = 'none';
+                btnReabrir.style.display = 'none';
+                btnNotificar.style.display = 'none';
+                toggleFormulario(false);
+            }
+        }
+
+        function toggleFormulario(habilitado) {
+            var card = document.querySelector('.card');
+            var inputs = card.querySelectorAll('input, select, textarea');
+            var botones = card.querySelectorAll('.btn-remove, .btn-add-item, .btn-eliminar, .btn.btn-danger.btn-sm');
+            var addRows = card.querySelectorAll('.add-row');
+
+            inputs.forEach(function(el) {
+                el.disabled = !habilitado;
+                el.style.opacity = habilitado ? '1' : '0.7';
+            });
+
+            botones.forEach(function(el) {
+                el.style.display = habilitado ? '' : 'none';
+            });
+
+            addRows.forEach(function(el) {
+                el.style.display = habilitado ? '' : 'none';
+            });
+        }
+
+        // =============================================
+        // GUARDAR FICHA
+        // =============================================
+        function guardarFicha() {
+            alert('Ficha Técnico Comercial guardada exitosamente.');
+        }
+
+        function completarFicha() {
+            if (confirm('¿Está seguro de marcar la ficha como completada? Los campos quedarán bloqueados.')) {
+                fichaEstado = 'COMPLETADO';
+                actualizarEstadoUI();
+                alert('Ficha marcada como Completada.');
+            }
+        }
+
+        function reabrirFicha() {
+            if (confirm('¿Desea reabrir la ficha para edición?')) {
+                fichaEstado = 'PENDIENTE';
+                actualizarEstadoUI();
+            }
+        }
+
+        function notificarFicha() {
+            if (confirm('¿Está seguro de notificar la ficha? Esta acción no se puede deshacer.')) {
+                fichaEstado = 'NOTIFICADO';
+                actualizarEstadoUI();
+                alert('Ficha notificada exitosamente.');
+            }
+        }
+    </script>
+</body>
+</html>

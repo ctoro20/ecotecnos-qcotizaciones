@@ -1,0 +1,2289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGS - Creación de Cotización</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/quill-table-better@1/dist/quill-table-better.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/cotizacion-detalle.css">
+</head>
+    <body class="demo-mode">
+
+        <!-- Barra Demo -->
+        <div class="demo-bar" id="demoBar">
+            <div class="demo-bar-left">
+                <span class="demo-label"><i class="fas fa-play-circle"></i> MODO DEMO</span>
+                <span class="demo-separator"></span>
+                <span class="demo-hint">Seleccione un paso para simular el estado de la cotización</span>
+            </div>
+            <div class="demo-bar-steps">
+                <button class="demo-step-btn active" data-demo="1" onclick="applyDemoStep(1)">
+                    <span class="demo-btn-num">1</span> Datos
+                </button>
+                <button class="demo-step-btn" data-demo="2" onclick="applyDemoStep(2)">
+                    <span class="demo-btn-num">2</span> Servicios
+                </button>
+                <button class="demo-step-btn" data-demo="3" onclick="applyDemoStep(3)">
+                    <span class="demo-btn-num">3</span> Técnica
+                </button>
+                <button class="demo-step-btn" data-demo="4" onclick="applyDemoStep(4)">
+                    <span class="demo-btn-num">4</span> Económica
+                </button>
+                <button class="demo-step-btn" data-demo="5" onclick="applyDemoStep(5)">
+                    <span class="demo-btn-num">5</span> Previsualización
+                </button>
+                <button class="demo-step-btn" data-demo="6" onclick="applyDemoStep(6)">
+                    <span class="demo-btn-num">6</span> Aprobación
+                </button>
+            </div>
+            <button class="demo-close-btn" onclick="closeDemoBar()" title="Cerrar barra demo">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="wrapper">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-container">
+                    <div class="logo-top-line"></div>
+                    <div class="logo-text">SGS</div>
+                </div>
+            </div>
+
+            <div class="user">
+                <div class="user-name">
+                    <i class="fa fa-user"></i>
+                    Bienvenido <span id="NombreUsuarioSistema">Cristian Toro</span>
+                </div>
+                <div class="app-version">V.1.0.0</div>
+            </div>
+
+            <ul class="nav">
+                <li>
+                    <a href="#">
+                        <i class="fas fa-home"></i>
+                        <span>Inicio</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="far fa-square"></i>
+                        <span>Tarifario</span>
+                    </a>
+                </li>
+                <li class="active">
+                    <a href="cotizaciones-sgs.html">
+                        <i class="far fa-circle"></i>
+                        <span>Listado Cotizaciones/Propuestas</span>
+                    </a>
+                </li>
+                <li style="display:none;">
+                    <a href="propuestas-sgs.html">
+                        <i class="fas fa-file-contract"></i>
+                        <span>Listado de licitaciones</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-check"></i>
+                        <span>Aprobar cotizaciones</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Salir</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- MAIN PANEL -->
+            <div class="main-panel">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-header-left">
+                    <div class="header-icon">
+                        <i class="fas fa-money-check"></i>
+                    </div>
+                    <h1>Creación cotización</h1>
+                </div>
+                <div class="company-switcher">
+                    <label>Empresa:</label>
+                    <select id="companySelect" class="company-select">
+                        <option value="SGS" selected>SGS</option>
+                        <option value="CONEMI">CONEMI</option>
+                        <option value="ECOTECNOS">ECOTECNOS</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <!-- Back Button -->
+                <div style="margin-bottom: 20px;">
+                    <a href="cotizaciones-sgs.html" class="btn btn-default">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+
+                <p class="category">Complete los pasos a continuación para crear una nueva cotización.</p>
+
+                <!-- Quote Summary Header -->
+                <div class="quote-summary" id="quoteSummary">
+                    <div class="quote-summary-bar" onclick="toggleQuoteSummary()">
+                        <div class="quote-summary-left">
+                            <div class="summary-topline">
+                                <div class="quote-number">
+                                    <span class="quote-number-label">Cotización</span>
+                                    <span class="quote-number-value empty" id="summaryQuoteNumber">Sin registrar</span>
+                                </div>
+                                <div class="summary-badges">
+                                    <span class="status-pill draft" id="summaryStatus">
+                                        <i class="fas fa-edit"></i>
+                                        <span>Borrador</span>
+                                    </span>
+                                    <span class="status-pill subtle empty" id="summaryProposalBadge">
+                                        <i class="fas fa-file-signature"></i>
+                                        <span>Propuesta</span>
+                                        <strong id="summaryProposalNumber">—</strong>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="summary-bottomline">
+                                <div class="summary-item">
+                                    <span class="summary-item-label">Cliente</span>
+                                    <span class="summary-item-value empty" id="summaryClient">No seleccionado</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-item-label">Atención a</span>
+                                    <span class="summary-item-value empty" id="summaryContact">No seleccionado</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-item-label">Fecha cotización</span>
+                                    <span class="summary-item-value" id="summaryDate">30/01/2026</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="quote-summary-right">
+                            <div class="quote-total">
+                                <div class="quote-total-label">Total</div>
+                                <div class="quote-total-value">
+                                    <span id="summaryTotal">0.00</span>
+                                    <span class="quote-total-currency" id="summaryCurrency">CLP</span>
+                                </div>
+                            </div>
+                            <div class="quote-expand-btn">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quote-summary-details">
+                        <div class="quote-details-grid">
+                            <div class="quote-detail-section">
+                                <h6><i class="fas fa-building"></i> Cliente</h6>
+                                <div class="detail-row">
+                                    <span>Razón social</span>
+                                    <span id="detailClientName">-</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>RUT</span>
+                                    <span id="detailClientRut">-</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>Dirección</span>
+                                    <span id="detailClientAddress">-</span>
+                                </div>
+                            </div>
+                            <div class="quote-detail-section">
+                                <h6><i class="fas fa-user"></i> Contacto</h6>
+                                <div class="detail-row">
+                                    <span>Nombre</span>
+                                    <span id="detailContactName">-</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>Email</span>
+                                    <span id="detailContactEmail">-</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>Teléfono</span>
+                                    <span id="detailContactPhone">-</span>
+                                </div>
+                            </div>
+                            <div class="quote-detail-section">
+                                <h6><i class="fas fa-file-invoice"></i> Cotización</h6>
+                                <div class="detail-row">
+                                    <span>Vendedor</span>
+                                    <span id="detailVendedor">-</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>Vigencia</span>
+                                    <span id="detailVigencia">-</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>Cond. Pago</span>
+                                    <span id="detailCondPago">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resumen de Servicios -->
+                        <div class="services-summary-section">
+                            <h6>Resumen de la propuesta</h6>
+                            <table class="services-summary-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:40px;">#</th>
+                                        <th>Servicio</th>
+                                        <th style="width:100px;">Precio Unit.</th>
+                                        <th style="width:70px;">Cant</th>
+                                        <th style="width:80px;">Desc %</th>
+                                        <th style="width:100px;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="summaryServicesBody">
+                                    <tr class="empty-row">
+                                        <td colspan="6">Sin servicios agregados</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="services-summary-total">
+                                <span>Total:</span>
+                                <span id="summaryGrandTotal">0.00</span>
+                                <span id="summaryGrandCurrency">/CLU</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stepper -->
+                <div class="card">
+                    <div class="stepper">
+                        <div class="stepper-item active" data-step="1">
+                            <div class="stepper-number">1</div>
+                            <div class="stepper-label">Datos cotización</div>
+                        </div>
+                        <div class="stepper-item" data-step="2">
+                            <div class="stepper-number">2</div>
+                            <div class="stepper-label">Servicios</div>
+                        </div>
+                        <div class="stepper-item" data-step="3">
+                            <div class="stepper-number">3</div>
+                            <div class="stepper-label">Técnica</div>
+                        </div>
+                        <div class="stepper-item" data-step="4">
+                            <div class="stepper-number">4</div>
+                            <div class="stepper-label">Económica</div>
+                        </div>
+                        <div class="stepper-item" data-step="5">
+                            <div class="stepper-number">5</div>
+                            <div class="stepper-label">Previsualización</div>
+                        </div>
+                        <div class="stepper-item" data-step="6">
+                            <div class="stepper-number">6</div>
+                            <div class="stepper-label">Aprobación</div>
+                        </div>
+                    </div>
+
+                    <!-- PASO 1: Datos Cotización -->
+                    <div class="step-panel active" id="step1">
+                        <h4 class="section-title"><i class="fas fa-file-alt"></i> Datos cotización</h4>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>División</label>
+                                    <select class="form-control" id="DivisionId">
+                                        <option value="">-- Seleccione --</option>
+                                        <option value="10">H&N - Health & Nutrition</option>
+                                        <option value="500">I&E - Industries & Environment</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Departamento</label>
+                                    <select class="form-control" id="DepartamentoId">
+                                        <option value="">-- Seleccione --</option>
+                                        <option value="ADM">Adm Envi (DS)</option>
+                                        <option value="COM">Comercial Envi (DS)</option>
+                                        <option value="MA">Monitoreo Aguas</option>
+                                        <option value="MM">Monitoreo Medio Marino</option>
+                                        <option value="CON">Consultoría</option>
+                                        <option value="MAIR">Monitoreo Aire</option>
+                                        <option value="EMI">Emisiones</option>
+                                        <option value="HI">Higiene Industrial</option>
+                                        <option value="LAB">Laboratorio</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Localidad</label>
+                                    <select class="form-control" id="LocalidadId">
+                                        <option value="">-- Seleccione --</option>
+                                        <option value="ANT">Zona A_Antofagasta</option>
+                                        <option value="CM">Zona C_Casa Matriz</option>
+                                        <option value="PV">Zona C_Puerto Varas</option>
+                                        <option value="SAL">Zona C_Salamanca</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="section-title"><i class="fas fa-building"></i> Cliente y Contacto</h4>
+
+                        <!-- Hidden field for client ID -->
+                        <input type="hidden" id="ClienteId">
+
+                        <!-- Before client selection - show prompts -->
+                        <div id="divBuscarCliente" class="cards-row">
+                            <div class="card-column">
+                                <div class="client-search-prompt">
+                                    <div class="search-prompt-icon">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <div class="search-prompt-text">
+                                        <span>No hay cliente seleccionado</span>
+                                        <small>Haga clic en buscar para seleccionar un cliente</small>
+                                    </div>
+                                    <button type="button" class="btn btn-success" id="btnBuscarCliente">
+                                        <i class="fas fa-search"></i> Buscar
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-column">
+                                <div class="contact-search-prompt">
+                                    <div class="search-prompt-icon">
+                                        <i class="fas fa-user-tie"></i>
+                                    </div>
+                                    <div class="search-prompt-text">
+                                        <span>Atención a</span>
+                                        <small>Seleccione primero un cliente para ver sus contactos</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- After client selection - show cards -->
+                        <div id="divDatosCliente" hidden class="cards-row">
+                            <!-- Client Card -->
+                            <div class="card-column">
+                                <div class="client-card">
+                                    <div class="client-card-header">
+                                        <div class="client-card-title">
+                                            <div class="client-card-icon">
+                                                <i class="fas fa-building"></i>
+                                            </div>
+                                            <div>
+                                                <div class="client-card-name" id="lblNombre"></div>
+                                                <div class="client-card-code" id="lblCodigo"></div>
+                                            </div>
+                                        </div>
+                                        <div class="client-card-actions">
+                                            <button type="button" class="btn-change-client" onclick="openClientModal()">
+                                                <i class="fas fa-exchange-alt"></i> Cambiar
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="client-card-body">
+                                        <div class="client-info-chip">
+                                            <i class="fas fa-id-card"></i>
+                                            <span class="chip-label">Rut:</span>
+                                            <span class="chip-value" id="lblRut"></span>
+                                        </div>
+                                        <div class="client-info-chip">
+                                            <i class="fas fa-globe-americas"></i>
+                                            <span class="chip-label">País:</span>
+                                            <span class="chip-value" id="lblPais"></span>
+                                        </div>
+                                        <div class="client-address-selector">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            <select id="cbDireccion">
+                                                <option value="">-- Seleccione dirección --</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact/Atención Card -->
+                            <div class="card-column">
+                                <div class="contact-card">
+                                    <div class="contact-card-header">
+                                        <div class="contact-card-title">
+                                            <div class="contact-card-icon">
+                                                <i class="fas fa-user-tie"></i>
+                                            </div>
+                                            <span class="contact-card-label">Atención a</span>
+                                        </div>
+                                        <div class="contact-selector">
+                                            <i class="fas fa-user"></i>
+                                            <select id="AtendedorId">
+                                                <option value="">-- Seleccione contacto --</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="contact-card-body">
+                                        <div class="contact-info-item" id="contactTelefono">
+                                            <i class="fas fa-phone"></i>
+                                            <div>
+                                                <span class="info-label">Teléfono</span>
+                                                <span class="info-value" id="lblTelefono">--</span>
+                                            </div>
+                                        </div>
+                                        <div class="contact-info-item" id="contactCargo">
+                                            <i class="fas fa-briefcase"></i>
+                                            <div>
+                                                <span class="info-label">Cargo</span>
+                                                <span class="info-value" id="lblCargo">--</span>
+                                            </div>
+                                        </div>
+                                        <div class="contact-info-item" id="contactEmail">
+                                            <i class="fas fa-envelope"></i>
+                                            <div>
+                                                <span class="info-label">Email</span>
+                                                <span class="info-value" id="lblEmail">--</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="section-title"><i class="fas fa-clipboard-list"></i> Datos de la Cotización</h4>
+
+                        <div class="form-section-card">
+                            <div class="form-grid">
+                                <div class="compact-form-group">
+                                    <label>Inicio vigencia</label>
+                                    <input type="date" class="form-control" id="InicioVigencia" value="2026-01-30">
+                                </div>
+                                <div class="compact-form-group">
+                                    <label>Fin vigencia</label>
+                                    <input type="date" class="form-control" id="FinVigencia" value="2026-02-28">
+                                </div>
+                                <div class="compact-form-group">
+                                    <label>Moneda</label>
+                                    <select class="form-control" id="MonedaId">
+                                        <option value="">-- Seleccione --</option>
+                                        <option value="CLP">PESO CHILENO</option>
+                                        <option value="CLU">UF</option>
+                                        <option value="EUR">EURO</option>
+                                        <option value="USD">DOLARES AMERICANOS</option>
+                                    </select>
+                                </div>
+                                <div class="compact-form-group">
+                                    <label>Tasa de cambio</label>
+                                    <input type="text" class="form-control" id="TasaCambio" disabled value="0">
+                                </div>
+                                <div class="compact-form-group">
+                                    <label>Vendedor</label>
+                                    <select class="form-control" id="VendedorId">
+                                        <option value="">-- Seleccione --</option>
+                                        <option value="abreschi">ANITZA ROXANA BRESCHI</option>
+                                        <option value="acossio">ANNIA MARLENE COSSIO</option>
+                                        <option value="amartin">ASTRID DENISSE MARTIN</option>
+                                        <option value="crojas">CAMILO ADRIAN ROJAS</option>
+                                        <option value="ccaceres">CAMILO CACERES</option>
+                                        <option value="cdiaz">CARLOS IGNACIO DÍAZ</option>
+                                        <option value="dalvarez">DANIELA ALEJANDRA ALVAREZ</option>
+                                        <option value="jvillalobos">JOSE JOAQUIN VILLALOBOS</option>
+                                        <option value="morellana">MARINA BELEN ORELLANA</option>
+                                        <option value="mampuero">MAURICIO ANDRES AMPUERO</option>
+                                        <option value="psaavedra">PABLO FRANCISCO SAAVEDRA</option>
+                                        <option value="pmellado">PABLO PATRICIO MELLADO</option>
+                                        <option value="pbenavides">PAULETTE CAROLINA BENAVIDES</option>
+                                        <option value="pcortes">PAULINA BELEN CORTES</option>
+                                        <option value="rvalenzuela">RICARDO VALENZUELA</option>
+                                        <option value="vgodoy">VICTOR HUGO GODOY</option>
+                                    </select>
+                                </div>
+                                <div class="compact-form-group">
+                                    <label>Encargado</label>
+                                    <select class="form-control" id="EncargadoId">
+                                        <option value="">-- Seleccione --</option>
+                                        <option value="vlopez" selected>VIVIANA LOPEZ OYARCE</option>
+                                    </select>
+                                </div>
+                                <div class="compact-form-group">
+                                    <label>Condiciones de pago</label>
+                                    <select class="form-control" id="CondicionPago">
+                                        <option value="">-- Seleccione --</option>
+                                        <option value="Anticipado">Anticipado</option>
+                                        <option value="OC con pago a 30 días">OC con pago a 30 días</option>
+                                        <option value="Otra por definir">Otra por definir</option>
+                                    </select>
+                                </div>
+                                <div class="compact-form-group">
+                                    <label>Tiempo entrega</label>
+                                    <input type="number" min="0" class="form-control" id="TiempoEntrega" value="0">
+                                </div>
+                                <div class="compact-form-group span-3">
+                                    <label>Asunto</label>
+                                    <input type="text" class="form-control" id="Asunto">
+                                </div>
+                                <div class="compact-form-group">
+                                    <div class="toggle-pair">
+                                        <div class="toggle-item">
+                                            <label>Licitación</label>
+                                            <div class="radio-toggle">
+                                                <input type="radio" name="LicitacionRadio" value="1" id="licitacionSi">
+                                                <label for="licitacionSi">Sí</label>
+                                                <input type="radio" name="LicitacionRadio" value="0" id="licitacionNo" checked>
+                                                <label for="licitacionNo">No</label>
+                                            </div>
+                                        </div>
+                                        <div class="toggle-item">
+                                            <label>Cliente nuevo</label>
+                                            <div class="radio-toggle">
+                                                <input type="radio" name="TipoClienteRadio" value="1" id="clienteSi">
+                                                <label for="clienteSi">Sí</label>
+                                                <input type="radio" name="TipoClienteRadio" value="0" id="clienteNo" checked>
+                                                <label for="clienteNo">No</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="compact-form-group span-2">
+                                    <label>Observaciones</label>
+                                    <textarea class="form-control" id="Observacion" rows="2"></textarea>
+                                </div>
+                                <div class="compact-form-group span-2">
+                                    <label>Plan de muestreo / Alcance servicio</label>
+                                    <textarea class="form-control" id="PlanMuestreo" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <div></div>
+                            <button type="button" class="btn btn-success" onclick="nextStep(2)">
+                                Finalizar Paso <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                        <!-- PASO 2: Servicios -->
+                    <div class="step-panel" id="step2">
+                        <div class="service-section">
+                            <div class="service-section-header">
+                                <div>
+                                    <div class="service-section-title"><i class="fas fa-flask"></i> Servicios de laboratorio</div>
+                                    <div class="service-section-desc">Agrupa servicios por producto y presentación. Los grupos sólo aplican a laboratorio.</div>
+                                </div>
+                                <div class="service-section-actions">
+                                    <button class="btn btn-warning" id="btnAgregarNuevoGrupo">
+                                        <i class="fas fa-plus"></i> Agregar Nuevo Grupo
+                                    </button>
+                                    <button class="btn btn-success">
+                                        <i class="fas fa-plus"></i> Agregar Grupo Existente
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="divGruposServicioLab">
+                            <div class="service-group">
+                                <div class="service-group-header">
+                                    <div class="group-title">
+                                        <i class="fas fa-expand-alt text-warning"></i>
+                                        Grupo 1: Salmuera 1 - COT CIT
+                                    </div>
+                                    <div class="group-actions">
+                                        <i class="fas fa-pen"></i>
+                                        <i class="fas fa-trash"></i>
+                                        <button class="btn btn-success btn-sm js-open-service-modal" data-context="lab">
+                                            <i class="fas fa-plus"></i> Agregar servicio
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="service-tags">
+                                    <span class="service-tag">Analisis Agua (2023)</span>
+                                    <span class="service-tag">Agua de Mar (2023)</span>
+                                </div>
+                                <div class="table-responsive" style="padding: 10px 12px;">
+                                    <table class="table table-lct">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Servicio</th>
+                                                <th>LD*</th>
+                                                <th>Metodología</th>
+                                                <th>Unidad</th>
+                                                <th>Precio Unit.</th>
+                                                <th>Tipo Var.</th>
+                                                <th>Variación</th>
+                                                <th>Cant</th>
+                                                <th>Total</th>
+                                                <th>Laboratorio</th>
+                                                <th>Tiempo Resp.</th>
+                                                <th>ETFA</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>1</td>
+                                                <td>Carbono Orgánico Disuelto</td>
+                                                <td>0.2</td>
+                                                <td>SM 5310 B Ed.24, 2023</td>
+                                                <td>MG/L</td>
+                                                <td>0.98</td>
+                                                <td>PORCENTAJE</td>
+                                                <td>0.00</td>
+                                                <td>1.00</td>
+                                                <td>0.98</td>
+                                                <td>Lab. Santiago - ENV</td>
+                                                <td>12</td>
+                                                <td><input type="checkbox" disabled></td>
+                                                <td>
+                                                    <i class="fas fa-edit"></i>
+                                                    <i class="fas fa-trash"></i>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>2</td>
+                                                <td>Carbono Orgánico Total</td>
+                                                <td>0.2</td>
+                                                <td>SM 5310 B Ed.24, 2023</td>
+                                                <td>UND</td>
+                                                <td>0.68</td>
+                                                <td>PORCENTAJE</td>
+                                                <td>0.00</td>
+                                                <td>1.00</td>
+                                                <td>0.68</td>
+                                                <td>Lab. Santiago - ENV</td>
+                                                <td>12</td>
+                                                <td><input type="checkbox" disabled></td>
+                                                <td>
+                                                    <i class="fas fa-edit"></i>
+                                                    <i class="fas fa-trash"></i>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="service-subtotal">SubTotal 1.66 / CLU</div>
+                            </div>
+
+                            <div class="service-group">
+                                <div class="service-group-header">
+                                    <div class="group-title">
+                                        <i class="fas fa-expand-alt text-warning"></i>
+                                        Grupo 2: Salmuera
+                                    </div>
+                                    <div class="group-actions">
+                                        <i class="fas fa-pen"></i>
+                                        <i class="fas fa-trash"></i>
+                                        <button class="btn btn-success btn-sm js-open-service-modal" data-context="lab">
+                                            <i class="fas fa-plus"></i> Agregar servicio
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="service-tags">
+                                    <span class="service-tag">Analisis Agua (2023)</span>
+                                    <span class="service-tag">Aguas Residuales (2023)</span>
+                                </div>
+                                <div class="table-responsive" style="padding: 10px 12px;">
+                                    <table class="table table-lct">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Servicio</th>
+                                                <th>LD*</th>
+                                                <th>Metodología</th>
+                                                <th>Unidad</th>
+                                                <th>Precio Unit.</th>
+                                                <th>Tipo Var.</th>
+                                                <th>Variación</th>
+                                                <th>Cant</th>
+                                                <th>Total</th>
+                                                <th>Laboratorio</th>
+                                                <th>Tiempo Resp.</th>
+                                                <th>ETFA</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>1</td>
+                                                <td>Carbono Inorgánico Total</td>
+                                                <td>0.2</td>
+                                                <td>SM 5310 B Ed.24, 2023</td>
+                                                <td>MG/L</td>
+                                                <td>0.98</td>
+                                                <td>PORCENTAJE</td>
+                                                <td>0.00</td>
+                                                <td>1.00</td>
+                                                <td>0.98</td>
+                                                <td>Lab. Santiago - ENV</td>
+                                                <td>12</td>
+                                                <td><input type="checkbox" disabled></td>
+                                                <td>
+                                                    <i class="fas fa-edit"></i>
+                                                    <i class="fas fa-trash"></i>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>2</td>
+                                                <td>Carbono Orgánico Total</td>
+                                                <td>0.2</td>
+                                                <td>SM 5310 B Ed.24, 2023</td>
+                                                <td>MG/L</td>
+                                                <td>0.68</td>
+                                                <td>PORCENTAJE</td>
+                                                <td>0.00</td>
+                                                <td>1.00</td>
+                                                <td>0.68</td>
+                                                <td>Lab. Santiago - ENV</td>
+                                                <td>12</td>
+                                                <td><input type="checkbox" disabled></td>
+                                                <td>
+                                                    <i class="fas fa-edit"></i>
+                                                    <i class="fas fa-trash"></i>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="service-subtotal">SubTotal 1.66 / CLU</div>
+                            </div>
+                            </div>
+                        </div>
+
+                        <div class="service-section">
+                            <div class="service-section-header">
+                                <div>
+                                    <div class="service-section-title"><i class="fas fa-map-marker-alt"></i> Servicios de Muestreo y Mediciones de Terreno</div>
+                                    <div class="service-section-desc">Servicios en terreno que no requieren agrupación.</div>
+                                </div>
+                                <div class="service-section-actions">
+                                    <button class="btn btn-success btn-sm js-open-service-modal" data-context="field">
+                                        <i class="fas fa-plus"></i> Agregar Servicio
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="divDetalleServicioMuestreo">
+                                <div class="table-responsive">
+                                    <table class="table table-lct">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center" style="width:40px;">#</th>
+                                                <th>Servicio</th>
+                                                <th style="width:90px;">Unidad</th>
+                                                <th style="width:90px;">Precio</th>
+                                                <th style="width:90px;">Tipo Var.</th>
+                                                <th style="width:90px;">Variación</th>
+                                                <th style="width:70px;">Cant</th>
+                                                <th style="width:110px;">Precio Final</th>
+                                                <th style="width:90px;">Total</th>
+                                                <th style="width:60px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="text-center">1</td>
+                                                <td>
+                                                    <div class="muestreo-name">
+                                                        <span class="muestreo-name-text" data-original="Muestreo compuesto 24 hrs" title="Original: Muestreo compuesto 24 hrs">Muestreo compuesto 24 hrs</span>
+                                                        <i class="fas fa-copy muestreo-duplicate" title="Duplicar"></i>
+                                                        <span class="muestreo-code">10010168</span>
+                                                    </div>
+                                                    <div class="service-tags" style="margin-top:6px;">
+                                                        <span class="service-tag">MONITOREO AGUAS (2023)</span>
+                                                        <span class="service-tag">MONITOREO AGUAS RESIDUALES (2023)</span>
+                                                    </div>
+                                                </td>
+                                                <td>UND</td>
+                                                <td align="right">0.00</td>
+                                                <td>
+                                                    <select class="muestreo-cell-input js-muestreo-tipo" disabled>
+                                                        <option value="FIJO" selected>FIJO</option>
+                                                        <option value="PORCENTAJE">PORCENTAJE</option>
+                                                    </select>
+                                                </td>
+                                                <td align="right"><input type="number" min="0" step="0.01" value="1.00" class="muestreo-cell-input js-muestreo-variacion" disabled></td>
+                                                <td align="right"><input type="number" min="1" step="1" value="1.00" class="muestreo-cell-input js-muestreo-cantidad" disabled></td>
+                                                <td align="right" class="js-muestreo-precio-final">1.00</td>
+                                                <td align="right" class="js-muestreo-total">1.00</td>
+                                                <td class="text-center">
+                                                    <i class="fas fa-edit muestreo-edit-row"></i>
+                                                    &nbsp;&nbsp;
+                                                    <i class="fas fa-trash"></i>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="service-subtotal">SubTotal 48.00 / CLU</div>
+                            </div>
+                        </div>
+
+                        <div class="service-section">
+                            <div class="service-section-header">
+                                <div>
+                                    <div class="service-section-title"><i class="fas fa-tag"></i> Otros Servicios</div>
+                                    <div class="service-section-desc">Servicios adicionales que no pertenecen a laboratorio ni a terreno.</div>
+                                </div>
+                                  <div class="service-section-actions">
+                                      <button class="btn btn-success btn-sm js-open-service-modal" data-context="other">
+                                          <i class="fas fa-plus"></i> Agregar Servicio
+                                      </button>
+                                  </div>
+                            </div>
+
+                              <div id="divDetalleServicioMon">
+                                  <div class="table-responsive">
+                                      <table class="table table-lct">
+                                          <thead>
+                                              <tr>
+                                                  <th class="text-center" style="width:40px;">#</th>
+                                                  <th>Servicio</th>
+                                                  <th style="width:90px;">Unidad</th>
+                                                  <th style="width:90px;">Precio</th>
+                                                  <th style="width:90px;">Tipo Var.</th>
+                                                  <th style="width:90px;">Variación</th>
+                                                  <th style="width:70px;">Cant</th>
+                                                  <th style="width:110px;">Precio Final</th>
+                                                  <th style="width:90px;">Total</th>
+                                                  <th style="width:60px;"></th>
+                                              </tr>
+                                          </thead>
+                                          <tbody>
+                                              <tr>
+                                                  <td class="text-center">1</td>
+                                                  <td>
+                                                      <div class="muestreo-name">
+                                                          <span class="muestreo-name-text" data-original="Auditoria Ambiental de Cumplimiento" title="Original: Auditoria Ambiental de Cumplimiento">Auditoria Ambiental de Cumplimiento</span>
+                                                          <i class="fas fa-copy muestreo-duplicate" title="Duplicar"></i>
+                                                          <span class="muestreo-code">104582</span>
+                                                      </div>
+                                                      <div class="service-tags" style="margin-top:6px;">
+                                                          <span class="service-tag">CONSULTORIA AMBIENTAL (2024)</span>
+                                                          <span class="service-tag">AUDITORIA AMBIENTAL</span>
+                                                      </div>
+                                                  </td>
+                                                  <td>SERV</td>
+                                                  <td align="right">0.00</td>
+                                                  <td>
+                                                      <select class="muestreo-cell-input js-otros-tipo" disabled>
+                                                          <option value="FIJO" selected>FIJO</option>
+                                                          <option value="PORCENTAJE">PORCENTAJE</option>
+                                                      </select>
+                                                  </td>
+                                                  <td align="right"><input type="number" min="0" step="0.01" value="1.00" class="muestreo-cell-input js-otros-variacion" disabled></td>
+                                                  <td align="right"><input type="number" min="1" step="1" value="1.00" class="muestreo-cell-input js-otros-cantidad" disabled></td>
+                                                  <td align="right" class="js-otros-precio-final">1.00</td>
+                                                  <td align="right" class="js-otros-total">1.00</td>
+                                                  <td class="text-center">
+                                                      <i class="fas fa-edit otros-edit-row"></i>
+                                                      &nbsp;&nbsp;
+                                                      <i class="fas fa-trash"></i>
+                                                  </td>
+                                              </tr>
+                                          </tbody>
+                                      </table>
+                                  </div>
+                                  <div class="service-subtotal">SubTotal 0.00 / CLU</div>
+                              </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-default" onclick="prevStep(1)">
+                                <i class="fas fa-arrow-left"></i> Anterior
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="nextStep(3)">
+                                Finalizar Paso <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="simple-modal-overlay" id="modalNuevoGrupo">
+                        <div class="simple-modal">
+                            <div class="simple-modal-header">
+                                <span>Agregar Nuevo Grupo</span>
+                                <button class="btn btn-default btn-sm" id="btnCerrarModalGrupo">Cerrar</button>
+                            </div>
+                            <div class="simple-modal-body">
+                                <div class="form-group">
+                                    <label>Nombre</label>
+                                    <input type="text" class="form-control" id="txtNombreGrupoNuevo" placeholder="Nombre del grupo">
+                                </div>
+                                <div class="form-group">
+                                    <label>Producto</label>
+                                    <select class="form-control" id="ddlProductoGrupoNuevo">
+                                        <option value="">-- Seleccione --</option>
+                                        <option value="Analisis Agua (2023)">Analisis Agua (2023)</option>
+                                        <option value="Analisis Aire (2023)">Analisis Aire (2023)</option>
+                                        <option value="Analisis Calidad del Aire (2023)">Analisis Calidad del Aire (2023)</option>
+                                        <option value="Analisis Emisiones (2023)">Analisis Emisiones (2023)</option>
+                                        <option value="Analisis Higiene (2023)">Analisis Higiene (2023)</option>
+                                        <option value="Analisis Solido (2023)">Analisis Solido (2023)</option>
+                                        <option value="Analisis Suelos (2023)">Analisis Suelos (2023)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Presentación</label>
+                                    <select class="form-control" id="ddlPresentacionGrupoNuevo">
+                                        <option value="">-- Seleccione --</option>
+                                        <option value="Agua de Mar (2023)">Agua de Mar (2023)</option>
+                                        <option value="Agua Potable (2023)">Agua Potable (2023)</option>
+                                        <option value="Agua para fines Industriales (2023)">Agua para fines Industriales (2023)</option>
+                                        <option value="Aguas Residuales (2023)">Aguas Residuales (2023)</option>
+                                        <option value="Agua Subterránea (2023)">Agua Subterránea (2023)</option>
+                                        <option value="Agua Superficial (2023)">Agua Superficial (2023)</option>
+                                        <option value="Fuentes de Captacion (2023)">Fuentes de Captacion (2023)</option>
+                                        <option value="Agua Salobres (2023)">Agua Salobres (2023)</option>
+                                        <option value="Agua de Diálisis (2023)">Agua de Diálisis (2023)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="simple-modal-footer">
+                                <button class="btn btn-warning" id="btnGuardarGrupoNuevo">
+                                    <i class="fas fa-save"></i> Guardar
+                                </button>
+                                <button class="btn btn-default" id="btnCancelarGrupoNuevo">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="service-drawer-overlay" id="modalBuscarServicios">
+                        <div class="service-drawer">
+                            <div class="service-drawer-body">
+                                <div class="drawer-group-summary">
+                                    <div class="drawer-group-header">
+                                        <div>
+                                            <div class="drawer-group-title">
+                                                <i class="fas fa-pen"></i>
+                                                <span id="drawerGroupTitle">Grupo</span>
+                                            </div>
+                                            <div class="drawer-group-tags" id="drawerGroupTags"></div>
+                                        </div>
+                                        <div class="service-search-tabs">
+                                            <button class="active" data-tab="servicios">Servicios</button>
+                                            <button data-tab="normas">Normas (Paquete)</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="service-search-filters">
+                                    <div class="service-search-row">
+                                        <div class="service-search-field">
+                                            <input type="text" class="form-control" id="txtBuscarServicioDrawer" placeholder="Buscar servicio o método">
+                                        </div>
+                                        <label class="etfa-toggle">
+                                            <input type="checkbox" id="chkEtfaServicios">
+                                            <span>ETFA</span>
+                                        </label>
+                                        <button class="btn btn-default btn-sm" id="btnBuscarServicioDrawer">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                        <div class="service-search-row secondary field-only">
+                                            <div class="service-search-field">
+                                                  <select class="form-control" id="ddlProductoServicioDrawer">
+                                                      <option value="">-- Seleccione producto --</option>
+                                                      <option value="Consultoria 2023">Consultoria 2023</option>
+                                                      <option value="Consultoria Ambiental (2024)">Consultoria Ambiental (2024)</option>
+                                                      <option value="Oceanografia (2024)">Oceanografia (2024)</option>
+                                                      <option value="Capacitaciones Ambientales (2024)">Capacitaciones Ambientales (2024)</option>
+                                                    <option value="Higiene Industrial (2023)">Higiene Industrial (2023)</option>
+                                                    <option value="Monitoreo Aguas (2023)">Monitoreo Aguas (2023)</option>
+                                                    <option value="Monitoreo Aire (2023)">Monitoreo Aire (2023)</option>
+                                                    <option value="Monitoreo de Emisiones (2023)">Monitoreo de Emisiones (2023)</option>
+                                                    <option value="Monitoreo Sólidos (2023)">Monitoreo Sólidos (2023)</option>
+                                                    <option value="Monitoreo Suelos (2023)">Monitoreo Suelos (2023)</option>
+                                                </select>
+                                            </div>
+                                            <div class="service-search-field">
+                                                  <select class="form-control" id="ddlPresentacionServicioDrawer">
+                                                      <option value="">-- Seleccione presentación --</option>
+                                                      <option value="Auditoria Ambiental">Auditoria Ambiental</option>
+                                                      <option value="Pertinencia Ambiental">Pertinencia Ambiental</option>
+                                                      <option value="Oceanografia Fisica">Oceanografia Fisica</option>
+                                                      <option value="Capacitaciones">Capacitaciones</option>
+                                                      <option value="Agua de Mar (2023)">Agua de Mar (2023)</option>
+                                                    <option value="Riles (2023)">Riles (2023)</option>
+                                                    <option value="Varias (2023)">Varias (2023)</option>
+                                                    <option value="Agua para fines Industriales (2023)">Agua para fines Industriales (2023)</option>
+                                                    <option value="Fuentes de Captacion (2023)">Fuentes de Captacion (2023)</option>
+                                                    <option value="Sedimentos Acuaticos (2023)">Sedimentos Acuaticos (2023)</option>
+                                                    <option value="Sedimentos Lacustres (2023)">Sedimentos Lacustres (2023)</option>
+                                                    <option value="Sedimentos Marinos (2023)">Sedimentos Marinos (2023)</option>
+                                                    <option value="Logisticd (2023)">Logisticd (2023)</option>
+                                                    <option value="Monitoreo Aguas Potables (2023)">Monitoreo Aguas Potables (2023)</option>
+                                                    <option value="Monitoreo Aguas Subterraneas (2023)">Monitoreo Aguas Subterraneas (2023)</option>
+                                                    <option value="Monitoreo Aguas Superficiales (2023)">Monitoreo Aguas Superficiales (2023)</option>
+                                                    <option value="Monitoreo Riles (2023)">Monitoreo Riles (2023)</option>
+                                                    <option value="Monitoreo Aguas Residuales (2023)">Monitoreo Aguas Residuales (2023)</option>
+                                                    <option value="Monitoreo Online (2023)">Monitoreo Online (2023)</option>
+                                                    <option value="Gastos Operacionales (2023)">Gastos Operacionales (2023)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                </div>
+
+                                <div class="service-search-pane" data-tab="servicios">
+                                    <div class="service-field-table">
+                                        <div class="table-responsive">
+                                            <table class="table table-lct">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width:36px;"></th>
+                                                        <th style="width:90px;">#</th>
+                                                        <th>Servicio</th>
+                                                        <th>Producto</th>
+                                                        <th>Presentación</th>
+                                                        <th>Unidad</th>
+                                                        <th>Moneda</th>
+                                                        <th>Precio</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="fieldServiceTableBody"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="service-card-list">
+                                        <div class="service-card" data-context="lab" data-servicio="Recuento Algal (Subcontrato Universidad de Antofagasta)" data-metodo="Standard Methods 22th Ed. 10200F. Fluorescencia." data-ld="0" data-unidad="UEA/ML" data-precio="0.72" data-lab="Lab. Santiago - ENV, Lab. Antofagasta - ENV" data-etfa="true" data-etfa-code="1000862">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Recuento Algal (Subcontrato Universidad de Antofagasta)</div>
+                                                <span class="service-card-etfa" title="ETFA"><i class="fas fa-check-circle"></i><span class="service-card-etfa-code">1000862</span></span>
+                                                <div class="service-card-meta">
+                                                    <span><strong>Código:</strong> <span class="service-card-code">10002732</span></span>
+                                                    <span><strong>LD:</strong> 0</span>
+                                                    <span><strong>Unidad:</strong> UEA/ML</span>
+                                                    <span><strong>Precio:</strong> 0.72 CLU</span>
+                                                    <span class="meta-span-2"><strong>Metodología:</strong> Standard Methods 22th Ed. 10200F. Fluorescencia.</span>
+                                                    <span class="meta-span-2"><strong>Laboratorios:</strong> Lab. Santiago - ENV, Lab. Antofagasta - ENV</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="lab" data-servicio="Razón Adsorción Sodio Abs. Atómica" data-metodo="NCH1333. Of 87 Punto 3.7 (Cálculo)." data-ld="0" data-unidad="NOUNIT" data-precio="0.69" data-lab="Lab. Santiago - ENV, Lab. Antofagasta - ENV" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Razón Adsorción Sodio Abs. Atómica</div>
+                                                
+                                                <div class="service-card-meta">
+                                                    <span><strong>Código:</strong> <span class="service-card-code">10002758</span></span>
+                                                    <span><strong>LD:</strong> 0</span>
+                                                    <span><strong>Unidad:</strong> NOUNIT</span>
+                                                    <span><strong>Precio:</strong> 0.69 CLU</span>
+                                                    <span class="meta-span-2"><strong>Metodología:</strong> NCH1333. Of 87 Punto 3.7 (Cálculo).</span>
+                                                    <span class="meta-span-2"><strong>Laboratorios:</strong> Lab. Santiago - ENV, Lab. Antofagasta - ENV</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="lab" data-servicio="Clorato" data-metodo="I-ENV-LAB-320 Ed00 Basado en EPA 300.1-1" data-ld="0.02" data-unidad="MG/L" data-precio="1.84" data-lab="Lab. Santiago - ENV, Lab. Antofagasta - ENV" data-etfa="true" data-etfa-code="1000869">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Clorato</div>
+                                                <span class="service-card-etfa" title="ETFA"><i class="fas fa-check-circle"></i><span class="service-card-etfa-code">1000869</span></span>
+                                                <div class="service-card-meta">
+                                                    <span><strong>Código:</strong> <span class="service-card-code">10002721</span></span>
+                                                    <span><strong>LD:</strong> 0.02</span>
+                                                    <span><strong>Unidad:</strong> MG/L</span>
+                                                    <span><strong>Precio:</strong> 1.84 CLU</span>
+                                                    <span class="meta-span-2"><strong>Metodología:</strong> I-ENV-LAB-320 Ed00 Basado en EPA 300.1-1</span>
+                                                    <span class="meta-span-2"><strong>Laboratorios:</strong> Lab. Santiago - ENV, Lab. Antofagasta - ENV</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="lab" data-servicio="Carbono Total" data-metodo="SM 5310 B Ed.24, 2023" data-ld="0.4" data-unidad="MG/L" data-precio="0.00" data-lab="Lab. Santiago - ENV, Lab. Antofagasta - ENV" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Carbono Total</div>
+                                                
+                                                <div class="service-card-meta">
+                                                    <span><strong>Código:</strong> <span class="service-card-code">10003040</span></span>
+                                                    <span><strong>LD:</strong> 0.4</span>
+                                                    <span><strong>Unidad:</strong> MG/L</span>
+                                                    <span><strong>Precio:</strong> 0.00 CLU</span>
+                                                    <span class="meta-span-2"><strong>Metodología:</strong> SM 5310 B Ed.24, 2023</span>
+                                                    <span class="meta-span-2"><strong>Laboratorios:</strong> Lab. Santiago - ENV, Lab. Antofagasta - ENV</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="lab" data-servicio="Cis-Clordano" data-metodo="I-ENV-LAB-306 ED00 Basado en EPA 8081A, 6630 B" data-ld="25" data-unidad="UG/L" data-precio="1.02" data-lab="Lab. Santiago - ENV, Lab. Antofagasta - ENV" data-etfa="true" data-etfa-code="1009340">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Cis-Clordano</div>
+                                                <span class="service-card-etfa" title="ETFA"><i class="fas fa-check-circle"></i><span class="service-card-etfa-code">1009340</span></span>
+                                                <div class="service-card-meta">
+                                                    <span><strong>Código:</strong> <span class="service-card-code">10003077</span></span>
+                                                    <span><strong>LD:</strong> 25</span>
+                                                    <span><strong>Unidad:</strong> UG/L</span>
+                                                    <span><strong>Precio:</strong> 1.02 CLU</span>
+                                                    <span class="meta-span-2"><strong>Metodología:</strong> I-ENV-LAB-306 ED00 Basado en EPA 8081A, 6630 B</span>
+                                                    <span class="meta-span-2"><strong>Laboratorios:</strong> Lab. Santiago - ENV, Lab. Antofagasta - ENV</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="lab" data-servicio="Trans-Clordano" data-metodo="I-ENV-LAB-306 ED00 Basado en EPA 8081A, 6630 B" data-ld="25" data-unidad="UG/L" data-precio="1.02" data-lab="Lab. Santiago - ENV, Lab. Antofagasta - ENV" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Trans-Clordano</div>
+                                                
+                                                <div class="service-card-meta">
+                                                    <span><strong>Código:</strong> <span class="service-card-code">10003079</span></span>
+                                                    <span><strong>LD:</strong> 25</span>
+                                                    <span><strong>Unidad:</strong> UG/L</span>
+                                                    <span><strong>Precio:</strong> 1.02 CLU</span>
+                                                    <span class="meta-span-2"><strong>Metodología:</strong> I-ENV-LAB-306 ED00 Basado en EPA 8081A, 6630 B</span>
+                                                    <span class="meta-span-2"><strong>Laboratorios:</strong> Lab. Santiago - ENV, Lab. Antofagasta - ENV</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="lab" data-servicio="Rcto. Aerobio Mesófilo" data-metodo="SM 9215 B Ed.24, 2023" data-ld="1" data-unidad="UFC/100ML" data-precio="0.40" data-lab="Lab. Santiago - ENV" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Rcto. Aerobio Mesófilo</div>
+                                                
+                                                <div class="service-card-meta">
+                                                    <span><strong>Código:</strong> <span class="service-card-code">10003082</span></span>
+                                                    <span><strong>LD:</strong> 1</span>
+                                                    <span><strong>Unidad:</strong> UFC/100ML</span>
+                                                    <span><strong>Precio:</strong> 0.40 CLU</span>
+                                                    <span class="meta-span-2"><strong>Metodología:</strong> SM 9215 B Ed.24, 2023</span>
+                                                    <span class="meta-span-2"><strong>Laboratorios:</strong> Lab. Santiago - ENV</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="lab" data-servicio="Nitrato" data-metodo="SM 4500-NO3 B Ed.24, 2023" data-ld="0.1" data-unidad="MG/L" data-precio="0.55" data-lab="Lab. Santiago - ENV, Lab. Antofagasta - ENV" data-etfa="true" data-etfa-code="1011151">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Nitrato</div>
+                                                <span class="service-card-etfa" title="ETFA"><i class="fas fa-check-circle"></i><span class="service-card-etfa-code">1011151</span></span>
+                                                <div class="service-card-meta">
+                                                    <span><strong>Código:</strong> <span class="service-card-code">10003110</span></span>
+                                                    <span><strong>LD:</strong> 0.1</span>
+                                                    <span><strong>Unidad:</strong> MG/L</span>
+                                                    <span><strong>Precio:</strong> 0.55 CLU</span>
+                                                    <span class="meta-span-2"><strong>Metodología:</strong> SM 4500-NO3 B Ed.24, 2023</span>
+                                                    <span class="meta-span-2"><strong>Laboratorios:</strong> Lab. Santiago - ENV, Lab. Antofagasta - ENV</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="lab" data-servicio="Nitrito" data-metodo="SM 4500-NO2 B Ed.24, 2023" data-ld="0.05" data-unidad="MG/L" data-precio="0.48" data-lab="Lab. Santiago - ENV" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Nitrito</div>
+                                                
+                                                <div class="service-card-meta">
+                                                    <span><strong>Código:</strong> <span class="service-card-code">10003111</span></span>
+                                                    <span><strong>LD:</strong> 0.05</span>
+                                                    <span><strong>Unidad:</strong> MG/L</span>
+                                                    <span><strong>Precio:</strong> 0.48 CLU</span>
+                                                    <span class="meta-span-2"><strong>Metodología:</strong> SM 4500-NO2 B Ed.24, 2023</span>
+                                                    <span class="meta-span-2"><strong>Laboratorios:</strong> Lab. Santiago - ENV</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="lab" data-servicio="Sulfato" data-metodo="SM 4500-SO4 E Ed.24, 2023" data-ld="1" data-unidad="MG/L" data-precio="0.62" data-lab="Lab. Santiago - ENV, Lab. Antofagasta - ENV" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Sulfato</div>
+                                                
+                                                <div class="service-card-meta">
+                                                    <span><strong>Código:</strong> <span class="service-card-code">10003125</span></span>
+                                                    <span><strong>LD:</strong> 1</span>
+                                                    <span><strong>Unidad:</strong> MG/L</span>
+                                                    <span><strong>Precio:</strong> 0.62 CLU</span>
+                                                    <span class="meta-span-2"><strong>Metodología:</strong> SM 4500-SO4 E Ed.24, 2023</span>
+                                                    <span class="meta-span-2"><strong>Laboratorios:</strong> Lab. Santiago - ENV, Lab. Antofagasta - ENV</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="field" data-product="Monitoreo Aguas (2023)" data-present="Monitoreo Aguas Residuales (2023)" data-servicio="Conductividad" data-metodo="Procedimiento SGS-AG-2023" data-ld="0" data-unidad="" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Conductividad<span class="service-card-subtags"><span class="service-card-subtag">Monitoreo Aguas (2023)</span><span class="service-card-subtag">Monitoreo Aguas Residuales (2023)</span></span></div>
+                                                <span class="service-card-code-pill">10010161</span>
+                                                <div class="service-card-meta">
+                                                    <span class="lab-only"><strong>Código:</strong> <span class="service-card-code">10010161</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="field" data-product="Monitoreo Aguas (2023)" data-present="Monitoreo Aguas Residuales (2023)" data-servicio="Muestreo compuesto" data-metodo="Procedimiento SGS-AG-2023" data-ld="0" data-unidad="" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Muestreo compuesto<span class="service-card-subtags"><span class="service-card-subtag">Monitoreo Aguas (2023)</span><span class="service-card-subtag">Monitoreo Aguas Residuales (2023)</span></span></div>
+                                                <span class="service-card-code-pill">10010167</span>
+                                                <div class="service-card-meta">
+                                                    <span class="lab-only"><strong>Código:</strong> <span class="service-card-code">10010167</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="field" data-product="Monitoreo Aguas (2023)" data-present="Monitoreo Aguas Residuales (2023)" data-servicio="Muestreo compuesto 24 hrs" data-metodo="Procedimiento SGS-AG-2023" data-ld="0" data-unidad="" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Muestreo compuesto 24 hrs<span class="service-card-subtags"><span class="service-card-subtag">Monitoreo Aguas (2023)</span><span class="service-card-subtag">Monitoreo Aguas Residuales (2023)</span></span></div>
+                                                <span class="service-card-code-pill">10010168</span>
+                                                <div class="service-card-meta">
+                                                    <span class="lab-only"><strong>Código:</strong> <span class="service-card-code">10010168</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="field" data-product="Monitoreo Aguas (2023)" data-present="Monitoreo Aguas Residuales (2023)" data-servicio="Muestreo Puntual" data-metodo="Procedimiento SGS-AG-2023" data-ld="0" data-unidad="" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Muestreo Puntual<span class="service-card-subtags"><span class="service-card-subtag">Monitoreo Aguas (2023)</span><span class="service-card-subtag">Monitoreo Aguas Residuales (2023)</span></span></div>
+                                                <span class="service-card-code-pill">10010170</span>
+                                                <div class="service-card-meta">
+                                                    <span class="lab-only"><strong>Código:</strong> <span class="service-card-code">10010170</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="field" data-product="Monitoreo Aguas (2023)" data-present="Monitoreo Aguas Residuales (2023)" data-servicio="pH" data-metodo="Procedimiento SGS-AG-2023" data-ld="0" data-unidad="" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">pH<span class="service-card-subtags"><span class="service-card-subtag">Monitoreo Aguas (2023)</span><span class="service-card-subtag">Monitoreo Aguas Residuales (2023)</span></span></div>
+                                                <span class="service-card-code-pill">10010176</span>
+                                                <div class="service-card-meta">
+                                                    <span class="lab-only"><strong>Código:</strong> <span class="service-card-code">10010176</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="field" data-product="Monitoreo Aguas (2023)" data-present="Monitoreo Aguas Residuales (2023)" data-servicio="TEMPERATURA" data-metodo="Procedimiento SGS-AG-2023" data-ld="0" data-unidad="Temp." data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">TEMPERATURA<span class="service-card-subtags"><span class="service-card-subtag">Monitoreo Aguas (2023)</span><span class="service-card-subtag">Monitoreo Aguas Residuales (2023)</span></span></div>
+                                                <span class="service-card-code-pill">10010180</span>
+                                                <div class="service-card-meta">
+                                                    <span class="lab-only"><strong>Código:</strong> <span class="service-card-code">10010180</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="field" data-product="Monitoreo Aguas (2023)" data-present="Agua de Mar (2023)" data-servicio="Muestreo Puntual" data-metodo="Procedimiento SGS-AG-2023" data-ld="0" data-unidad="" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Muestreo Puntual<span class="service-card-subtags"><span class="service-card-subtag">Monitoreo Aguas (2023)</span><span class="service-card-subtag">Agua de Mar (2023)</span></span></div>
+                                                <span class="service-card-code-pill">10010170</span>
+                                                <div class="service-card-meta">
+                                                    <span class="lab-only"><strong>Código:</strong> <span class="service-card-code">10010170</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="field" data-product="Monitoreo Aguas (2023)" data-present="Agua de Mar (2023)" data-servicio="Transparencia" data-metodo="Procedimiento SGS-AG-2023" data-ld="0" data-unidad="" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Transparencia<span class="service-card-subtags"><span class="service-card-subtag">Monitoreo Aguas (2023)</span><span class="service-card-subtag">Agua de Mar (2023)</span></span></div>
+                                                <span class="service-card-code-pill">10010689</span>
+                                                <div class="service-card-meta">
+                                                    <span class="lab-only"><strong>Código:</strong> <span class="service-card-code">10010689</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="field" data-product="Monitoreo Aguas (2023)" data-present="Riles (2023)" data-servicio="Muestreo compuesto" data-metodo="Procedimiento SGS-AG-2023" data-ld="0" data-unidad="" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Muestreo compuesto<span class="service-card-subtags"><span class="service-card-subtag">Monitoreo Aguas (2023)</span><span class="service-card-subtag">Riles (2023)</span></span></div>
+                                                <span class="service-card-code-pill">10010167</span>
+                                                <div class="service-card-meta">
+                                                    <span class="lab-only"><strong>Código:</strong> <span class="service-card-code">10010167</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="field" data-product="Monitoreo Aguas (2023)" data-present="Riles (2023)" data-servicio="Muestreo Puntual" data-metodo="Procedimiento SGS-AG-2023" data-ld="0" data-unidad="" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Muestreo Puntual<span class="service-card-subtags"><span class="service-card-subtag">Monitoreo Aguas (2023)</span><span class="service-card-subtag">Riles (2023)</span></span></div>
+                                                <span class="service-card-code-pill">10010170</span>
+                                                <div class="service-card-meta">
+                                                    <span class="lab-only"><strong>Código:</strong> <span class="service-card-code">10010170</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="service-card" data-context="field" data-product="Monitoreo Aguas (2023)" data-present="Riles (2023)" data-servicio="Visita Tecnica" data-metodo="Procedimiento SGS-AG-2023" data-ld="0" data-unidad="" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Visita Tecnica<span class="service-card-subtags"><span class="service-card-subtag">Monitoreo Aguas (2023)</span><span class="service-card-subtag">Riles (2023)</span></span></div>
+                                                <span class="service-card-code-pill">10010182</span>
+                                                <div class="service-card-meta">
+                                                    <span class="lab-only"><strong>Código:</strong> <span class="service-card-code">10010182</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="service-card" data-context="other" data-product="Consultoria Ambiental (2024)" data-present="Auditoria Ambiental" data-servicio="Auditoria Ambiental de Cumplimiento" data-metodo="Evaluacion normativa y verificacion de compromisos" data-ld="0" data-unidad="SERV" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Auditoria Ambiental de Cumplimiento<span class="service-card-subtags"><span class="service-card-subtag">Consultoria Ambiental (2024)</span><span class="service-card-subtag">Auditoria Ambiental</span></span></div>
+                                                <span class="service-card-code-pill">104582</span>
+                                                <div class="service-card-meta"></div>
+                                            </div>
+                                        </div>
+                                        <div class="service-card" data-context="other" data-product="Consultoria Ambiental (2024)" data-present="Auditoria Ambiental" data-servicio="Auditoria Ambiental ISO 14001" data-metodo="Revision de sistema de gestion ambiental" data-ld="0" data-unidad="SERV" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Auditoria Ambiental ISO 14001<span class="service-card-subtags"><span class="service-card-subtag">Consultoria Ambiental (2024)</span><span class="service-card-subtag">Auditoria Ambiental</span></span></div>
+                                                <span class="service-card-code-pill">118739</span>
+                                                <div class="service-card-meta"></div>
+                                            </div>
+                                        </div>
+                                        <div class="service-card" data-context="other" data-product="Consultoria Ambiental (2024)" data-present="Pertinencia Ambiental" data-servicio="Elaboracion de Pertinencia Ambiental (SEA)" data-metodo="Analisis de ingreso al SEIA" data-ld="0" data-unidad="SERV" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Elaboracion de Pertinencia Ambiental (SEA)<span class="service-card-subtags"><span class="service-card-subtag">Consultoria Ambiental (2024)</span><span class="service-card-subtag">Pertinencia Ambiental</span></span></div>
+                                                <span class="service-card-code-pill">126405</span>
+                                                <div class="service-card-meta"></div>
+                                            </div>
+                                        </div>
+                                        <div class="service-card" data-context="other" data-product="Consultoria Ambiental (2024)" data-present="Pertinencia Ambiental" data-servicio="Informe de Pertinencia Sectorial" data-metodo="Revision de permisos sectoriales aplicables" data-ld="0" data-unidad="SERV" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Informe de Pertinencia Sectorial<span class="service-card-subtags"><span class="service-card-subtag">Consultoria Ambiental (2024)</span><span class="service-card-subtag">Pertinencia Ambiental</span></span></div>
+                                                <span class="service-card-code-pill">135291</span>
+                                                <div class="service-card-meta"></div>
+                                            </div>
+                                        </div>
+                                        <div class="service-card" data-context="other" data-product="Oceanografia (2024)" data-present="Oceanografia Fisica" data-servicio="Oceanografia Fisica - Campana de Corrientes" data-metodo="Mediciones en terreno y analisis de series" data-ld="0" data-unidad="SERV" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Oceanografia Fisica - Campana de Corrientes<span class="service-card-subtags"><span class="service-card-subtag">Oceanografia (2024)</span><span class="service-card-subtag">Oceanografia Fisica</span></span></div>
+                                                <span class="service-card-code-pill">147808</span>
+                                                <div class="service-card-meta"></div>
+                                            </div>
+                                        </div>
+                                        <div class="service-card" data-context="other" data-product="Oceanografia (2024)" data-present="Oceanografia Fisica" data-servicio="Oceanografia Fisica - Modelacion Hidrodinamica" data-metodo="Modelos numericos y calibracion" data-ld="0" data-unidad="SERV" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Oceanografia Fisica - Modelacion Hidrodinamica<span class="service-card-subtags"><span class="service-card-subtag">Oceanografia (2024)</span><span class="service-card-subtag">Oceanografia Fisica</span></span></div>
+                                                <span class="service-card-code-pill">152604</span>
+                                                <div class="service-card-meta"></div>
+                                            </div>
+                                        </div>
+                                        <div class="service-card" data-context="other" data-product="Capacitaciones Ambientales (2024)" data-present="Capacitaciones" data-servicio="Capacitacion Ambiental para Operaciones" data-metodo="Taller teorico-practico" data-ld="0" data-unidad="SERV" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Capacitacion Ambiental para Operaciones<span class="service-card-subtags"><span class="service-card-subtag">Capacitaciones Ambientales (2024)</span><span class="service-card-subtag">Capacitaciones</span></span></div>
+                                                <span class="service-card-code-pill">163977</span>
+                                                <div class="service-card-meta"></div>
+                                            </div>
+                                        </div>
+                                        <div class="service-card" data-context="other" data-product="Capacitaciones Ambientales (2024)" data-present="Capacitaciones" data-servicio="Capacitacion en Manejo de Residuos" data-metodo="Curso presencial con casos practicos" data-ld="0" data-unidad="SERV" data-precio="0.00" data-lab="" data-etfa="false">
+                                            <input type="checkbox" class="service-select-checkbox">
+                                            <div>
+                                                <div class="service-card-title">Capacitacion en Manejo de Residuos<span class="service-card-subtags"><span class="service-card-subtag">Capacitaciones Ambientales (2024)</span><span class="service-card-subtag">Capacitaciones</span></span></div>
+                                                <span class="service-card-code-pill">171340</span>
+                                                <div class="service-card-meta"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="service-search-pagination">
+                                        <span>Anterior</span>
+                                        <span class="page-pill">1</span>
+                                        <span>2</span>
+                                        <span>3</span>
+                                        <span>4</span>
+                                        <span>5</span>
+                                        <span>...</span>
+                                        <span>82</span>
+                                        <span>Siguiente</span>
+                                    </div>
+                                </div>
+
+                                <div class="service-search-pane" data-tab="normas" style="display:none;">
+                                    <div class="table-responsive">
+                                        <table class="table table-lct">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:30px;"></th>
+                                                    <th style="width:90px;">#</th>
+                                                    <th>Paquete</th>
+                                                    <th>Unidad</th>
+                                                    <th>Moneda</th>
+                                                    <th>Precio Unit.</th>
+                                                    <th>ETFA</th>
+                                                    <th>Laboratorios</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="8" style="text-align:center;color:#9a9a9a;">Sin datos para Normas (Paquete).</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="service-drawer-footer">
+                                <div class="drawer-summary">
+                                    <span class="drawer-count">Seleccionados: <strong id="selectedServicesCount">0</strong></span>
+                                    <span class="drawer-hint">Puedes agregar varios y seguir buscando</span>
+                                </div>
+                                <div class="drawer-actions">
+                                    <button class="btn btn-warning" id="btnSeleccionarServicios">Agregar al grupo</button>
+                                    <button class="btn btn-default" id="btnCerrarModalServicios2">Cerrar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PASO 3: Propuesta Técnica -->
+                    <div class="step-panel" id="step3">
+                        <h4 class="section-title"><i class="fas fa-folder-open"></i> Propuesta técnica</h4>
+                        <div class="repo-toolbar repo-toolbar-tight">
+                            <div class="repo-views">
+                                <button class="repo-view-btn active" id="techViewEditBtn"><i class="fas fa-edit"></i> Edición</button>
+                                <button class="repo-view-btn" id="techViewDocBtn"><i class="fas fa-file-alt"></i> Documento</button>
+                            </div>
+                        </div>
+                          <div class="tech-wiki-shell" id="techEditShell">
+                              <div class="tech-wiki-layout">
+                                  <div class="tech-wiki-tree">
+                                      <div class="tech-tree-header">
+                                          <div class="tech-tree-title">
+                                              <i class="fas fa-sitemap"></i>
+                                              <span>Secciones técnicas</span>
+                                          </div>
+                                          <button class="tech-tree-add-btn" id="techAddTopicBtn" title="Nueva sección"><i class="fas fa-plus"></i></button>
+                                      </div>
+                                      <div class="tech-tree-body" id="techWikiTree"></div>
+                                  </div>
+                                  <div class="tech-wiki-editor">
+                                      <div class="tech-editor-header">
+                                          <div class="tech-editor-breadcrumb">
+                                              <span class="tech-editor-root">Propuesta técnica</span>
+                                              <i class="fas fa-chevron-right"></i>
+                                              <span class="tech-editor-current" id="techEditorTitle">Selecciona una sección</span>
+                                          </div>
+                                          <div class="tech-editor-status" id="techEditorStatus">Sin cambios</div>
+                                      </div>
+                                      <div class="tech-editor-fields">
+                                      <div id="techViewEdit">
+                                      <div id="techEditorDefaultFields">
+                                          <div class="tech-editor-row">
+                                              <label>Resumen</label>
+                                              <div id="techEditorSummary" class="quill-editor"></div>
+                                          </div>
+                                          <div class="tech-editor-row">
+                                              <label>Contenido</label>
+                                              <div id="techEditorContent" class="quill-editor"></div>
+                                          </div>
+                                          <div class="tech-editor-row">
+                                              <label>Notas internas</label>
+                                              <div id="techEditorNotes" class="quill-editor"></div>
+                                          </div>
+                                      </div>
+                                      <div id="techEditorObjetivosFields" style="display:none;">
+                                          <div class="tech-editor-row">
+                                              <label>Objetivo del servicio</label>
+                                              <div id="techEditorObjetivo" class="quill-editor"></div>
+                                          </div>
+                                          <div class="tech-editor-row">
+                                              <label>Alcance del servicio</label>
+                                              <div id="techEditorAlcance" class="quill-editor"></div>
+                                          </div>
+                                      </div>
+                                      <div id="techEditorNormasFields" style="display:none;">
+                                          <div class="tech-editor-row">
+                                              <label>Introducción</label>
+                                              <div id="techEditorNormasIntro" class="quill-editor"></div>
+                                          </div>
+                                          <div class="tech-editor-row">
+                                              <label>Normas aplicables</label>
+                                              <div class="tech-editor-actions">
+                                                  <button class="btn btn-default btn-sm" id="techOpenNormasModal"><i class="fas fa-search"></i> Buscar normas</button>
+                                              </div>
+                                              <div class="tech-normas-selected-list" id="techNormasSelectedList"></div>
+                                              <div class="tech-normas-selected" id="techNormasSelected">Seleccionadas: 0</div>
+                                          </div>
+                                      </div>
+                                      <div id="techEditorUbicacionFields" style="display:none;">
+                                          <div class="tech-editor-row">
+                                              <label>Introducción</label>
+                                              <div id="techEditorUbicacionIntro" class="quill-editor"></div>
+                                          </div>
+                                          <div class="tech-editor-row">
+                                              <label>Mapa de ubicación</label>
+                                              <div class="tech-map-upload" id="techMapUpload">
+                                                  <i class="fas fa-map-marked-alt" style="font-size:20px;color:#ccc;display:block;margin-bottom:6px;"></i>
+                                                  Subir imagen de mapa
+                                              </div>
+                                              <input type="file" id="techMapInput" accept="image/*" hidden>
+                                              <div class="tech-map-preview" id="techMapPreview" style="display:none;">
+                                                  <img id="techMapImg" alt="Mapa de ubicación">
+                                                  <div class="tech-map-caption" id="techMapCaptionDisplay">
+                                                      <span id="techMapCaptionText"></span>
+                                                      <button type="button" id="techMapCaptionEdit"><i class="fas fa-pen"></i></button>
+                                                  </div>
+                                                  <input class="tech-map-caption-input" id="techMapCaptionInput" style="display:none;" placeholder="Figura 7.1: Área de estudio">
+                                                  <div class="tech-map-actions">
+                                                      <button class="btn btn-default btn-sm" id="techMapRemoveBtn"><i class="fas fa-trash"></i> Quitar imagen</button>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <div id="techEditorProfesionalesFields" style="display:none;">
+                                          <div class="tech-editor-row">
+                                              <label>Introducción</label>
+                                              <div id="techEditorProfesionalesIntro" class="quill-editor"></div>
+                                          </div>
+                                          <div class="tech-editor-row">
+                                              <label>Listado de profesionales</label>
+                                              <div class="tech-pro-list" id="techProList"></div>
+                                              <div class="tech-editor-actions" style="margin-top:8px;">
+                                                  <button class="btn btn-default btn-sm" id="techOpenProModal"><i class="fas fa-search"></i> Seleccionar profesionales</button>
+                                              </div>
+                                          </div>
+                                      </div>
+                                        <div id="techEditorCoordinacionesFields" style="display:none;">
+                                            <div class="tech-editor-row">
+                                                <label>Unidad coordinadora</label>
+                                                <div id="techEditorCoordUnidad" class="quill-editor"></div>
+                                            </div>
+                                            <div class="tech-editor-row">
+                                                <label>Movilización en terreno</label>
+                                                <div id="techEditorCoordMovilizacion" class="quill-editor"></div>
+                                            </div>
+                                            <div class="tech-editor-row">
+                                                <label>Ropa de trabajo</label>
+                                                <div id="techEditorCoordRopa" class="quill-editor"></div>
+                                            </div>
+                                        </div>
+                                        <div id="techEditorAutorizacionesFields" style="display:none;">
+                                            <div class="tech-editor-row">
+                                                <label>Introducción</label>
+                                                <div id="techEditorAutorizacionesIntro" class="quill-editor"></div>
+                                            </div>
+                                          <div class="tech-editor-row">
+                                              <label>Autorizaciones a solicitar</label>
+                                              <div class="tech-auth-list" id="techAuthList"></div>
+                                              <div class="tech-auth-actions" style="margin-top:8px;">
+                                                  <button class="btn btn-default btn-sm" id="techOpenAuthModal"><i class="fas fa-search"></i> Seleccionar autorizaciones</button>
+                                              </div>
+                                            </div>
+                                        </div>
+                                        <div id="techEditorMetFQFields" style="display:none;">
+                                            <div class="tech-editor-row" id="techMetFQProtocoloRow">
+                                                <label>Introducción</label>
+                                                <div id="techEditorMetFQProtocolo" class="quill-editor"></div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetFQProtocoloTableRow">
+                                                <label>Protocolo de muestreo</label>
+                                                <div class="table-responsive">
+                                                    <table class="tech-fq-protocol-table" id="techMetFQProtocolTable">
+                                                        <thead>
+                                                            <tr>
+                                                                <th style="width:48px;">#</th>
+                                                                <th>Nombre Estación</th>
+                                                                <th>Lugar de Muestreo</th>
+                                                                <th>Coordenadas Geográficas</th>
+                                                                <th style="width:120px;">Matriz</th>
+                                                                <th style="width:40px;"></th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="techMetFQProtocolTableBody"></tbody>
+                                                    </table>
+                                                </div>
+                                                <div class="tech-editor-actions" style="margin-top:8px;">
+                                                    <button class="btn btn-default btn-sm" id="techMetFQAddProtocolPoint"><i class="fas fa-plus"></i> Agregar punto</button>
+                                                </div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetFQProtocoloImgRow">
+                                                <label>Imagen asociada</label>
+                                                <div class="tech-map-upload" id="techMetFQProtocolImgUpload">
+                                                    <i class="fas fa-image" style="font-size:20px;color:#ccc;display:block;margin-bottom:6px;"></i>
+                                                    Subir imagen
+                                                </div>
+                                                <input type="file" id="techMetFQProtocolImgInput" accept="image/*" hidden>
+                                                <div class="tech-map-preview" id="techMetFQProtocolImgPreview" style="display:none;">
+                                                    <img id="techMetFQProtocolImgTag" alt="Imagen protocolo de muestreo">
+                                                    <div class="tech-map-actions">
+                                                        <button class="btn btn-default btn-sm" id="techMetFQProtocolImgRemove"><i class="fas fa-trash"></i> Quitar imagen</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetFQProtocoloDescRow">
+                                                <label>Descripción</label>
+                                                <div id="techEditorMetFQProtocoloDesc" class="quill-editor"></div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetFQParamsRow">
+                                                <label>Texto introductorio</label>
+                                                <div id="techEditorMetFQParamsIntro" class="quill-editor"></div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetFQParamsControlRow">
+                                                <label>Parámetros a analizar</label>
+                                                <div class="tech-editor-actions" style="margin-bottom:8px;">
+                                                    <button class="btn btn-default btn-sm" id="techOpenFQParametrosModal"><i class="fas fa-search"></i> Seleccionar parámetros</button>
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="tech-fq-param-table" id="techMetFQParamTable">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Parámetro</th>
+                                                                <th style="width:90px;">Unidad</th>
+                                                                <th style="width:120px;">Límite de detección</th>
+                                                                <th>Metodología</th>
+                                                                <th>Laboratorios</th>
+                                                                <th style="width:40px;"></th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="techMetFQParamTableBody"></tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetFQFinalRow">
+                                                <label>Texto final</label>
+                                                <div id="techEditorMetFQFinal" class="quill-editor"></div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetFQInSituIntroRow">
+                                                <label>Texto introductorio</label>
+                                                <div id="techEditorMetFQInSituIntro" class="quill-editor"></div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetFQInSituControlRow">
+                                                <label>Parámetros de terreno</label>
+                                                <div class="tech-editor-actions" style="margin-bottom:8px;">
+                                                    <button class="btn btn-default btn-sm" id="techOpenInSituModal"><i class="fas fa-search"></i> Seleccionar parámetros de terreno</button>
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="tech-fq-insitu-table" id="techMetFQInSituTable">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Parámetro</th>
+                                                                <th>Método / Equipo</th>
+                                                                <th style="width:40px;"></th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="techMetFQInSituTableBody"></tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetFQInSituFinalRow">
+                                                <label>Texto final</label>
+                                                <div id="techEditorMetFQInSituFinal" class="quill-editor"></div>
+                                            </div>
+                                        </div>
+                                        <div id="techEditorCustomFields" style="display:none;">
+                                            <div class="tech-editor-row">
+                                                <label>Campos personalizados</label>
+                                                <div class="tech-custom-fields" id="techCustomFieldsContainer"></div>
+                                            </div>
+                                      </div>
+                                      <div class="tech-editor-row">
+                                          <div class="tech-editor-hint">Los borradores se guardan localmente mientras navegas entre secciones.</div>
+                                      </div>
+                                      </div>
+                                      </div>
+                                      <div id="techViewDoc" style="display:none;">
+                                          <div class="tech-doc-view" id="techDocView"></div>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                          <div class="tech-doc-full" id="techDocFull" style="display:none;">
+                              <div class="tech-doc-page" id="techDocFullContent"></div>
+                          </div>
+
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-default" onclick="prevStep(2)">
+                                <i class="fas fa-arrow-left"></i> Anterior
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="nextStep(4)">
+                                Continuar <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PASO 4: Económica -->
+                    <div class="step-panel" id="step4">
+                        <div style="display:none;">
+                            <h4 class="section-title"><i class="fas fa-cog"></i> Datos propios</h4>
+
+                            <div class="form-section-card">
+                                <div class="form-grid">
+                                    <div class="compact-form-group">
+                                        <label>Dirección de muestreo</label>
+                                        <input type="text" class="form-control" id="DireccionMuestreo" placeholder="Ingrese dirección">
+                                    </div>
+                                    <div class="compact-form-group">
+                                        <label>Lugar de muestreo</label>
+                                        <input type="text" class="form-control" id="LugarMuestreo" placeholder="Ingrese lugar">
+                                    </div>
+                                    <div class="compact-form-group">
+                                        <label>Tipo de Servicio</label>
+                                        <select class="form-control" id="TipoServicio">
+                                            <option value="">-- Seleccione --</option>
+                                            <option value="ETFA">ETFA</option>
+                                            <option value="NO ETFA">NO ETFA</option>
+                                        </select>
+                                    </div>
+                                    <div class="compact-form-group">
+                                        <label>Coordinación General</label>
+                                        <input type="text" class="form-control" id="CoordinacionGeneral" placeholder="Nombre coordinador">
+                                    </div>
+                                    <div class="compact-form-group">
+                                        <label>Teléfono de contacto SGS</label>
+                                        <input type="text" class="form-control" id="TelefonoContacto" placeholder="+56 9 XXXX XXXX">
+                                    </div>
+                                    <div class="compact-form-group">
+                                        <label>Días pactados OI</label>
+                                        <input type="number" class="form-control" id="DiasPactados" placeholder="0" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="section-title"><i class="fas fa-chart-line"></i> Evaluación económica</h4>
+
+                        <div class="upload-section-card">
+                            <input type="file" id="inputEvaluacion" hidden accept=".pdf,.xls,.xlsx,.doc,.docx,.png,.jpg,.jpeg">
+                            <div class="upload-area" id="uploadEvaluacion">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="upload-text">
+                                    <span>Arrastra un archivo aquí o</span>
+                                    <button type="button" class="btn btn-success btn-sm" id="btnSeleccionarEvaluacion">
+                                        <i class="fas fa-folder-open"></i> Seleccionar archivo
+                                    </button>
+                                </div>
+                                <div class="upload-hint">Formatos permitidos: PDF, Excel, Word, Imágenes (máx. 10MB)</div>
+                            </div>
+                            <div class="uploaded-file" id="uploadedEvaluacion" style="display: none;">
+                                <div class="file-info">
+                                    <i class="fas fa-file-alt file-icon" id="evalFileIcon"></i>
+                                    <div class="file-details">
+                                        <span class="file-name" id="evalFileName">documento.pdf</span>
+                                        <span class="file-meta-line"><i class="fas fa-calendar-alt"></i> Fecha de subida: <strong id="evalFileDate">—</strong></span>
+                                        <span class="file-meta-line"><i class="fas fa-user"></i> Usuario: <strong id="evalFileUser">—</strong></span>
+                                        <span class="file-meta-line"><i class="fas fa-file-signature"></i> Este archivo pertenece a la propuesta n°: <strong id="evalFilePropuesta">1</strong></span>
+                                    </div>
+                                </div>
+                                <div class="file-actions">
+                                    <button type="button" class="btn-icon" title="Descargar" id="btnDescargarEvaluacion">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button type="button" class="btn-icon btn-icon-danger" title="Eliminar" id="btnEliminarEvaluacion">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="upload-observations">
+                                <label>Observaciones</label>
+                                <textarea class="form-control" id="ObservacionesEvaluacion" rows="2" placeholder="Observaciones sobre la evaluación económica..."></textarea>
+                            </div>
+                        </div>
+
+                        <h4 class="section-title"><i class="fas fa-paperclip"></i> Documentos adjuntos</h4>
+
+                        <div class="documents-section-card">
+                            <input type="file" id="inputDocumento" hidden>
+                            <div class="documents-toolbar">
+                                <button type="button" class="btn btn-success btn-sm" id="btnAgregarDocumento">
+                                    <i class="fas fa-plus"></i> Agregar documento
+                                </button>
+                            </div>
+                            <table class="table table-documents">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 30%;">Documento</th>
+                                        <th style="width: 35%;">Descripción</th>
+                                        <th style="width: 15%;">Fecha</th>
+                                        <th style="width: 15%;">Responsable</th>
+                                        <th style="width: 5%;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyDocumentos">
+                                    <tr class="empty-row">
+                                        <td colspan="5">
+                                            <div class="empty-state">
+                                                <i class="fas fa-folder-open"></i>
+                                                <span>No se encontraron documentos adjuntos</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-default" onclick="prevStep(3)">
+                                <i class="fas fa-arrow-left"></i> Anterior
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="nextStep(5)">
+                                Finalizar Paso <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PASO 5: Previsualización -->
+                    <div class="step-panel" id="step5">
+                        <div class="form-section-card">
+                            <div class="pdf-preview-header">
+                                <h4 class="section-title" style="margin-bottom:0;"><i class="fas fa-file-pdf"></i> Previsualización de Cotización</h4>
+                                <div class="pdf-toolbar">
+                                    <button class="btn-pdf-action" onclick="refreshPdfPreview()" title="Actualizar PDF">
+                                        <i class="fas fa-sync-alt"></i> Actualizar
+                                    </button>
+                                    <button class="btn-pdf-action primary" onclick="downloadPdfPreview()" title="Descargar PDF">
+                                        <i class="fas fa-download"></i> Descargar
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="pdf-preview-container" id="pdfPreviewContainer">
+                                <iframe id="pdfPreviewFrame" src="descarga.pdf" class="pdf-preview-frame"></iframe>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-default" onclick="prevStep(4)">
+                                <i class="fas fa-arrow-left"></i> Anterior
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="nextStep(6)">
+                                Aprobar Propuesta <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PASO 6: Aprobación -->
+                    <div class="step-panel" id="step6">
+
+                        <h4 class="section-title"><i class="fas fa-bell"></i> Notificación al cliente</h4>
+
+                        <div class="form-section-card">
+                            <div class="notification-status-panel" id="notifPanel">
+                                <!-- Estado: sin enviar -->
+                                <div class="notif-state notif-pending" id="notifStatePending">
+                                    <div class="notif-icon-box pending">
+                                        <i class="fas fa-envelope"></i>
+                                    </div>
+                                    <div class="notif-info">
+                                        <span class="notif-title">Notificación pendiente</span>
+                                        <span class="notif-desc">La cotización aún no ha sido enviada al cliente.</span>
+                                    </div>
+                                    <button class="btn-notif-send" onclick="sendNotification()">
+                                        <i class="fas fa-paper-plane"></i> Enviar notificación
+                                    </button>
+                                </div>
+
+                                <!-- Estado: enviada (oculto por defecto) -->
+                                <div class="notif-state notif-sent" id="notifStateSent" style="display:none;">
+                                    <div class="notif-icon-box sent">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="notif-info">
+                                        <span class="notif-title sent">Notificación enviada</span>
+                                        <div class="notif-meta">
+                                            <span><i class="fas fa-calendar-alt"></i> <span id="Estado_Notificacion_Fecha">--</span></span>
+                                            <span><i class="fas fa-user"></i> <span id="Estado_Notificacion_Usuario">--</span></span>
+                                            <span><i class="fas fa-at"></i> <span id="Estado_Notificacion_Email">--</span></span>
+                                        </div>
+                                    </div>
+                                    <div class="notif-actions">
+                                        <button class="btn-notif-view" onclick="viewSentEmail()">
+                                            <i class="fas fa-eye"></i> Ver correo
+                                        </button>
+                                        <button class="btn-notif-resend" onclick="sendNotification()">
+                                            <i class="fas fa-redo"></i> Reenviar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="section-title"><i class="fas fa-thumbs-up"></i> Aprobación del cliente</h4>
+
+                        <div class="form-section-card">
+                            <div class="form-grid">
+                                <div class="compact-form-group">
+                                    <label>Respuesta Cliente</label>
+                                    <select class="form-control" id="ddlAprobacion">
+                                        <option value="-1">Seleccionar</option>
+                                        <option value="6">Rechazado</option>
+                                        <option value="3">Aprobado</option>
+                                    </select>
+                                </div>
+                                <div class="compact-form-group">
+                                    <label>Propuesta</label>
+                                    <select class="form-control" id="ddlPropuestas">
+                                        <option value="-1">Seleccionar</option>
+                                        <option value="1">Propuesta n° 1</option>
+                                    </select>
+                                </div>
+                                <div class="compact-form-group">
+                                    <label>Fecha aprobación</label>
+                                    <input type="date" class="form-control" id="FechaAprobacion">
+                                </div>
+                                <div class="compact-form-group" style="grid-column: 1 / -1;">
+                                    <label>Comentario</label>
+                                    <textarea class="form-control" id="Comentarios" rows="3" placeholder="Observaciones del cliente..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="aprobacion-upload-divider"></div>
+
+                            <div class="compact-form-group" style="margin-bottom: 0;">
+                                <label><i class="fas fa-paperclip"></i> Documento de respaldo</label>
+                            </div>
+                            <input type="file" id="inputAprobacionFile" hidden accept=".pdf,.xls,.xlsx,.doc,.docx,.png,.jpg,.jpeg,.msg,.eml">
+                            <div class="upload-area upload-area-compact" id="uploadAprobacion">
+                                <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                                <div class="upload-text">
+                                    <span>Arrastra el archivo aquí o</span>
+                                    <button type="button" class="btn btn-success btn-sm" id="btnSeleccionarAprobacion">
+                                        <i class="fas fa-folder-open"></i> Seleccionar archivo
+                                    </button>
+                                </div>
+                                <div class="upload-hint">Email, PDF, imagen u otro documento que respalde la aceptación del cliente</div>
+                            </div>
+                            <div class="uploaded-file" id="uploadedAprobacion" style="display: none;">
+                                <div class="file-info">
+                                    <i class="fas fa-file-alt file-icon" id="aprobFileIcon"></i>
+                                    <div class="file-details">
+                                        <span class="file-name" id="aprobFileName">documento.pdf</span>
+                                        <span class="file-meta-line"><i class="fas fa-calendar-alt"></i> Subido: <strong id="aprobFileDate">—</strong></span>
+                                        <span class="file-meta-line"><i class="fas fa-user"></i> Usuario: <strong id="aprobFileUser">—</strong></span>
+                                    </div>
+                                </div>
+                                <div class="file-actions">
+                                    <button type="button" class="btn-icon" title="Descargar" onclick="downloadAprobacionFile()">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button type="button" class="btn-icon btn-icon-danger" title="Eliminar" onclick="removeAprobacionFile()">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="section-title"><i class="fas fa-user-check"></i> Aprobación final (Supervisor)</h4>
+
+                        <div class="form-section-card">
+                            <div class="table-documents-wrapper">
+                                <table class="table-documents">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:40px;"></th>
+                                            <th>Aprobador</th>
+                                            <th>Nombre</th>
+                                            <th style="width:130px;">Fecha</th>
+                                            <th>Comentario</th>
+                                            <th style="width:120px;">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbodyAprobadores">
+                                        <tr class="empty-row">
+                                            <td colspan="6">
+                                                <div class="empty-state">
+                                                    <i class="fas fa-user-shield"></i>
+                                                    <span>Sin aprobadores asignados</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-default" onclick="prevStep(5)">
+                                <i class="fas fa-arrow-left"></i> Anterior
+                            </button>
+                            <button type="button" class="btn btn-success">
+                                <i class="fas fa-save"></i> Guardar Aprobación
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <nav>
+                    <a href="https://www.sgs.com/">SGS</a>
+                </nav>
+                <div class="copyright">
+                    &copy; 2026, made by <a href="https://www.sgs.com/">SGS TI</a>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Modal Buscador de Clientes -->
+    <div class="modal-overlay" id="modalBuscadorClientes">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h5><i class="fas fa-search"></i> Buscador de clientes</h5>
+                <button type="button" class="close-btn" onclick="closeClientModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Clientes</label>
+                    <input type="text" class="form-control" id="txtBuscarCliente" placeholder="Ingrese nombre o código del cliente...">
+                </div>
+                <div class="search-results-table" id="divResultadosClientes">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th style="width: 120px;">Código</th>
+                                <th>Nombre cliente</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyResultadosClientes">
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: #9a9a9a;">Ingrese un término de búsqueda</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" id="btnProspecto">
+                    <i class="fas fa-user-plus"></i> Prospecto
+                </button>
+                <button type="button" class="btn btn-default" onclick="closeClientModal()">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+
+        <button class="floating-summary-btn" id="btnFloatingResumen">
+            <i class="fas fa-file-alt"></i> Resumen
+        </button>
+
+        <div class="summary-drawer-overlay" id="summaryDrawer">
+            <div class="summary-drawer">
+                <div class="summary-drawer-header">
+                    <span>Resumen de la propuesta</span>
+                    <button class="btn btn-default btn-sm" id="btnCerrarResumen">Cerrar</button>
+                </div>
+                <div class="summary-drawer-body">
+                    <div class="summary-doc">
+                        <h5>Servicios</h5>
+                        <table class="summary-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:32px;">#</th>
+                                    <th>Servicio</th>
+                                    <th style="width:80px;">Precio Unit.</th>
+                                    <th style="width:60px;">Cant</th>
+                                    <th style="width:70px;">Desc %</th>
+                                    <th style="width:80px;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summaryServicesBody">
+                                <tr>
+                                    <td>1</td>
+                                    <td>Servicio de ejemplo</td>
+                                    <td>0.00</td>
+                                    <td>1</td>
+                                    <td>0.00</td>
+                                    <td>0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="summary-total">Total: <span id="summaryServicesTotal" style="margin-left:8px;">0.00 / CLU</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Notificación al Cliente -->
+    <div class="modal-overlay" id="modalNotificacion">
+        <div class="modal-dialog modal-email">
+            <div class="modal-header modal-header-email">
+                <div class="modal-header-left">
+                    <i class="fas fa-envelope"></i>
+                    <h5>Enviar notificación al cliente</h5>
+                </div>
+                <button type="button" class="close-btn" onclick="closeNotifModal()">&times;</button>
+            </div>
+            <div class="modal-body modal-body-email">
+                <!-- Para -->
+                <div class="email-field">
+                    <label class="email-field-label">Para:</label>
+                    <input type="text" class="form-control email-recipient-input" id="notifPara" placeholder="nombre@empresa.cl" value="">
+                </div>
+
+                <!-- CC -->
+                <div class="email-field">
+                    <label class="email-field-label">CC:</label>
+                    <input type="text" class="form-control email-recipient-input" id="notifCC" placeholder="copia@sgs.com" value="">
+                </div>
+
+                <!-- Asunto -->
+                <div class="email-field">
+                    <label class="email-field-label">Asunto:</label>
+                    <input type="text" class="form-control email-subject-input" id="notifAsunto" value="">
+                </div>
+
+                <!-- Cuerpo -->
+                <div class="email-body-wrapper">
+                    <textarea class="form-control email-body-input" id="notifCuerpo" rows="10"></textarea>
+                </div>
+
+                <!-- Adjuntos -->
+                <div class="email-attachments">
+                    <div class="email-attachments-header">
+                        <i class="fas fa-paperclip"></i>
+                        <span>Documentos adjuntos</span>
+                        <span class="email-attach-count" id="notifAttachCount">0</span>
+                    </div>
+                    <div class="email-attachments-list" id="notifAttachList">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" onclick="closeNotifModal()">
+                    Cancelar
+                </button>
+                <button type="button" class="btn-notif-send" onclick="confirmSendNotification()">
+                    <i class="fas fa-paper-plane"></i> Enviar notificación
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals Propuesta Técnica -->
+    <div class="simple-modal-overlay" id="normasModal">
+        <div class="simple-modal" role="dialog" aria-modal="true" aria-labelledby="normasModalTitle">
+            <div class="simple-modal-header">
+                <h4 id="normasModalTitle">Seleccionar normas aplicables</h4>
+                <button class="btn btn-default btn-sm" id="normasModalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="simple-modal-body">
+                <div class="tech-tree-search" style="margin:0;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="normasModalSearch" placeholder="Buscar norma">
+                </div>
+                <div class="simple-modal-list" id="normasModalList"></div>
+                <div style="display:flex;justify-content:flex-end;">
+                    <button class="btn btn-warning btn-sm" id="normasModalApply">Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="simple-modal-overlay" id="profesionalesModal">
+        <div class="simple-modal" role="dialog" aria-modal="true" aria-labelledby="profesionalesModalTitle">
+            <div class="simple-modal-header">
+                <h4 id="profesionalesModalTitle">Seleccionar profesionales</h4>
+                <button class="btn btn-default btn-sm" id="profesionalesModalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="simple-modal-body">
+                <div class="tech-tree-search" style="margin:0;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="profesionalesModalSearch" placeholder="Buscar profesional">
+                </div>
+                <div class="simple-modal-list" id="profesionalesModalList"></div>
+                <div style="display:flex;justify-content:flex-end;">
+                    <button class="btn btn-warning btn-sm" id="profesionalesModalApply">Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="simple-modal-overlay" id="fqParametrosModal">
+        <div class="simple-modal" role="dialog" aria-modal="true" aria-labelledby="fqParametrosModalTitle">
+            <div class="simple-modal-header">
+                <h4 id="fqParametrosModalTitle">Seleccionar parámetros a analizar</h4>
+                <button class="btn btn-default btn-sm" id="fqParametrosModalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="simple-modal-body">
+                <div class="tech-tree-search" style="margin:0;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="fqParametrosModalSearch" placeholder="Buscar parámetro">
+                </div>
+                <div class="simple-modal-list" id="fqParametrosModalList"></div>
+                <div style="display:flex;justify-content:flex-end;">
+                    <button class="btn btn-warning btn-sm" id="fqParametrosModalApply">Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="simple-modal-overlay" id="inSituModal">
+        <div class="simple-modal" role="dialog" aria-modal="true" aria-labelledby="inSituModalTitle">
+            <div class="simple-modal-header">
+                <h4 id="inSituModalTitle">Seleccionar parámetros de terreno</h4>
+                <button class="btn btn-default btn-sm" id="inSituModalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="simple-modal-body">
+                <div class="tech-tree-search" style="margin:0;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="inSituModalSearch" placeholder="Buscar parámetro de terreno">
+                </div>
+                <div class="simple-modal-list" id="inSituModalList"></div>
+                <div style="display:flex;justify-content:flex-end;">
+                    <button class="btn btn-warning btn-sm" id="inSituModalApply">Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="simple-modal-overlay" id="autorizacionesModal">
+        <div class="simple-modal" role="dialog" aria-modal="true" aria-labelledby="autorizacionesModalTitle">
+            <div class="simple-modal-header">
+                <h4 id="autorizacionesModalTitle">Seleccionar autorizaciones</h4>
+                <button class="btn btn-default btn-sm" id="autorizacionesModalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="simple-modal-body">
+                <div class="tech-tree-search" style="margin:0;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="autorizacionesModalSearch" placeholder="Buscar autorización">
+                </div>
+                <div class="simple-modal-list" id="autorizacionesModalList"></div>
+                <div style="display:flex;justify-content:flex-end;">
+                    <button class="btn btn-warning btn-sm" id="autorizacionesModalApply">Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="simple-modal-overlay" id="customTopicModal">
+        <div class="simple-modal" role="dialog" aria-modal="true" aria-labelledby="customTopicModalTitle">
+            <div class="simple-modal-header">
+                <h4 id="customTopicModalTitle">Nuevo tópico</h4>
+                <button class="btn btn-default btn-sm" id="customTopicModalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="simple-modal-body">
+                <div class="tech-editor-row" style="padding:0;border:none;">
+                    <label>Nombre del tópico</label>
+                    <input class="form-control" id="customTopicTitle" placeholder="Ej: Plan de trabajo">
+                </div>
+                <div class="tech-editor-row" style="padding:0;border:none;">
+                    <label>Campos personalizados (uno por línea)</label>
+                    <textarea class="form-control" rows="4" id="customTopicFields" placeholder="Ej:\nObjetivo\nMetodología\nEntregables"></textarea>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;">
+                    <button class="btn btn-default btn-sm" id="customTopicCancel">Cancelar</button>
+                    <button class="btn btn-warning btn-sm" id="customTopicCreate">Crear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill-table-better@1/dist/quill-table-better.js"></script>
+    <script src="js/cotizacion-detalle.js"></script>
+</body>
+</html>
