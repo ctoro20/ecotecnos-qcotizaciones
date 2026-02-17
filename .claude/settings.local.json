@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:demos.creative-tim.com)",
+      "WebFetch(domain:colormind.io)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(copy \"c:\\\\Users\\\\Cristian\\\\source\\\\Claude\\\\SGS\\\\Qcotizaciones\\\\V1\\\\cotizacion-detalle.html\" \"c:\\\\Users\\\\Cristian\\\\source\\\\Claude\\\\SGS\\\\Qcotizaciones\\\\V1\\\\cotizacion-detalle.backup.html\")",
+      "Bash(powershell -Command:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "WebFetch(domain:claude.ai)"
+    ]
+  }
+}
