@@ -2671,6 +2671,7 @@
             // Inicializar funcionalidades del Paso 3
             initEvaluacionUpload();
             initDocumentosAdjuntos();
+            initEconomicaConsideraciones();
             // Inicializar funcionalidades del Paso 5
             initAprobacionUpload();
             initExternalNotificationRegister();
@@ -2921,6 +2922,146 @@
         }
 
         // =============================================
+        // PASO 4: CONSIDERACIONES ADICIONALES
+        // =============================================
+
+        var econConsideracionesFijas = [
+            'Tarifas: Son valores netos y no incluyen impuestos (IVA). Este se debe agregar al monto final de la factura. Los precios en Pesos Chilenos (CLP) se reajustarán semestralmente de acuerdo con la variación del IPC.',
+            'Valor UF: Se considera valor de UF al día de la facturación.',
+            'Valor mínimo para facturar: 5 UF.',
+            'Condiciones de Pago: OC con pago a 30 días.',
+            'Datos comerciales: Para el pago al proveedor SGS Chile Ltda., RUT 80.914.400-3, Cuenta Corriente, Banco BCI N°127-97-618, para estas formas de pagos se ha de utilizar la UF del día de conversión (con decimales incluidos) e informando ésta en documento a escanear y devolver vía email, el cuál indique además, el comprobante de depósito del pago, indicando el N° del depósito y nombre de la empresa depositante y N° cotización asociada al servicio o factura involucrada.'
+        ];
+        var econConsideracionesCatalog = [
+            'Los costos no incluyen permisos municipales, sectoriales o de terceros.',
+            'Los valores consideran ejecución en días hábiles, salvo coordinación distinta con el cliente.',
+            'El cliente debe garantizar acceso seguro y oportuno a las áreas de muestreo.',
+            'Cualquier cambio de alcance será evaluado mediante una actualización de propuesta.',
+            'Los plazos pueden ajustarse por condiciones climáticas o de marea.',
+            'Los ensayos se ejecutarán según capacidad operativa del laboratorio asignado.'
+        ];
+        var econConsideracionesSelected = [];
+
+        function renderEconConsideracionesList() {
+            var list = document.getElementById('econConsideracionesList');
+            if (!list) return;
+            var fixedHtml = (econConsideracionesFijas || []).map(function(text) {
+                return '<div class="tech-consider-item is-fixed">' +
+                    '<span class="ci-prefix"><i class="fas fa-lock" aria-hidden="true"></i><span class="ci-bullet">•</span></span>' +
+                    '<span class="ci-text">' + escapeHtml(text) + '</span>' +
+                '</div>';
+            }).join('');
+            var selectedHtml = econConsideracionesSelected.map(function(text, idx) {
+                return '<div class="tech-consider-item is-additional">' +
+                    '<span class="ci-prefix"><i class="fas fa-list-ul" aria-hidden="true"></i><span class="ci-bullet">•</span></span>' +
+                    '<span class="ci-text">' + escapeHtml(text) + '</span>' +
+                    '<button type="button" class="ci-remove" data-econ-consider-remove="' + idx + '" title="Quitar"><i class="fas fa-times"></i></button>' +
+                '</div>';
+            }).join('');
+
+            list.innerHTML =
+                '<div class="tech-consider-group">' +
+                    '<div class="tech-consider-group-title">Consideraciones fijas</div>' +
+                    fixedHtml +
+                '</div>' +
+                '<div class="tech-consider-group">' +
+                    '<div class="tech-consider-group-title">Consideraciones adicionales</div>' +
+                    (selectedHtml || '<div class="tech-editor-hint">Sin consideraciones adicionales seleccionadas.</div>') +
+                '</div>';
+
+            list.querySelectorAll('[data-econ-consider-remove]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var idx = parseInt(this.getAttribute('data-econ-consider-remove'), 10);
+                    if (isNaN(idx)) return;
+                    econConsideracionesSelected.splice(idx, 1);
+                    renderEconConsideracionesList();
+                    renderEconConsideracionesModalList(document.getElementById('econConsideracionesModalSearch') ? document.getElementById('econConsideracionesModalSearch').value : '');
+                });
+            });
+        }
+
+        function renderEconConsideracionesModalList(filterText) {
+            var list = document.getElementById('econConsideracionesModalList');
+            if (!list) return;
+            var filter = (filterText || '').toLowerCase().trim();
+            var visibleItems = econConsideracionesCatalog.filter(function(item) {
+                return !filter || item.toLowerCase().indexOf(filter) !== -1;
+            });
+            if (!visibleItems.length) {
+                list.innerHTML = '<div class="tech-editor-hint">Sin resultados.</div>';
+                return;
+            }
+            list.innerHTML = visibleItems.map(function(item, idx) {
+                var checked = econConsideracionesSelected.indexOf(item) !== -1 ? ' checked' : '';
+                return '<label class="simple-modal-item">' +
+                    '<input type="checkbox" data-econ-consider-item="' + idx + '"' + checked + '>' +
+                    '<span>' + escapeHtml(item) + '</span>' +
+                '</label>';
+            }).join('');
+            list.querySelectorAll('input[type="checkbox"]').forEach(function(box) {
+                box.addEventListener('change', function() {
+                    var idx = parseInt(this.getAttribute('data-econ-consider-item'), 10);
+                    if (isNaN(idx)) return;
+                    var value = visibleItems[idx];
+                    var current = econConsideracionesSelected.indexOf(value);
+                    if (this.checked && current === -1) econConsideracionesSelected.push(value);
+                    if (!this.checked && current !== -1) econConsideracionesSelected.splice(current, 1);
+                });
+            });
+        }
+
+        function openEconConsideracionesModal() {
+            var modal = document.getElementById('econConsideracionesModal');
+            var search = document.getElementById('econConsideracionesModalSearch');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            if (search) search.value = '';
+            renderEconConsideracionesModalList('');
+        }
+
+        function closeEconConsideracionesModal() {
+            var modal = document.getElementById('econConsideracionesModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+        }
+
+        function initEconomicaConsideraciones() {
+            var openBtn = document.getElementById('econOpenConsideracionesModal');
+            var modal = document.getElementById('econConsideracionesModal');
+            var closeBtn = document.getElementById('econConsideracionesModalClose');
+            var applyBtn = document.getElementById('econConsideracionesModalApply');
+            var search = document.getElementById('econConsideracionesModalSearch');
+            if (!openBtn || !modal) return;
+
+            renderEconConsideracionesList();
+            openBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                openEconConsideracionesModal();
+            });
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    closeEconConsideracionesModal();
+                });
+            }
+            if (applyBtn) {
+                applyBtn.addEventListener('click', function() {
+                    renderEconConsideracionesList();
+                    closeEconConsideracionesModal();
+                });
+            }
+            if (search) {
+                search.addEventListener('input', function() {
+                    renderEconConsideracionesModalList(this.value);
+                });
+            }
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeEconConsideracionesModal();
+                }
+            });
+        }
+
+        // =============================================
         // PASO 4: PREVISUALIZACIÓN PDF
         // =============================================
 
@@ -3001,6 +3142,7 @@
         function renderApprovalWorkflowUI() {
             var infoEl = document.getElementById('approvalLastRequestInfo');
             var approveBtn = document.getElementById('approvalApproveBtn');
+            var returnBtn = document.getElementById('approvalReturnBtn');
             var logBody = document.getElementById('approvalLogBody');
             var reviewActionsBlock = document.getElementById('approvalReviewActionsBlock');
 
@@ -3015,6 +3157,9 @@
 
             if (approveBtn) {
                 approveBtn.disabled = !(approvalWorkflow.status === 'requested');
+            }
+            if (returnBtn) {
+                returnBtn.disabled = !(approvalWorkflow.status === 'requested');
             }
 
             if (reviewActionsBlock) {
@@ -3212,6 +3357,53 @@
                 statusEl.textContent = 'Autorización registrada el ' + dateStr + '.';
             }
             closeApprovalConfirmModal();
+            renderApprovalWorkflowUI();
+        }
+
+        function returnQuoteToReview() {
+            if (approvalWorkflow.status !== 'requested') return;
+            var commentEl = document.getElementById('approvalDecisionComment');
+            var decisionStatusEl = document.getElementById('approvalDecisionStatus');
+            var requestStatusEl = document.getElementById('approvalRequestStatus');
+            var requestBtnEl = document.getElementById('approvalRequestBtn');
+            var requestCommentEl = document.getElementById('approvalRequestComment');
+            var comment = ((commentEl && commentEl.value) || '').trim();
+            if (!comment) {
+                if (commentEl) commentEl.focus();
+                return;
+            }
+
+            var now = new Date();
+            var dateStr = formatApprovalDateTime(now);
+            var user = getCurrentUserName();
+
+            approvalWorkflow.status = 'none';
+            approvalWorkflow.log.unshift({
+                date: dateStr,
+                action: 'Devolución a revisión',
+                user: user,
+                comment: comment
+            });
+
+            setQuoteSummaryStatus('Registrado');
+
+            if (requestBtnEl) {
+                requestBtnEl.disabled = false;
+                requestBtnEl.textContent = 'Solicitar';
+            }
+            if (requestStatusEl) {
+                requestStatusEl.style.display = '';
+                requestStatusEl.textContent = 'Devuelta a revisión el ' + dateStr + '. Puedes ajustar y volver a solicitar autorización.';
+            }
+            if (decisionStatusEl) {
+                decisionStatusEl.style.display = '';
+                decisionStatusEl.textContent = 'Solicitud devuelta a revisión el ' + dateStr + '.';
+            }
+            if (commentEl) commentEl.value = '';
+            if (requestCommentEl && !requestCommentEl.value.trim()) {
+                requestCommentEl.value = 'Se realizan ajustes solicitados en revisión.';
+            }
+
             renderApprovalWorkflowUI();
         }
 
@@ -4088,7 +4280,7 @@
             { value: 'EPI_INTER_DURO', label: 'Epibentónica Intermareal de Sustrato Duro' },
             { value: 'FILMACIONES_ROV', label: 'Filmaciones ROV' }
         ];
-        var preloadedMetBioMatrices = ['FITOPLANCTON', 'ZOOPLANCTON'];
+        var preloadedMetBioMatrices = ['FITOPLANCTON', 'ZOOPLANCTON', 'CENSO_AVES_MAM_REP'];
         var metBioClassicMatrices = ['FITOPLANCTON', 'ZOOPLANCTON', 'ICTIOPLANCTON', 'MACROBENTONICA_SUB', 'MACROBENTONICA_INTER', 'CENSO_AVES_MAM_REP'];
         var metBioTransectasMatrices = ['CENSO_AVES_MAM_REP', 'BANCOS_NAT_RH', 'ICTIOFAUNA_LITORAL', 'EPI_SUB_DURO', 'EPI_INTER_DURO', 'MACROBENTONICA_INTER', 'FILMACIONES_ROV'];
         var metBioEspecificacionesMatrices = ['CENSO_AVES_MAM_REP', 'FITOPLANCTON', 'ZOOPLANCTON'];
@@ -5545,7 +5737,6 @@
                     authHtml;
                 return;
             }
-
 
             if (activeTechId === 'metodologias_fq') {
                 var puntosProtocolo = draft.protocolo_puntos || [];

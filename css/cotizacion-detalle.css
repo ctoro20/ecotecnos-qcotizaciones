@@ -5651,7 +5651,8 @@
         #techOpenNormasModal,
         #techOpenProModal,
         #techOpenAuthModal,
-        #techOpenInSituModal {
+        #techOpenInSituModal,
+        #econOpenConsideracionesModal {
             background: #ef8157;
             color: #fff;
             border: none;
@@ -5660,7 +5661,8 @@
         #techOpenNormasModal:hover,
         #techOpenProModal:hover,
         #techOpenAuthModal:hover,
-        #techOpenInSituModal:hover {
+        #techOpenInSituModal:hover,
+        #econOpenConsideracionesModal:hover {
             background: #e97042;
         }
 
@@ -5675,6 +5677,65 @@
             gap: 6px;
             font-size: 12px;
             color: #66615b;
+        }
+        .tech-consider-list {
+            display: grid;
+            gap: 8px;
+        }
+        .tech-consider-group {
+            display: grid;
+            gap: 8px;
+        }
+        .tech-consider-group-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #66615b;
+        }
+        .tech-consider-item {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 10px;
+            padding: 8px 10px;
+            border: 1px solid #ece6dd;
+            border-radius: 8px;
+            background: #fcfaf7;
+            color: #66615b;
+            font-size: 12px;
+        }
+        .tech-consider-item.is-fixed {
+            background: #f8f7f5;
+            border-color: #e3ddd4;
+        }
+        .tech-consider-item.is-additional {
+            background: #fcfaf7;
+        }
+        .tech-consider-item .ci-prefix {
+            min-width: 34px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #9b948a;
+            margin-top: 1px;
+        }
+        .tech-consider-item .ci-prefix .ci-bullet {
+            display: none;
+        }
+        .tech-consider-item .ci-text {
+            flex: 1;
+            line-height: 1.4;
+        }
+        .tech-consider-item .ci-remove {
+            background: none;
+            border: none;
+            color: #b5b0aa;
+            cursor: pointer;
+            padding: 2px 4px;
+            font-size: 12px;
+            margin-left: 4px;
+        }
+        .tech-consider-item .ci-remove:hover {
+            color: #ef8157;
         }
 
         .tech-doc-full {
