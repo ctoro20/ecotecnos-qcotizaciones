@@ -1560,6 +1560,24 @@
                                             </div>
                                         </div>
                                         <div id="techEditorMetFQFields" style="display:none;">
+                                            <div class="tech-editor-row" id="techMetFQMatrixGroupRow">
+                                                <label>Matrices de componentes físico-químicos</label>
+                                                <div class="tech-metfq-matrix-controls">
+                                                    <select id="techMetFQMatrixSelect" class="form-control">
+                                                        <option value="AGUA_MAR_E">Agua de Mar (E)</option>
+                                                        <option value="AGUA_INDUSTRIAL_G">Agua para fines industriales (G)</option>
+                                                        <option value="AGUA_RESIDUAL_F">Agua Residual (F)</option>
+                                                        <option value="AGUA_SUPERFICIAL_D">Agua Superficial (D)</option>
+                                                        <option value="BIOTAS_U">Biotas (U)</option>
+                                                        <option value="SED_ACUATICOS_SUB">Sedimentos Acuáticos Submareales</option>
+                                                        <option value="SED_ACUATICOS_INTER">Sedimentos Acuáticos Intermareales</option>
+                                                        <option value="SED_MARINOS_SUB">Sedimentos Marinos Submareales</option>
+                                                        <option value="SED_MARINOS_INTER">Sedimentos Marinos Intermareales</option>
+                                                    </select>
+                                                    <button class="btn btn-warning btn-sm" id="techMetFQMatrixAddBtn" type="button"><i class="fas fa-plus"></i> Agregar matriz</button>
+                                                </div>
+                                                <div class="tech-metfq-matrix-chips" id="techMetFQMatrixChips"></div>
+                                            </div>
                                             <div class="tech-editor-row" id="techMetFQProtocoloRow">
                                                 <label>Introducción</label>
                                                 <div id="techEditorMetFQProtocolo" class="quill-editor"></div>
