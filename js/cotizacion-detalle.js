@@ -4052,7 +4052,7 @@
             profesionales: ['Introducción', 'Listado de profesionales'],
             coordinaciones: ['Unidad coordinadora', 'Movilización en terreno', 'Ropa de trabajo'],
             autorizaciones: ['Introducción', 'Autorizaciones a solicitar'],
-            metodologias_fq: ['Protocolo de muestreo', 'Parámetros a Analizar y Laboratorios', 'Parámetros medidos in situ'],
+            metodologias_fq: ['Protocolo de muestreo', 'Parámetros de Laboratorio', 'Parámetros medidos in situ'],
             metodologias_bio: ['Protocolo de muestreo'],
             metodologias_fis: ['Resumen', 'Contenido']
         };
@@ -4517,7 +4517,7 @@
         var suppressQuillSync = false;
         var techMetFQSubsections = [
             { id: 'protocolo_estudio', title: 'Protocolo de muestreo', fields: ['Introducción', 'Puntos de muestreo', 'Imagen asociada', 'Descripción'] },
-            { id: 'parametros_laboratorios', title: 'Parámetros a Analizar y Laboratorios', fields: ['Texto introductorio', 'Control de análisis', 'Texto final'] },
+            { id: 'parametros_laboratorios', title: 'Parámetros de Laboratorio', fields: ['Texto introductorio', 'Control de análisis', 'Texto final'] },
             { id: 'parametros_in_situ', title: 'Parámetros medidos in situ', fields: ['Texto introductorio', 'Parámetros de terreno', 'Texto final'] }
         ];
         var techMetBioSubsections = [
@@ -4795,7 +4795,7 @@
                 parametro: item.parametro || '',
                 metodo: item.metodo || '—',
                 matriz: item.matriz || '',
-                afectaETFA: item.afectaETFA || '',
+                afectaETFA: item.afectaETFA || 'SI',
                 etfaCode: item.etfaCode || '',
                 instrumento: item.instrumento || ''
             };
@@ -5956,7 +5956,7 @@
         }
 
         function renderMetFQProtocolTable() {
-            var tbody = document.getElementById('techFQEstacionesBody');
+            var tbody = document.getElementById('techMetFQProtocolTableBody');
             var countEl = document.getElementById('techFQCountPuntos');
             var totalEl = document.getElementById('techFQTotalMuestras');
             if (!tbody) return;
@@ -5965,23 +5965,40 @@
 
             tbody.innerHTML = '';
             var totalMuestras = 0;
+            function markProtocolDirty() {
+                techDrafts.metodologias_fq.dirty = true;
+                syncRootToActiveMetFQGroup();
+                updateTechStatus('Cambios sin guardar');
+                renderTechDocView();
+            }
+
             draft.protocolo_puntos.forEach(function(punto, idx) {
                 var estratos = parseInt(punto.estratos, 10) || 1;
                 var replicas = parseInt(punto.replicas, 10) || 1;
                 var muestras = estratos * replicas;
+                punto.estratos = estratos;
+                punto.replicas = replicas;
+                punto.muestras = muestras;
                 totalMuestras += muestras;
+                var isEditing = !!punto._isEditing;
                 var tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td>' + (idx + 1) + '</td>' +
-                    '<td><input type="text" class="fq-inline" data-fq-field="nombre" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.nombre || punto.estacion || '') + '"></td>' +
-                    '<td><input type="text" class="fq-inline" data-fq-field="lugar" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.lugar || '') + '"></td>' +
-                    '<td><input type="text" class="fq-inline" data-fq-field="latitud" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.latitud || punto.coordenadas || '') + '"></td>' +
-                    '<td><input type="text" class="fq-inline" data-fq-field="longitud" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.longitud || '') + '"></td>' +
-                    '<td><input type="text" class="fq-inline" data-fq-field="datum" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.datum || '') + '"></td>' +
-                    '<td><input type="number" class="fq-inline fq-inline-num fq-est-estratos" data-fq-idx="' + idx + '" value="' + estratos + '" min="1"></td>' +
-                    '<td><input type="number" class="fq-inline fq-inline-num fq-est-replicas" data-fq-idx="' + idx + '" value="' + replicas + '" min="1"></td>' +
+                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-fq-field="nombre" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.nombre || punto.estacion || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-fq-field="lugar" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.lugar || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-fq-field="datum" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.datum || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-fq-field="latitud" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.latitud || punto.coordenadas || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-fq-field="longitud" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.longitud || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                    '<td><input type="number" class="fq-inline fq-inline-num fq-est-estratos' + (isEditing ? '' : ' is-readonly') + '" data-fq-idx="' + idx + '" value="' + estratos + '" min="1"' + (isEditing ? '' : ' disabled') + '></td>' +
+                    '<td><input type="number" class="fq-inline fq-inline-num fq-est-replicas' + (isEditing ? '' : ' is-readonly') + '" data-fq-idx="' + idx + '" value="' + replicas + '" min="1"' + (isEditing ? '' : ' disabled') + '></td>' +
                     '<td class="fq-muestras-cell">' + muestras + '</td>' +
-                    '<td><button class="fq-remove-btn" data-fq-remove="' + idx + '" title="Quitar"><i class="fas fa-times"></i></button></td>';
+                    '<td>' +
+                        (isEditing
+                            ? '<button class="fq-row-action fq-row-save" data-fq-save="' + idx + '" title="Guardar"><i class="fas fa-save"></i></button>' +
+                              '<button class="fq-row-action fq-row-cancel" data-fq-cancel="' + idx + '" title="Cancelar"><i class="fas fa-times"></i></button>'
+                            : '<button class="fq-row-action fq-row-edit" data-fq-edit="' + idx + '" title="Editar"><i class="fas fa-edit"></i></button>' +
+                              '<button class="fq-row-action fq-row-delete" data-fq-remove="' + idx + '" title="Eliminar"><i class="fas fa-trash"></i></button>') +
+                    '</td>';
                 tbody.appendChild(tr);
             });
 
@@ -5994,9 +6011,7 @@
                     var f = this.getAttribute('data-fq-field');
                     if (isNaN(i) || !f || !techDrafts.metodologias_fq.protocolo_puntos[i]) return;
                     techDrafts.metodologias_fq.protocolo_puntos[i][f] = this.value;
-                    techDrafts.metodologias_fq.dirty = true;
-                    updateTechStatus('Cambios sin guardar');
-                    renderTechDocView();
+                    markProtocolDirty();
                 });
             });
 
@@ -6017,11 +6032,71 @@
                     techDrafts.metodologias_fq.protocolo_puntos[i].estratos = e;
                     techDrafts.metodologias_fq.protocolo_puntos[i].replicas = r;
                     techDrafts.metodologias_fq.protocolo_puntos[i].muestras = m;
-                    techDrafts.metodologias_fq.dirty = true;
-                    updateTechStatus('Cambios sin guardar');
+                    markProtocolDirty();
                     var total = 0;
                     tbody.querySelectorAll('.fq-muestras-cell').forEach(function(c) { total += parseInt(c.textContent, 10) || 0; });
                     if (totalEl) totalEl.textContent = total;
+                });
+            });
+
+            tbody.querySelectorAll('button[data-fq-edit]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-fq-edit'), 10);
+                    var row = techDrafts.metodologias_fq.protocolo_puntos[i];
+                    if (isNaN(i) || !row) return;
+                    row._snapshot = {
+                        nombre: row.nombre || row.estacion || '',
+                        lugar: row.lugar || '',
+                        datum: row.datum || '',
+                        latitud: row.latitud || row.coordenadas || '',
+                        longitud: row.longitud || '',
+                        estratos: parseInt(row.estratos, 10) || 1,
+                        replicas: parseInt(row.replicas, 10) || 1
+                    };
+                    row._isEditing = true;
+                    renderMetFQProtocolTable();
+                });
+            });
+
+            tbody.querySelectorAll('button[data-fq-save]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-fq-save'), 10);
+                    var row = techDrafts.metodologias_fq.protocolo_puntos[i];
+                    if (isNaN(i) || !row) return;
+                    row._isEditing = false;
+                    delete row._isNew;
+                    delete row._snapshot;
+                    markProtocolDirty();
+                    renderMetFQProtocolTable();
+                });
+            });
+
+            tbody.querySelectorAll('button[data-fq-cancel]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-fq-cancel'), 10);
+                    var row = techDrafts.metodologias_fq.protocolo_puntos[i];
+                    if (isNaN(i) || !row) return;
+                    if (row._isNew) {
+                        techDrafts.metodologias_fq.protocolo_puntos.splice(i, 1);
+                    } else if (row._snapshot) {
+                        row.nombre = row._snapshot.nombre;
+                        row.lugar = row._snapshot.lugar;
+                        row.datum = row._snapshot.datum;
+                        row.latitud = row._snapshot.latitud;
+                        row.longitud = row._snapshot.longitud;
+                        row.estratos = row._snapshot.estratos;
+                        row.replicas = row._snapshot.replicas;
+                        row.muestras = row._snapshot.estratos * row._snapshot.replicas;
+                        row._isEditing = false;
+                        delete row._snapshot;
+                    } else {
+                        row._isEditing = false;
+                    }
+                    techDrafts.metodologias_fq.dirty = true;
+                    syncRootToActiveMetFQGroup();
+                    updateTechStatus('Cambios sin guardar');
+                    renderTechDocView();
+                    renderMetFQProtocolTable();
                 });
             });
 
@@ -6030,10 +6105,8 @@
                     var i = parseInt(this.getAttribute('data-fq-remove'), 10);
                     if (isNaN(i)) return;
                     techDrafts.metodologias_fq.protocolo_puntos.splice(i, 1);
-                    techDrafts.metodologias_fq.dirty = true;
-                    updateTechStatus('Cambios sin guardar');
+                    markProtocolDirty();
                     renderMetFQProtocolTable();
-                    renderTechDocView();
                 });
             });
         }
@@ -6056,23 +6129,39 @@
 
             tbody.innerHTML = '';
             var totalMuestras = 0;
+            function markBioProtocolDirty() {
+                techDrafts.metodologias_bio.dirty = true;
+                syncRootToActiveMetBioGroup();
+                updateTechStatus('Cambios sin guardar');
+                renderTechDocView();
+            }
             draft[cfg.puntos].forEach(function(punto, idx) {
                 var estratos = parseInt(punto.estratos, 10) || 1;
                 var replicas = parseInt(punto.replicas, 10) || 1;
                 var muestras = estratos * replicas;
+                punto.estratos = estratos;
+                punto.replicas = replicas;
+                punto.muestras = muestras;
                 totalMuestras += muestras;
+                var isEditing = !!punto._isEditing;
                 var tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td>' + (idx + 1) + '</td>' +
-                    '<td><input type="text" class="fq-inline" data-bio-field="nombre" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.nombre || punto.estacion || '') + '"></td>' +
-                    '<td><input type="text" class="fq-inline" data-bio-field="lugar" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.lugar || '') + '"></td>' +
-                    '<td><input type="text" class="fq-inline" data-bio-field="latitud" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.latitud || punto.coordenadas || '') + '"></td>' +
-                    '<td><input type="text" class="fq-inline" data-bio-field="longitud" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.longitud || '') + '"></td>' +
-                    '<td><input type="text" class="fq-inline" data-bio-field="datum" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.datum || '') + '"></td>' +
-                    '<td><input type="number" class="fq-inline fq-inline-num bio-est-estratos" data-bio-idx="' + idx + '" value="' + estratos + '" min="1"></td>' +
-                    '<td><input type="number" class="fq-inline fq-inline-num bio-est-replicas" data-bio-idx="' + idx + '" value="' + replicas + '" min="1"></td>' +
+                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="nombre" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.nombre || punto.estacion || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="lugar" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.lugar || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="latitud" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.latitud || punto.coordenadas || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="longitud" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.longitud || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="datum" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.datum || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                    '<td><input type="number" class="fq-inline fq-inline-num bio-est-estratos' + (isEditing ? '' : ' is-readonly') + '" data-bio-idx="' + idx + '" value="' + estratos + '" min="1"' + (isEditing ? '' : ' disabled') + '></td>' +
+                    '<td><input type="number" class="fq-inline fq-inline-num bio-est-replicas' + (isEditing ? '' : ' is-readonly') + '" data-bio-idx="' + idx + '" value="' + replicas + '" min="1"' + (isEditing ? '' : ' disabled') + '></td>' +
                     '<td class="bio-muestras-cell">' + muestras + '</td>' +
-                    '<td><button class="fq-remove-btn" data-bio-remove="' + idx + '" title="Quitar"><i class="fas fa-times"></i></button></td>';
+                    '<td>' +
+                        (isEditing
+                            ? '<button class="fq-row-action fq-row-save" data-bio-save="' + idx + '" title="Guardar"><i class="fas fa-save"></i></button>' +
+                              '<button class="fq-row-action fq-row-cancel" data-bio-cancel="' + idx + '" title="Cancelar"><i class="fas fa-times"></i></button>'
+                            : '<button class="fq-row-action fq-row-edit" data-bio-edit="' + idx + '" title="Editar"><i class="fas fa-edit"></i></button>' +
+                              '<button class="fq-row-action fq-row-delete" data-bio-remove="' + idx + '" title="Eliminar"><i class="fas fa-trash"></i></button>') +
+                    '</td>';
                 tbody.appendChild(tr);
             });
 
@@ -6085,10 +6174,7 @@
                     var f = this.getAttribute('data-bio-field');
                     if (isNaN(i) || !f || !techDrafts.metodologias_bio[cfg.puntos] || !techDrafts.metodologias_bio[cfg.puntos][i]) return;
                     techDrafts.metodologias_bio[cfg.puntos][i][f] = this.value;
-                    techDrafts.metodologias_bio.dirty = true;
-                    syncRootToActiveMetBioGroup();
-                    updateTechStatus('Cambios sin guardar');
-                    renderTechDocView();
+                    markBioProtocolDirty();
                 });
             });
 
@@ -6109,12 +6195,68 @@
                     techDrafts.metodologias_bio[cfg.puntos][i].estratos = e;
                     techDrafts.metodologias_bio[cfg.puntos][i].replicas = r;
                     techDrafts.metodologias_bio[cfg.puntos][i].muestras = m;
-                    techDrafts.metodologias_bio.dirty = true;
-                    syncRootToActiveMetBioGroup();
-                    updateTechStatus('Cambios sin guardar');
+                    markBioProtocolDirty();
                     var total = 0;
                     tbody.querySelectorAll('.bio-muestras-cell').forEach(function(c) { total += parseInt(c.textContent, 10) || 0; });
                     if (totalEl) totalEl.textContent = total;
+                });
+            });
+
+            tbody.querySelectorAll('button[data-bio-edit]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-bio-edit'), 10);
+                    var row = techDrafts.metodologias_bio[cfg.puntos][i];
+                    if (isNaN(i) || !row) return;
+                    row._snapshot = {
+                        nombre: row.nombre || row.estacion || '',
+                        lugar: row.lugar || '',
+                        latitud: row.latitud || row.coordenadas || '',
+                        longitud: row.longitud || '',
+                        datum: row.datum || '',
+                        estratos: parseInt(row.estratos, 10) || 1,
+                        replicas: parseInt(row.replicas, 10) || 1
+                    };
+                    row._isEditing = true;
+                    renderMetBioProtocolTable();
+                });
+            });
+
+            tbody.querySelectorAll('button[data-bio-save]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-bio-save'), 10);
+                    var row = techDrafts.metodologias_bio[cfg.puntos][i];
+                    if (isNaN(i) || !row) return;
+                    row._isEditing = false;
+                    delete row._isNew;
+                    delete row._snapshot;
+                    markBioProtocolDirty();
+                    renderMetBioProtocolTable();
+                });
+            });
+
+            tbody.querySelectorAll('button[data-bio-cancel]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-bio-cancel'), 10);
+                    var row = techDrafts.metodologias_bio[cfg.puntos][i];
+                    if (isNaN(i) || !row) return;
+                    if (row._isNew) {
+                        techDrafts.metodologias_bio[cfg.puntos].splice(i, 1);
+                    } else if (row._snapshot) {
+                        row.nombre = row._snapshot.nombre;
+                        row.lugar = row._snapshot.lugar;
+                        row.latitud = row._snapshot.latitud;
+                        row.longitud = row._snapshot.longitud;
+                        row.datum = row._snapshot.datum;
+                        row.estratos = row._snapshot.estratos;
+                        row.replicas = row._snapshot.replicas;
+                        row.muestras = row._snapshot.estratos * row._snapshot.replicas;
+                        row._isEditing = false;
+                        delete row._snapshot;
+                    } else {
+                        row._isEditing = false;
+                    }
+                    markBioProtocolDirty();
+                    renderMetBioProtocolTable();
                 });
             });
 
@@ -6123,11 +6265,8 @@
                     var i = parseInt(this.getAttribute('data-bio-remove'), 10);
                     if (isNaN(i)) return;
                     techDrafts.metodologias_bio[cfg.puntos].splice(i, 1);
-                    techDrafts.metodologias_bio.dirty = true;
-                    syncRootToActiveMetBioGroup();
-                    updateTechStatus('Cambios sin guardar');
+                    markBioProtocolDirty();
                     renderMetBioProtocolTable();
-                    renderTechDocView();
                 });
             });
         }
@@ -6158,13 +6297,12 @@
                     '<td style="font-size:11px;color:#9a9a9a;">' + (item.metodo || '—') + '</td>' +
                     '<td>' +
                         '<select class="form-control-inline" data-insitu-idx="' + idx + '" data-field="afectaETFA">' +
-                            '<option value="">Seleccionar</option>' +
                             '<option value="SI"' + (item.afectaETFA === 'SI' ? ' selected' : '') + '>Sí</option>' +
                             '<option value="NO"' + (item.afectaETFA === 'NO' ? ' selected' : '') + '>No</option>' +
                         '</select>' +
                     '</td>' +
                     '<td class="etfa-validation-col" style="display:none;">' +
-                        (item.afectaETFA === 'SI' && activeMatrix
+                        (item.afectaETFA === 'SI' && (item.matriz || activeMatrix)
                             ? '<span class="ok"><i class="fas fa-check-circle"></i> ' + (item.etfaCode || generarCodigoEtfa(item.parametro, 1000000)) + '</span>'
                             : '<span class="na">-</span>') +
                     '</td>' +
@@ -6196,7 +6334,7 @@
                     techDrafts.metodologias_fq.in_situ_selected[i][field] = this.value;
                     if (field === 'afectaETFA'
                         && techDrafts.metodologias_fq.in_situ_selected[i].afectaETFA === 'SI'
-                        && activeMatrix
+                        && (techDrafts.metodologias_fq.in_situ_selected[i].matriz || activeMatrix)
                         && !techDrafts.metodologias_fq.in_situ_selected[i].etfaCode) {
                         techDrafts.metodologias_fq.in_situ_selected[i].etfaCode = generarCodigoEtfa(techDrafts.metodologias_fq.in_situ_selected[i].parametro, 1000000);
                     }
@@ -6479,7 +6617,7 @@
                 if (subSepEl) subSepEl.style.display = '';
                 if (subTitleEl) {
                     subTitleEl.style.display = '';
-                    subTitleEl.textContent = matrixLabel ? (matrixLabel + ' / ' + subLabel) : subLabel;
+                    subTitleEl.textContent = matrixLabel ? (matrixLabel + ' > ' + subLabel) : subLabel;
                 }
             } else if (section && section.id === 'metodologias_bio' && activeMetBioSubsection) {
                 var activeBioSub = getMetBioSubsectionsForMatrix(getActiveMetBioMatrixValue()).find(function(sub) { return sub.id === activeMetBioSubsection; });
@@ -6490,7 +6628,7 @@
                 if (subSepEl) subSepEl.style.display = '';
                 if (subTitleEl) {
                     subTitleEl.style.display = '';
-                    subTitleEl.textContent = bioMatrixLabel ? (bioMatrixLabel + ' / ' + bioSubLabel) : bioSubLabel;
+                    subTitleEl.textContent = bioMatrixLabel ? (bioMatrixLabel + ' > ' + bioSubLabel) : bioSubLabel;
                 }
             }
 
@@ -6775,38 +6913,34 @@
             if (censoTierraDiurno) censoTierraDiurno.addEventListener('change', function() { syncActiveDraft(true); });
             if (censoTierraNocturno) censoTierraNocturno.addEventListener('change', function() { syncActiveDraft(true); });
 
-            var techFQAddPointBtn = document.getElementById('techFQAddPointBtn');
             var techFQToggleAddPointBtn = document.getElementById('techFQToggleAddPointBtn');
-            var techFQCancelAddPointBtn = document.getElementById('techFQCancelAddPointBtn');
-            var techFQAddPointForm = document.getElementById('techFQAddPointForm');
-
-            function setFQAddPointFormOpen(isOpen) {
-                if (techFQAddPointForm) techFQAddPointForm.style.display = isOpen ? '' : 'none';
-                if (techFQToggleAddPointBtn) techFQToggleAddPointBtn.style.display = isOpen ? 'none' : '';
-            }
-
-            setFQAddPointFormOpen(false);
-
-            if (techFQToggleAddPointBtn && techFQAddPointForm) {
+            if (techFQToggleAddPointBtn) {
                 techFQToggleAddPointBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    setFQAddPointFormOpen(true);
-                    var firstInput = document.getElementById('techFQNewNombre');
-                    if (firstInput) firstInput.focus();
-                });
-            }
-            if (techFQCancelAddPointBtn && techFQAddPointForm) {
-                techFQCancelAddPointBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    ['techFQNewNombre', 'techFQNewLugar', 'techFQNewLatitud', 'techFQNewLongitud', 'techFQNewDatum'].forEach(function(id) {
-                        var el = document.getElementById(id);
-                        if (el) el.value = '';
+                    if (!Array.isArray(techDrafts.metodologias_fq.protocolo_puntos)) {
+                        techDrafts.metodologias_fq.protocolo_puntos = [];
+                    }
+                    techDrafts.metodologias_fq.protocolo_puntos.push({
+                        nombre: '',
+                        lugar: '',
+                        datum: '',
+                        latitud: '',
+                        longitud: '',
+                        estratos: 1,
+                        replicas: 1,
+                        muestras: 1,
+                        _isEditing: true,
+                        _isNew: true
                     });
-                    var newEstratosEl = document.getElementById('techFQNewEstratos');
-                    var newReplicasEl = document.getElementById('techFQNewReplicas');
-                    if (newEstratosEl) newEstratosEl.value = '1';
-                    if (newReplicasEl) newReplicasEl.value = '1';
-                    setFQAddPointFormOpen(false);
+                    techDrafts.metodologias_fq.dirty = true;
+                    syncRootToActiveMetFQGroup();
+                    updateTechStatus('Cambios sin guardar');
+                    renderMetFQProtocolTable();
+                    renderTechDocView();
+                    setTimeout(function() {
+                        var lastInput = document.querySelector('#techMetFQProtocolTableBody tr:last-child input[data-fq-field=\"nombre\"]');
+                        if (lastInput) lastInput.focus();
+                    }, 0);
                 });
             }
             var techMetFQMatrixSelect = document.getElementById('techMetFQMatrixSelect');
@@ -6856,38 +6990,6 @@
                     selectTechItem('metodologias_fq', { skipSyncCurrent: true });
                 });
             }
-            if (techFQAddPointBtn) {
-                techFQAddPointBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    var nombre = (document.getElementById('techFQNewNombre') || {}).value || '';
-                    var lugar = (document.getElementById('techFQNewLugar') || {}).value || '';
-                    var matriz = getMetFQMatrixLabel(getActiveMetFQMatrixValue());
-                    var latitud = (document.getElementById('techFQNewLatitud') || {}).value || '';
-                    var longitud = (document.getElementById('techFQNewLongitud') || {}).value || '';
-                    var datum = (document.getElementById('techFQNewDatum') || {}).value || '';
-                    var estratos = Math.max(1, parseInt((document.getElementById('techFQNewEstratos') || {}).value, 10) || 1);
-                    var replicas = Math.max(1, parseInt((document.getElementById('techFQNewReplicas') || {}).value, 10) || 1);
-                    var muestras = estratos * replicas;
-                    if (!nombre.trim() && !lugar.trim()) return;
-                    if (!techDrafts.metodologias_fq.protocolo_puntos) techDrafts.metodologias_fq.protocolo_puntos = [];
-                    techDrafts.metodologias_fq.protocolo_puntos.push({ nombre: nombre.trim(), lugar: lugar.trim(), matriz: matriz, latitud: latitud.trim(), longitud: longitud.trim(), datum: datum.trim(), estratos: estratos, replicas: replicas, muestras: muestras });
-                    techDrafts.metodologias_fq.dirty = true;
-                    updateTechStatus('Cambios sin guardar');
-                    ['techFQNewNombre', 'techFQNewLugar', 'techFQNewLatitud', 'techFQNewLongitud', 'techFQNewDatum'].forEach(function(id) {
-                        var el = document.getElementById(id);
-                        if (el) el.value = '';
-                    });
-                    var newEstratosEl = document.getElementById('techFQNewEstratos');
-                    var newReplicasEl = document.getElementById('techFQNewReplicas');
-                    if (newEstratosEl) newEstratosEl.value = '1';
-                    if (newReplicasEl) newReplicasEl.value = '1';
-                    var firstInput = document.getElementById('techFQNewNombre');
-                    if (firstInput) firstInput.focus();
-                    renderMetFQProtocolTable();
-                    renderTechDocView();
-                });
-            }
-
             var protocolImgUploadDiv = document.getElementById('techMetFQProtocolImgUpload');
             var protocolImgFileInput = document.getElementById('techMetFQProtocolImgInput');
             var protocolImgRemoveBtn = document.getElementById('techMetFQProtocolImgRemove');
@@ -6931,36 +7033,42 @@
 
             var techBioAddPointBtn = document.getElementById('techBioAddPointBtn');
             var techBioToggleAddPointBtn = document.getElementById('techBioToggleAddPointBtn');
-            var techBioCancelAddPointBtn = document.getElementById('techBioCancelAddPointBtn');
-            var techBioAddPointForm = document.getElementById('techBioAddPointForm');
-
-            function setBioAddPointFormOpen(isOpen) {
-                if (techBioAddPointForm) techBioAddPointForm.style.display = isOpen ? '' : 'none';
-                if (techBioToggleAddPointBtn) techBioToggleAddPointBtn.style.display = isOpen ? 'none' : '';
+            function addBioPointInline() {
+                var bioCfg = getActiveMetBioProtocolConfig();
+                if (!techDrafts.metodologias_bio[bioCfg.puntos]) techDrafts.metodologias_bio[bioCfg.puntos] = [];
+                techDrafts.metodologias_bio[bioCfg.puntos].push({
+                    nombre: '',
+                    lugar: '',
+                    latitud: '',
+                    longitud: '',
+                    datum: '',
+                    estratos: 1,
+                    replicas: 1,
+                    muestras: 1,
+                    _isEditing: true,
+                    _isNew: true
+                });
+                techDrafts.metodologias_bio.dirty = true;
+                syncRootToActiveMetBioGroup();
+                updateTechStatus('Cambios sin guardar');
+                renderMetBioProtocolTable();
+                renderTechDocView();
+                setTimeout(function() {
+                    var lastInput = document.querySelector('#techBioEstacionesBody tr:last-child input[data-bio-field=\"nombre\"]');
+                    if (lastInput) lastInput.focus();
+                }, 0);
             }
 
-            setBioAddPointFormOpen(false);
-
-            if (techBioToggleAddPointBtn && techBioAddPointForm) {
+            if (techBioToggleAddPointBtn) {
                 techBioToggleAddPointBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    setBioAddPointFormOpen(true);
-                    var firstInput = document.getElementById('techBioNewNombre');
-                    if (firstInput) firstInput.focus();
+                    addBioPointInline();
                 });
             }
-            if (techBioCancelAddPointBtn && techBioAddPointForm) {
-                techBioCancelAddPointBtn.addEventListener('click', function(e) {
+            if (techBioAddPointBtn) {
+                techBioAddPointBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    ['techBioNewNombre', 'techBioNewLugar', 'techBioNewLatitud', 'techBioNewLongitud', 'techBioNewDatum'].forEach(function(id) {
-                        var el = document.getElementById(id);
-                        if (el) el.value = '';
-                    });
-                    var newEstratosEl = document.getElementById('techBioNewEstratos');
-                    var newReplicasEl = document.getElementById('techBioNewReplicas');
-                    if (newEstratosEl) newEstratosEl.value = '1';
-                    if (newReplicasEl) newReplicasEl.value = '1';
-                    setBioAddPointFormOpen(false);
+                    addBioPointInline();
                 });
             }
             var techMetBioMatrixSelect = document.getElementById('techMetBioMatrixSelect');
@@ -7021,40 +7129,6 @@
                     selectTechItem('metodologias_bio', { skipSyncCurrent: true });
                 });
             }
-            if (techBioAddPointBtn) {
-                techBioAddPointBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    var nombre = (document.getElementById('techBioNewNombre') || {}).value || '';
-                    var lugar = (document.getElementById('techBioNewLugar') || {}).value || '';
-                    var matriz = getMetBioMatrixLabel(getActiveMetBioMatrixValue());
-                    var latitud = (document.getElementById('techBioNewLatitud') || {}).value || '';
-                    var longitud = (document.getElementById('techBioNewLongitud') || {}).value || '';
-                    var datum = (document.getElementById('techBioNewDatum') || {}).value || '';
-                    var estratos = Math.max(1, parseInt((document.getElementById('techBioNewEstratos') || {}).value, 10) || 1);
-                    var replicas = Math.max(1, parseInt((document.getElementById('techBioNewReplicas') || {}).value, 10) || 1);
-                    var muestras = estratos * replicas;
-                    var bioCfg = getActiveMetBioProtocolConfig();
-                    if (!nombre.trim() && !lugar.trim()) return;
-                    if (!techDrafts.metodologias_bio[bioCfg.puntos]) techDrafts.metodologias_bio[bioCfg.puntos] = [];
-                    techDrafts.metodologias_bio[bioCfg.puntos].push({ nombre: nombre.trim(), lugar: lugar.trim(), matriz: matriz, latitud: latitud.trim(), longitud: longitud.trim(), datum: datum.trim(), estratos: estratos, replicas: replicas, muestras: muestras });
-                    techDrafts.metodologias_bio.dirty = true;
-                    syncRootToActiveMetBioGroup();
-                    updateTechStatus('Cambios sin guardar');
-                    ['techBioNewNombre', 'techBioNewLugar', 'techBioNewLatitud', 'techBioNewLongitud', 'techBioNewDatum'].forEach(function(id) {
-                        var el = document.getElementById(id);
-                        if (el) el.value = '';
-                    });
-                    var newEstratosEl = document.getElementById('techBioNewEstratos');
-                    var newReplicasEl = document.getElementById('techBioNewReplicas');
-                    if (newEstratosEl) newEstratosEl.value = '1';
-                    if (newReplicasEl) newReplicasEl.value = '1';
-                    var firstInput = document.getElementById('techBioNewNombre');
-                    if (firstInput) firstInput.focus();
-                    renderMetBioProtocolTable();
-                    renderTechDocView();
-                });
-            }
-
             var bioProtocolImgUploadDiv = document.getElementById('techMetBioProtocolImgUpload');
             var bioProtocolImgFileInput = document.getElementById('techMetBioProtocolImgInput');
             var bioProtocolImgRemoveBtn = document.getElementById('techMetBioProtocolImgRemove');
@@ -7650,9 +7724,9 @@
                             selected.push(normalizeFieldSelectedItem({
                                 parametro: item.parametro,
                                 metodo: item.metodo,
-                                afectaETFA: '',
+                                afectaETFA: 'SI',
                                 etfaCode: generarCodigoEtfa(item.parametro, 1000000),
-                                matriz: '',
+                                matriz: getActiveMetFQMatrixValue() || 'AGUA_MAR_E',
                                 instrumento: ''
                             }));
                         }

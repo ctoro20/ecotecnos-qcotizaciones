@@ -1449,6 +1449,8 @@
                                               <span class="tech-editor-root">Propuesta técnica</span>
                                               <i class="fas fa-chevron-right"></i>
                                               <span class="tech-editor-current" id="techEditorTitle">Selecciona una sección</span>
+                                              <i class="fas fa-chevron-right" id="techEditorSubSep" style="display:none;"></i>
+                                              <span class="tech-editor-current" id="techEditorSubTitle" style="display:none;"></span>
                                           </div>
                                           <div class="tech-editor-status" id="techEditorStatus">Sin cambios</div>
                                       </div>
@@ -1564,23 +1566,37 @@
                                             </div>
                                             <div class="tech-editor-row" id="techMetFQProtocoloTableRow">
                                                 <label>Protocolo de muestreo</label>
+                                                <div class="tech-fq-proto-counters">
+                                                    <div class="tech-fq-proto-counter-item">
+                                                        <span class="tech-fq-proto-counter-label">Puntos</span>
+                                                        <span class="tech-fq-proto-counter-val" id="techFQCountPuntos">0</span>
+                                                    </div>
+                                                    <div class="tech-fq-proto-counter-item">
+                                                        <span class="tech-fq-proto-counter-label">Muestras</span>
+                                                        <span class="tech-fq-proto-counter-val" id="techFQTotalMuestras">0</span>
+                                                    </div>
+                                                </div>
                                                 <div class="table-responsive">
                                                     <table class="tech-fq-protocol-table" id="techMetFQProtocolTable">
                                                         <thead>
                                                             <tr>
                                                                 <th style="width:48px;">#</th>
-                                                                <th>Nombre Estación</th>
+                                                                <th>Punto de Muestreo / Estación</th>
                                                                 <th>Lugar de Muestreo</th>
-                                                                <th>Coordenadas Geográficas</th>
-                                                                <th style="width:120px;">Matriz</th>
-                                                                <th style="width:40px;"></th>
+                                                                <th style="width:120px;">Datum</th>
+                                                                <th style="width:130px;">Latitud</th>
+                                                                <th style="width:130px;">Longitud</th>
+                                                                <th style="width:90px;">Estratos</th>
+                                                                <th style="width:90px;">Réplicas</th>
+                                                                <th style="width:90px;">Muestras</th>
+                                                                <th style="width:60px;">Acción</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody id="techMetFQProtocolTableBody"></tbody>
                                                     </table>
                                                 </div>
                                                 <div class="tech-editor-actions" style="margin-top:8px;">
-                                                    <button class="btn btn-default btn-sm" id="techMetFQAddProtocolPoint"><i class="fas fa-plus"></i> Agregar punto</button>
+                                                    <button class="btn btn-default btn-sm" id="techFQToggleAddPointBtn"><i class="fas fa-plus"></i> Agregar punto</button>
                                                 </div>
                                             </div>
                                             <div class="tech-editor-row" id="techMetFQProtocoloImgRow">
@@ -1607,19 +1623,21 @@
                                             </div>
                                             <div class="tech-editor-row" id="techMetFQParamsControlRow">
                                                 <label>Parámetros a analizar</label>
-                                                <div class="tech-editor-actions" style="margin-bottom:8px;">
-                                                    <button class="btn btn-default btn-sm" id="techOpenFQParametrosModal"><i class="fas fa-search"></i> Seleccionar parámetros</button>
+                                                <div class="tech-editor-hint" style="margin-bottom:8px;">
+                                                    Los parámetros de laboratorio deben ser ingresados en el paso 2 de servicios para que aparezcan en esta sección.
                                                 </div>
                                                 <div class="table-responsive">
                                                     <table class="tech-fq-param-table" id="techMetFQParamTable">
                                                         <thead>
                                                             <tr>
+                                                                <th style="width:48px;">#</th>
                                                                 <th>Parámetro</th>
-                                                                <th style="width:90px;">Unidad</th>
-                                                                <th style="width:120px;">Límite de detección</th>
                                                                 <th>Metodología</th>
+                                                                <th style="width:120px;">LD</th>
+                                                                <th style="width:90px;">Unidad</th>
+                                                                <th style="width:100px;">¿Afecta a ETFA?</th>
+                                                                <th class="etfa-validation-col" style="width:140px;">Validación ETFA</th>
                                                                 <th>Laboratorios</th>
-                                                                <th style="width:40px;"></th>
                                                             </tr>
                                                         </thead>
                                                         <tbody id="techMetFQParamTableBody"></tbody>
@@ -1635,7 +1653,7 @@
                                                 <div id="techEditorMetFQInSituIntro" class="quill-editor"></div>
                                             </div>
                                             <div class="tech-editor-row" id="techMetFQInSituControlRow">
-                                                <label>Parámetros de terreno</label>
+                                                <label>Lista de Parámetros / Mediciones de Terreno (deben venir de la cotización)</label>
                                                 <div class="tech-editor-actions" style="margin-bottom:8px;">
                                                     <button class="btn btn-default btn-sm" id="techOpenInSituModal"><i class="fas fa-search"></i> Seleccionar parámetros de terreno</button>
                                                 </div>
@@ -1643,9 +1661,13 @@
                                                     <table class="tech-fq-insitu-table" id="techMetFQInSituTable">
                                                         <thead>
                                                             <tr>
+                                                                <th style="width:48px;">#</th>
                                                                 <th>Parámetro</th>
-                                                                <th>Método / Equipo</th>
-                                                                <th style="width:40px;"></th>
+                                                                <th>Metodología (auto)</th>
+                                                                <th style="width:130px;">¿Afecta a ETFA?</th>
+                                                                <th class="etfa-validation-col" style="width:150px;">Validación ETFA</th>
+                                                                <th style="width:190px;">Instrumento/Equipo</th>
+                                                                <th style="width:50px;">Acción</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody id="techMetFQInSituTableBody"></tbody>
@@ -1655,6 +1677,136 @@
                                             <div class="tech-editor-row" id="techMetFQInSituFinalRow">
                                                 <label>Texto final</label>
                                                 <div id="techEditorMetFQInSituFinal" class="quill-editor"></div>
+                                            </div>
+                                        </div>
+                                        <div id="techEditorMetBioFields" style="display:none;">
+                                            <div class="tech-editor-row" id="techMetBioMatrixGroupRow">
+                                                <label>Matrices de componentes biológicos</label>
+                                                <div class="tech-metfq-matrix-controls">
+                                                    <select id="techMetBioMatrixSelect" class="form-control">
+                                                        <option value="FITOPLANCTON">Fitoplancton</option>
+                                                        <option value="ZOOPLANCTON">Zooplancton</option>
+                                                        <option value="ICTIOPLANCTON">Ictioplancton</option>
+                                                        <option value="MACROBENTONICA_SUB_BLANDO">Macrobentónica Submareal de Sustrato Blando</option>
+                                                        <option value="MACROBENTONICA_INTER_BLANDO">Macrobentónica Intermareal de Sustrato Blando</option>
+                                                        <option value="CENSO_AVES_MAM_REP">Censo Aves, Mamíferos Marinos y Reptiles</option>
+                                                        <option value="BANCOS_HIDROBIOLOGICOS">Bancos Naturales de Recursos Hidrobiológicos</option>
+                                                        <option value="ICTIOFAUNA_LITORAL">Ictiofauna Litoral</option>
+                                                        <option value="EPIBENTONICA_SUB_DURO">Epibentónica Submareal de Sustrato Duro</option>
+                                                        <option value="EPIBENTONICA_INTER_DURO">Epibentónica Intermareal de Sustrato Duro</option>
+                                                        <option value="MACROBENTONICA_INTER_DURO">Macrobentónica Intermareal de Sustrato Duro</option>
+                                                        <option value="FILMACIONES_ROV">Filmaciones ROV</option>
+                                                    </select>
+                                                    <button class="btn btn-warning btn-sm" id="techMetBioMatrixAddBtn" type="button"><i class="fas fa-plus"></i> Agregar matriz</button>
+                                                </div>
+                                                <div class="tech-metfq-matrix-chips" id="techMetBioMatrixChips"></div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetBioProtocoloRow">
+                                                <label>Introducción</label>
+                                                <div id="techEditorMetBioProtocolo" class="quill-editor"></div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetBioProtocoloTableRow">
+                                                <label>Puntos de muestreo</label>
+                                                <div class="tech-fq-proto-counters">
+                                                    <div class="tech-fq-proto-counter-item">
+                                                        <span class="tech-fq-proto-counter-label">Puntos</span>
+                                                        <span class="tech-fq-proto-counter-val" id="techBioCountPuntos">0</span>
+                                                    </div>
+                                                    <div class="tech-fq-proto-counter-item">
+                                                        <span class="tech-fq-proto-counter-label">Muestras</span>
+                                                        <span class="tech-fq-proto-counter-val" id="techBioTotalMuestras">0</span>
+                                                    </div>
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="tech-fq-protocol-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th style="width:48px;">#</th>
+                                                                <th>Punto de Muestreo / Estación</th>
+                                                                <th>Lugar de Muestreo</th>
+                                                                <th style="width:130px;">Latitud</th>
+                                                                <th style="width:130px;">Longitud</th>
+                                                                <th style="width:120px;">Datum</th>
+                                                                <th style="width:90px;">Estratos</th>
+                                                                <th style="width:90px;">Réplicas</th>
+                                                                <th style="width:90px;">Muestras</th>
+                                                                <th style="width:70px;">Acción</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="techBioEstacionesBody"></tbody>
+                                                    </table>
+                                                </div>
+                                                <div class="tech-editor-actions" style="margin-top:8px;">
+                                                    <button class="btn btn-default btn-sm" id="techBioToggleAddPointBtn" type="button"><i class="fas fa-plus"></i> Agregar punto</button>
+                                                </div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetBioProtocoloImgRow">
+                                                <label>Imagen asociada</label>
+                                                <div class="tech-map-upload" id="techMetBioProtocolImgUpload">
+                                                    <i class="fas fa-image" style="font-size:20px;color:#ccc;display:block;margin-bottom:6px;"></i>
+                                                    Subir imagen
+                                                </div>
+                                                <input type="file" id="techMetBioProtocolImgInput" accept="image/*" hidden>
+                                                <div class="tech-map-preview" id="techMetBioProtocolImgPreview" style="display:none;">
+                                                    <img id="techMetBioProtocolImgTag" alt="Imagen protocolo biológico">
+                                                    <div class="tech-map-actions">
+                                                        <button class="btn btn-default btn-sm" id="techMetBioProtocolImgRemove"><i class="fas fa-trash"></i> Quitar imagen</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetBioProtocoloDescRow">
+                                                <label>Descripción</label>
+                                                <div id="techEditorMetBioProtocoloDesc" class="quill-editor"></div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetBioEspecificacionesRow">
+                                                <label>Especificaciones por matriz</label>
+                                                <div id="techMetBioFitoplanctonMatrixWrap" style="display:none;">
+                                                    <table class="tech-fq-insitu-table">
+                                                        <thead><tr><th style="width:50%;">Cualitativo</th><th style="width:50%;">Cuantitativo</th></tr></thead>
+                                                        <tbody><tr>
+                                                            <td style="text-align:center;"><input type="checkbox" id="techMetBioFitoCualitativo"></td>
+                                                            <td style="text-align:center;"><input type="checkbox" id="techMetBioFitoCuantitativo"></td>
+                                                        </tr></tbody>
+                                                    </table>
+                                                </div>
+                                                <div id="techMetBioZooIctioMatrixWrap" style="display:none;">
+                                                    <table class="tech-fq-insitu-table">
+                                                        <thead><tr><th></th><th>Diurno</th><th>Nocturno</th></tr></thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Arrastre Vertical</td>
+                                                                <td style="text-align:center;"><input type="checkbox" id="techMetBioZooIctioVertDiurno"></td>
+                                                                <td style="text-align:center;"><input type="checkbox" id="techMetBioZooIctioVertNocturno"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Arrastre Horizontal</td>
+                                                                <td style="text-align:center;"><input type="checkbox" id="techMetBioZooIctioHorDiurno"></td>
+                                                                <td style="text-align:center;"><input type="checkbox" id="techMetBioZooIctioHorNocturno"></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div id="techMetBioCensoMatrixWrap" style="display:none;">
+                                                    <table class="tech-fq-insitu-table">
+                                                        <thead><tr><th></th><th>Diurno</th><th>Nocturno</th></tr></thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Mar</td>
+                                                                <td style="text-align:center;"><input type="checkbox" id="techMetBioCensoMarDiurno"></td>
+                                                                <td style="text-align:center;"><input type="checkbox" id="techMetBioCensoMarNocturno"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Tierra</td>
+                                                                <td style="text-align:center;"><input type="checkbox" id="techMetBioCensoTierraDiurno"></td>
+                                                                <td style="text-align:center;"><input type="checkbox" id="techMetBioCensoTierraNocturno"></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="tech-editor-row" id="techMetBioEspecificacionesDescRow">
+                                                <label>Descripción</label>
+                                                <div id="techEditorMetBioEspecificacionesDesc" class="quill-editor"></div>
                                             </div>
                                         </div>
                                         <div id="techEditorCustomFields" style="display:none;">

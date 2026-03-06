@@ -5608,6 +5608,62 @@
         .tech-editor-row .ql-editor table td,
         .tech-editor-row .ql-editor table th { border: 1px solid #e6e6e6; padding: 4px 8px; font-size: 11px; min-width: 40px; }
 
+        .tech-fq-add-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1.3fr 0.8fr 0.9fr 0.9fr auto;
+            gap: 8px;
+            align-items: center;
+        }
+
+        @media (max-width: 1100px) {
+            .tech-fq-add-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        #techFQAddPointForm .tech-editor-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
+
+        .tech-fq-add-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: flex-end;
+            white-space: nowrap;
+        }
+
+        #techFQCancelAddPointBtn {
+            background: #d8d8d8;
+            color: #555;
+            border: none;
+        }
+
+        #techFQCancelAddPointBtn:hover {
+            background: #c8c8c8;
+            color: #444;
+        }
+
+        #techOpenNormasModal,
+        #techOpenProModal,
+        #techOpenAuthModal,
+        #techOpenInSituModal {
+            background: #ef8157;
+            color: #fff;
+            border: none;
+        }
+
+        #techOpenNormasModal:hover,
+        #techOpenProModal:hover,
+        #techOpenAuthModal:hover,
+        #techOpenInSituModal:hover {
+            background: #e97042;
+        }
+
         /* quill-table-better overrides */
         .ql-table-better-inserting-table { font-family: 'Montserrat', sans-serif; font-size: 11px; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
         .ql-table-better-context-menu { font-family: 'Montserrat', sans-serif; font-size: 11px; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
@@ -6038,17 +6094,21 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 15px;
+            border: 1px solid #e9e9e9;
+            border-radius: 6px;
+            overflow: hidden;
         }
 
         .tech-fq-param-table th {
             padding: 10px 12px;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 500;
             color: #66615b;
             text-align: left;
             border-bottom: 2px solid #e9e9e9;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
+            text-transform: none;
+            letter-spacing: 0.1px;
+            background: #fafafa;
         }
 
         .tech-fq-param-table td {
@@ -6058,6 +6118,7 @@
             border-bottom: 1px solid #f0f0f0;
             vertical-align: middle;
             text-align: left;
+            background: #fff;
         }
         .tech-fq-param-table th:first-child,
         .tech-fq-param-table td:first-child {
@@ -6066,8 +6127,7 @@
         }
         .tech-fq-param-table th:last-child,
         .tech-fq-param-table td:last-child {
-            width: 60px;
-            text-align: center;
+            text-align: left;
         }
 
         .tech-fq-param-table tbody tr:hover {
@@ -6078,6 +6138,9 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
+            border: 1px solid #e9e9e9;
+            border-radius: 6px;
+            overflow: hidden;
         }
 
         .tech-fq-protocol-table th,
@@ -6090,11 +6153,15 @@
 
         .tech-fq-protocol-table th {
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 500;
             color: #66615b;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
+            text-transform: none;
+            letter-spacing: 0.1px;
             background: #fafafa;
+        }
+
+        .tech-fq-protocol-table td {
+            background: #fff;
         }
 
         .tech-fq-protocol-table td:first-child {
@@ -6170,6 +6237,14 @@
         }
         .tech-fq-protocol-table .fq-inline:focus { outline: none; border-color: #ef8157; background: #fff; }
         .tech-fq-protocol-table .fq-inline-num { width: 44px; text-align: center; }
+        .tech-fq-protocol-table .fq-inline.is-readonly {
+            background: transparent;
+            border-color: transparent;
+            color: #66615b;
+            padding-left: 0;
+            padding-right: 0;
+            cursor: default;
+        }
         .tech-fq-protocol-table .fq-muestras-cell {
             text-align: center;
             font-weight: 700;
@@ -6180,6 +6255,34 @@
             padding: 2px 4px; font-size: 11px; transition: color 0.15s;
         }
         .tech-fq-protocol-table .fq-remove-btn:hover { color: #ef8157; }
+        .tech-fq-protocol-table .fq-row-action {
+            background: none;
+            border: none;
+            padding: 2px 4px;
+            font-size: 12px;
+            color: #8a8178;
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+        .tech-fq-protocol-table .fq-row-action:hover { color: #ef8157; }
+        .tech-fq-protocol-table .fq-row-save { color: #57c08d; }
+        .tech-fq-protocol-table .fq-row-save:hover { color: #3ea877; }
+        .tech-fq-protocol-table .fq-row-cancel { color: #7f7f7f; }
+        .tech-fq-protocol-table .fq-row-cancel:hover { color: #5f5f5f; }
+        .fq-row-action {
+            background: none;
+            border: none;
+            padding: 2px 4px;
+            font-size: 12px;
+            color: #8a8178;
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+        .fq-row-action:hover { color: #ef8157; }
+        .fq-row-save { color: #57c08d; }
+        .fq-row-save:hover { color: #3ea877; }
+        .fq-row-cancel { color: #7f7f7f; }
+        .fq-row-cancel:hover { color: #5f5f5f; }
 
         .tech-fq-proto-add {
             display: flex;
@@ -6212,29 +6315,41 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
+            border: 1px solid #e9e9e9;
+            border-radius: 6px;
+            overflow: hidden;
         }
 
         .tech-fq-insitu-table th,
         .tech-fq-insitu-table td {
-            border: 1px solid #c8c8c8;
-            padding: 8px 10px;
-            vertical-align: top;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 10px 12px;
+            vertical-align: middle;
+            text-align: left;
+        }
+
+        .tech-fq-insitu-table td {
+            background: #fff;
         }
 
         .tech-fq-insitu-table th {
-            background: #5b6f86;
-            color: #fff;
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 500;
+            color: #66615b;
             text-transform: none;
+            letter-spacing: 0.1px;
+            background: #fafafa;
+            border-bottom: 2px solid #e9e9e9;
         }
 
         .tech-fq-insitu-table td:last-child {
             text-align: center;
             width: 40px;
+            background: #fff;
         }
 
-        .tech-fq-param-table .form-control-inline {
+        .tech-fq-param-table .form-control-inline,
+        .tech-fq-insitu-table .form-control-inline {
             width: 100%;
             border: 1px solid #ddd;
             border-radius: 6px;
@@ -6244,7 +6359,8 @@
             color: #66615b;
             font-family: inherit;
         }
-        .tech-fq-param-table .form-control-inline:focus {
+        .tech-fq-param-table .form-control-inline:focus,
+        .tech-fq-insitu-table .form-control-inline:focus {
             outline: none;
             border-color: #ef8157;
             box-shadow: 0 0 0 2px rgba(239,129,87,0.1);
@@ -6253,7 +6369,8 @@
             min-width: 210px;
         }
 
-        .tech-fq-param-table .etfa-validation-col .ok {
+        .tech-fq-param-table .etfa-validation-col .ok,
+        .tech-fq-insitu-table .etfa-validation-col .ok {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -6261,11 +6378,13 @@
             font-weight: 700;
         }
 
-        .tech-fq-param-table .etfa-validation-col .na {
+        .tech-fq-param-table .etfa-validation-col .na,
+        .tech-fq-insitu-table .etfa-validation-col .na {
             color: #b0b0b0;
         }
 
-        .tech-fq-param-table .btn-remove {
+        .tech-fq-param-table .btn-remove,
+        .tech-fq-insitu-table .btn-remove {
             background: none;
             border: none;
             color: #ef8157;
@@ -6274,7 +6393,8 @@
             padding: 4px 8px;
             transition: color 0.2s;
         }
-        .tech-fq-param-table .btn-remove:hover {
+        .tech-fq-param-table .btn-remove:hover,
+        .tech-fq-insitu-table .btn-remove:hover {
             color: #d9534f;
         }
 
