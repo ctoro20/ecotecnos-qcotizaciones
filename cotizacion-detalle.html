@@ -549,12 +549,20 @@
                                     <div class="service-section-desc">Agrupa servicios por producto y presentación. Los grupos sólo aplican a laboratorio.</div>
                                 </div>
                                 <div class="service-section-actions">
-                                    <button class="btn btn-warning" id="btnAgregarNuevoGrupo">
-                                        <i class="fas fa-plus"></i> Agregar Nuevo Grupo
-                                    </button>
-                                    <button class="btn btn-success">
-                                        <i class="fas fa-plus"></i> Agregar Grupo Existente
-                                    </button>
+                                    <div class="service-actions-dropdown" id="labAddActionsDropdown">
+                                        <button class="btn btn-warning service-actions-toggle" id="btnLabAgregarMenu" type="button">
+                                            <i class="fas fa-plus"></i> Grupo
+                                            <i class="fas fa-chevron-down"></i>
+                                        </button>
+                                        <div class="service-actions-menu" id="labAddActionsMenu">
+                                            <button type="button" class="service-actions-item" id="btnAgregarNuevoGrupo">
+                                                <i class="fas fa-th-large"></i> Nuevo Grupo
+                                            </button>
+                                            <button type="button" class="service-actions-item" id="btnAgregarGrupoExistente">
+                                                <i class="fas fa-th-large"></i> Grupo Existente
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -562,14 +570,16 @@
                             <div class="service-group">
                                 <div class="service-group-header">
                                     <div class="group-title">
-                                        <i class="fas fa-expand-alt text-warning"></i>
+                                        <i class="fas fa-grip-vertical group-drag-handle" title="Arrastrar grupo para reordenar" draggable="true"></i>
                                         Grupo 1: Salmuera 1 - COT CIT
                                     </div>
                                     <div class="group-actions">
+                                        <i class="fas fa-arrow-up" title="Subir grupo"></i>
+                                        <i class="fas fa-arrow-down" title="Bajar grupo"></i>
                                         <i class="fas fa-pen"></i>
                                         <i class="fas fa-trash"></i>
                                         <button class="btn btn-success btn-sm js-open-service-modal" data-context="lab">
-                                            <i class="fas fa-plus"></i> Agregar servicio
+                                            <i class="fas fa-plus"></i> Servicio
                                         </button>
                                     </div>
                                 </div>
@@ -584,16 +594,14 @@
                                                 <th>#</th>
                                                 <th>Servicio</th>
                                                 <th>LD*</th>
-                                                <th>Metodología</th>
+                                                <th>Laboratorio</th>
+                                                <th>T. Resp.</th>
                                                 <th>Unidad</th>
                                                 <th>Precio Unit.</th>
                                                 <th>Tipo Var.</th>
                                                 <th>Variación</th>
                                                 <th>Cant</th>
                                                 <th>Total</th>
-                                                <th>Laboratorio</th>
-                                                <th>Tiempo Resp.</th>
-                                                <th>ETFA</th>
                                                 <th></th>
                                             </tr>
                                         </thead>
@@ -611,7 +619,7 @@
                                                 <td>0.98</td>
                                                 <td>Lab. Santiago - ENV</td>
                                                 <td>12</td>
-                                                <td><input type="checkbox" disabled></td>
+                                                <td><input type="checkbox" checked disabled></td>
                                                 <td>
                                                     <i class="fas fa-edit"></i>
                                                     <i class="fas fa-trash"></i>
@@ -630,7 +638,7 @@
                                                 <td>0.68</td>
                                                 <td>Lab. Santiago - ENV</td>
                                                 <td>12</td>
-                                                <td><input type="checkbox" disabled></td>
+                                                <td><input type="checkbox" checked disabled></td>
                                                 <td>
                                                     <i class="fas fa-edit"></i>
                                                     <i class="fas fa-trash"></i>
@@ -645,14 +653,16 @@
                             <div class="service-group">
                                 <div class="service-group-header">
                                     <div class="group-title">
-                                        <i class="fas fa-expand-alt text-warning"></i>
+                                        <i class="fas fa-grip-vertical group-drag-handle" title="Arrastrar grupo para reordenar" draggable="true"></i>
                                         Grupo 2: Salmuera
                                     </div>
                                     <div class="group-actions">
+                                        <i class="fas fa-arrow-up" title="Subir grupo"></i>
+                                        <i class="fas fa-arrow-down" title="Bajar grupo"></i>
                                         <i class="fas fa-pen"></i>
                                         <i class="fas fa-trash"></i>
                                         <button class="btn btn-success btn-sm js-open-service-modal" data-context="lab">
-                                            <i class="fas fa-plus"></i> Agregar servicio
+                                            <i class="fas fa-plus"></i> Servicio
                                         </button>
                                     </div>
                                 </div>
@@ -667,16 +677,14 @@
                                                 <th>#</th>
                                                 <th>Servicio</th>
                                                 <th>LD*</th>
-                                                <th>Metodología</th>
+                                                <th>Laboratorio</th>
+                                                <th>T. Resp.</th>
                                                 <th>Unidad</th>
                                                 <th>Precio Unit.</th>
                                                 <th>Tipo Var.</th>
                                                 <th>Variación</th>
                                                 <th>Cant</th>
                                                 <th>Total</th>
-                                                <th>Laboratorio</th>
-                                                <th>Tiempo Resp.</th>
-                                                <th>ETFA</th>
                                                 <th></th>
                                             </tr>
                                         </thead>
@@ -735,7 +743,7 @@
                                 </div>
                                 <div class="service-section-actions">
                                     <button class="btn btn-success btn-sm js-open-service-modal" data-context="field">
-                                        <i class="fas fa-plus"></i> Agregar Servicio
+                                        <i class="fas fa-plus"></i> Servicio
                                     </button>
                                 </div>
                             </div>
@@ -765,7 +773,7 @@
                                                         <i class="fas fa-copy muestreo-duplicate" title="Duplicar"></i>
                                                         <span class="muestreo-code">10010168</span>
                                                     </div>
-                                                    <div class="muestreo-budget-meta">MONITOREO AGUAS (2023) /  MONITOREO AGUAS RESIDUALES (2023)</div>
+                                                    <div class="muestreo-budget-meta">Monitoreo Aguas (2023) /  Monitoreo Aguas Residuales (2023)</div>
                                                 </td>
                                                 <td>UND</td>
                                                 <td align="right">0.00</td>
@@ -801,7 +809,7 @@
                                 </div>
                                   <div class="service-section-actions">
                                       <button class="btn btn-success btn-sm js-open-service-modal" data-context="other">
-                                          <i class="fas fa-plus"></i> Agregar Servicio
+                                          <i class="fas fa-plus"></i> Servicio
                                       </button>
                                   </div>
                             </div>
@@ -831,7 +839,7 @@
                                                           <i class="fas fa-copy muestreo-duplicate" title="Duplicar"></i>
                                                           <span class="muestreo-code">104582</span>
                                                       </div>
-                                                      <div class="muestreo-budget-meta">CONSULTORIA AMBIENTAL (2024) /  AUDITORIA AMBIENTAL</div>
+                                                      <div class="muestreo-budget-meta">Consultoria Ambiental (2024) /  Auditoria Ambiental</div>
                                                   </td>
                                                   <td>SERV</td>
                                                   <td align="right">0.00</td>
@@ -878,7 +886,6 @@
                         <div class="simple-modal">
                             <div class="simple-modal-header">
                                 <span>Agregar Nuevo Grupo</span>
-                                <button class="btn btn-default btn-sm" id="btnCerrarModalGrupo">Cerrar</button>
                             </div>
                             <div class="simple-modal-body">
                                 <div class="form-group">

@@ -583,6 +583,12 @@
                     numCell.textContent = (index + 1).toString();
                 }
                 syncLabRowComputedValues(tr);
+                ensureLabSecondaryRow(
+                    tr,
+                    findLabControl(tr, '.js-lab-laboratorio') ? findLabControl(tr, '.js-lab-laboratorio').value : 'Santiago',
+                    findLabControl(tr, '.js-lab-tiempo') ? findLabControl(tr, '.js-lab-tiempo').value : '12',
+                    !!(findLabControl(tr, '.js-lab-etfa') && findLabControl(tr, '.js-lab-etfa').checked)
+                );
                 var totalCell = tr.querySelectorAll('td')[10];
                 if (totalCell) {
                     var totalVal = parseFloat(totalCell.textContent.replace(',', '.')) || 0;
@@ -609,6 +615,29 @@
 
         function findLabControl(mainRow, selector) {
             return mainRow ? mainRow.querySelector(selector) : null;
+        }
+
+        function resolveLabServiceCodeByName(serviceName) {
+            var name = (serviceName || '').toString().trim().toLowerCase();
+            if (!name) return '';
+            var cards = Array.from(document.querySelectorAll('#modalBuscarServicios .service-card[data-context="lab"]'));
+            for (var i = 0; i < cards.length; i++) {
+                var card = cards[i];
+                var cardName = ((card.getAttribute('data-servicio') || '').toString().trim().toLowerCase());
+                if (cardName === name) {
+                    var codeEl = card.querySelector('.service-card-code');
+                    var code = codeEl ? codeEl.textContent.trim() : '';
+                    if (!code) {
+                        code = (card.getAttribute('data-etfa-code') || '').toString().trim();
+                    }
+                    return code;
+                }
+            }
+            var hash = 0;
+            for (var j = 0; j < name.length; j++) {
+                hash = (hash * 31 + name.charCodeAt(j)) % 90000000;
+            }
+            return String(10000000 + hash);
         }
 
         function ensureLabSecondaryRow(mainRow, laboratorio, tiempo, etfaChecked) {
@@ -652,8 +681,16 @@
             }
 
             if (actionCell) {
+                var rowCodeEl = row.querySelector('.lab-service-code strong');
+                var etfaCodeText = rowCodeEl ? rowCodeEl.textContent.trim() : '';
                 var etfaHtml =
-                    '<label class="lab-etfa-inline lab-etfa-action"><input type="checkbox" class="js-lab-etfa" ' + (isEtfa ? 'checked ' : '') + 'disabled> ETFA</label>';
+                    '<label class="lab-etfa-inline lab-etfa-action' + (isEtfa ? ' is-checked' : '') + '">' +
+                        '<span class="lab-etfa-status">' +
+                            '<i class="fas fa-check-circle"></i>' +
+                            '<span class="lab-etfa-code">' + (etfaCodeText || '') + '</span>' +
+                        '</span>' +
+                        '<input type="checkbox" class="js-lab-etfa" ' + (isEtfa ? 'checked ' : '') + 'disabled>' +
+                    '</label>';
                 var firstIcon = actionCell.querySelector('i');
                 if (firstIcon) {
                     firstIcon.insertAdjacentHTML('beforebegin', etfaHtml);
@@ -698,69 +735,85 @@
             }
 
             var hasOldColumns = cells.length >= 13;
-            var tipo = (cells[7].textContent || 'PORCENTAJE').trim();
-            var variacion = (parseFloat((cells[8].textContent || '0').replace(',', '.')) || 0).toFixed(2);
-            var cantidad = (parseFloat((cells[9].textContent || '1').replace(',', '.')) || 1).toFixed(2);
-            var serviceCell = cells[1];
-            if (serviceCell) {
-                var oldExtra = serviceCell.querySelector('.lab-service-extra');
-                if (oldExtra) {
-                    oldExtra.remove();
-                }
-            }
+            var indexText = (cells[0] ? cells[0].textContent.trim() : '1') || '1';
             var existingLab = mainRow.querySelector('.js-lab-laboratorio');
             var existingTime = mainRow.querySelector('.js-lab-tiempo');
             var existingEtfa = mainRow.querySelector('.js-lab-etfa');
             var currentLabControl = findLabControl(mainRow, '.js-lab-laboratorio');
             var currentTimeControl = findLabControl(mainRow, '.js-lab-tiempo');
             var currentEtfaControl = findLabControl(mainRow, '.js-lab-etfa');
-            var laboratorio = hasOldColumns
-                ? (cells[9].textContent || '').trim()
-                : ((existingLab && existingLab.value) || (currentLabControl && currentLabControl.value) || 'Santiago');
-            var tiempo = hasOldColumns
-                ? (cells[10].textContent || '12').trim()
-                : ((existingTime && existingTime.value) || (currentTimeControl && currentTimeControl.value) || '12');
-            var etfaChecked = hasOldColumns
-                ? !!mainRow.querySelector('td:nth-child(12) input[type="checkbox"]:checked')
-                : !!((existingEtfa && existingEtfa.checked) || (currentEtfaControl && currentEtfaControl.checked));
 
-            if (!mainRow.querySelector('.js-lab-tipo')) {
-                cells[7].innerHTML =
-                    '<select class="lab-cell-input lab-cell-select lab-edit-control js-lab-tipo" disabled>' +
-                        '<option value="PORCENTAJE"' + (tipo === 'PORCENTAJE' ? ' selected' : '') + '>Porcentaje</option>' +
-                        '<option value="FIJO"' + (tipo === 'FIJO' ? ' selected' : '') + '>Fijo</option>' +
-                    '</select>';
-            }
-
-            if (!mainRow.querySelector('.js-lab-variacion')) {
-                cells[8].innerHTML =
-                    '<input type="number" min="0" step="0.01" value="' + variacion + '" class="lab-cell-input lab-edit-control js-lab-variacion" disabled>';
-            }
-
-            if (!mainRow.querySelector('.js-lab-cantidad')) {
-                cells[9].innerHTML =
-                    '<input type="number" min="1" step="1" value="' + cantidad + '" class="lab-cell-input lab-edit-control js-lab-cantidad" disabled>';
-            }
+            var serviceName = '';
+            var serviceCode = '';
+            var serviceMethod = '';
+            var ld = '';
+            var unidad = '';
+            var precio = 0;
+            var tipo = 'PORCENTAJE';
+            var variacion = 0;
+            var cantidad = 1;
+            var total = 0;
+            var laboratorio = 'Santiago';
+            var tiempo = '12';
+            var etfaChecked = false;
 
             if (hasOldColumns) {
-                mainRow.deleteCell(11);
-                mainRow.deleteCell(10);
-                mainRow.deleteCell(9);
-                cells = mainRow.querySelectorAll('td');
+                serviceName = (cells[1] ? cells[1].textContent.trim() : '');
+                serviceMethod = (cells[3] ? cells[3].textContent.trim() : '');
+                serviceCode = resolveLabServiceCodeByName(serviceName);
+                ld = (cells[2] ? cells[2].textContent.trim() : '');
+                unidad = (cells[4] ? cells[4].textContent.trim() : '');
+                precio = parseFloat((cells[5] ? cells[5].textContent : '0').replace(',', '.')) || 0;
+                tipo = (cells[6] ? cells[6].textContent.trim() : 'PORCENTAJE') || 'PORCENTAJE';
+                variacion = parseFloat((cells[7] ? cells[7].textContent : '0').replace(',', '.')) || 0;
+                cantidad = parseFloat((cells[8] ? cells[8].textContent : '1').replace(',', '.')) || 1;
+                total = parseFloat((cells[9] ? cells[9].textContent : '0').replace(',', '.')) || 0;
+                laboratorio = (cells[10] ? cells[10].textContent.trim() : 'Santiago') || 'Santiago';
+                laboratorio = laboratorio.replace(/^Lab\.\s*/i, '').replace(/\s*-\s*ENV$/i, '').trim() || 'Santiago';
+                tiempo = (cells[11] ? cells[11].textContent.trim() : '12') || '12';
+                etfaChecked = !!mainRow.querySelector('td:nth-child(13) input[type="checkbox"]:checked');
+            } else {
+                var nameEl = mainRow.querySelector('.lab-service-name');
+                var codeEl = mainRow.querySelector('.lab-service-code strong');
+                var methodEl = mainRow.querySelector('.lab-service-method');
+                serviceName = nameEl ? nameEl.textContent.trim() : (cells[1] ? cells[1].textContent.trim() : '');
+                serviceCode = codeEl ? codeEl.textContent.trim() : resolveLabServiceCodeByName(serviceName);
+                serviceMethod = methodEl ? methodEl.textContent.trim() : '';
+                ld = (cells[2] ? cells[2].textContent.trim() : '');
+                unidad = (cells[5] ? cells[5].textContent.trim() : '');
+                precio = parseFloat((cells[6] ? cells[6].textContent : '0').replace(',', '.')) || 0;
+                var tipoSel = mainRow.querySelector('.js-lab-tipo');
+                tipo = tipoSel ? tipoSel.value : ((cells[7] ? cells[7].textContent.trim() : 'PORCENTAJE') || 'PORCENTAJE');
+                var varInput = mainRow.querySelector('.js-lab-variacion');
+                variacion = varInput ? (parseFloat((varInput.value || '0').replace(',', '.')) || 0) : (parseFloat((cells[8] ? cells[8].textContent : '0').replace(',', '.')) || 0);
+                var cantInput = mainRow.querySelector('.js-lab-cantidad');
+                cantidad = cantInput ? (parseFloat((cantInput.value || '1').replace(',', '.')) || 1) : (parseFloat((cells[9] ? cells[9].textContent : '1').replace(',', '.')) || 1);
+                total = parseFloat((cells[10] ? cells[10].textContent : '0').replace(',', '.')) || 0;
+                laboratorio = ((existingLab && existingLab.value) || (currentLabControl && currentLabControl.value) || 'Santiago');
+                tiempo = ((existingTime && existingTime.value) || (currentTimeControl && currentTimeControl.value) || '12');
+                etfaChecked = !!((existingEtfa && existingEtfa.checked) || (currentEtfaControl && currentEtfaControl.checked));
             }
 
-            // Estructura nueva: Laboratorio y Tresp después de LD
-            if (cells.length === 10) {
-                var labTd = mainRow.insertCell(3);
-                labTd.innerHTML = '';
-                var timeTd = mainRow.insertCell(4);
-                timeTd.innerHTML = '';
-                cells = mainRow.querySelectorAll('td');
-            } else if (cells.length === 11) {
-                var timeTdOnly = mainRow.insertCell(4);
-                timeTdOnly.innerHTML = '';
-                cells = mainRow.querySelectorAll('td');
-            }
+            mainRow.innerHTML =
+                '<td class="text-center">' + indexText + '</td>' +
+                '<td><span class="lab-service-name">' + serviceName + '</span><span class="lab-service-code"><strong>' + (serviceCode || '') + '</strong>' +
+                    (serviceMethod ? '<span class="lab-service-separator"> / </span><span class="lab-service-method">' + serviceMethod + '</span>' : '') +
+                '</span></td>' +
+                '<td>' + ld + '</td>' +
+                '<td></td>' +
+                '<td></td>' +
+                '<td>' + unidad + '</td>' +
+                '<td align="right">' + precio.toFixed(2) + '</td>' +
+                '<td><select class="lab-cell-input lab-cell-select lab-edit-control js-lab-tipo" disabled>' +
+                    '<option value="PORCENTAJE"' + (tipo === 'PORCENTAJE' ? ' selected' : '') + '>Porcentaje</option>' +
+                    '<option value="FIJO"' + (tipo === 'FIJO' ? ' selected' : '') + '>Fijo</option>' +
+                '</select></td>' +
+                '<td align="right"><input type="number" min="0" step="0.01" value="' + variacion.toFixed(2) + '" class="lab-cell-input lab-edit-control js-lab-variacion" disabled></td>' +
+                '<td align="right"><input type="number" min="1" step="1" value="' + cantidad.toFixed(2) + '" class="lab-cell-input lab-edit-control js-lab-cantidad" disabled></td>' +
+                '<td align="right">' + total.toFixed(2) + '</td>' +
+                '<td style="width:110px"><i class="fas fa-edit lab-edit-row" title="Editar"></i> <i class="fas fa-times lab-cancel-row" title="Cancelar edición"></i> <i class="fas fa-trash" title="Eliminar"></i></td>';
+
+            cells = mainRow.querySelectorAll('td');
             ensureLabSecondaryRow(mainRow, laboratorio, tiempo, etfaChecked);
 
             var editIcon = mainRow.querySelector('i.fa-edit');
@@ -957,6 +1010,7 @@
                     '<td align="right">' + precioNum.toFixed(2) + '</td>' +
                     '<td style="width:110px"><i class="fas fa-edit lab-edit-row" title="Editar"></i> <i class="fas fa-times lab-cancel-row" title="Cancelar edición"></i> <i class="fas fa-trash" title="Eliminar"></i></td>';
                 tr.classList.add('lab-main-row');
+                decorateLabServiceRow(tr);
 
                 tbody.appendChild(tr);
             });
@@ -1828,9 +1882,27 @@
 
             // Nuevo grupo modal events
             document.getElementById('btnAgregarNuevoGrupo').addEventListener('click', openNuevoGrupoModal);
-            document.getElementById('btnCerrarModalGrupo').addEventListener('click', closeNuevoGrupoModal);
             document.getElementById('btnCancelarGrupoNuevo').addEventListener('click', closeNuevoGrupoModal);
             document.getElementById('btnGuardarGrupoNuevo').addEventListener('click', addGrupoServicio);
+
+            var btnLabAgregarMenu = document.getElementById('btnLabAgregarMenu');
+            var labAddActionsDropdown = document.getElementById('labAddActionsDropdown');
+            if (btnLabAgregarMenu && labAddActionsDropdown) {
+                btnLabAgregarMenu.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    labAddActionsDropdown.classList.toggle('open');
+                });
+                document.addEventListener('click', function(ev) {
+                    if (!labAddActionsDropdown.contains(ev.target)) {
+                        labAddActionsDropdown.classList.remove('open');
+                    }
+                });
+                labAddActionsDropdown.querySelectorAll('.service-actions-item').forEach(function(itemBtn) {
+                    itemBtn.addEventListener('click', function() {
+                        labAddActionsDropdown.classList.remove('open');
+                    });
+                });
+            }
 
             initSortableServiceTable('divDetalleServicioMuestreo', updateMuestreoRowsAndSubtotal);
             initSortableServiceTable('divDetalleServicioMon', updateOtrosRowsAndSubtotal);
@@ -4798,6 +4870,8 @@
                 var unidad = cells[5] ? cells[5].textContent.trim() : '';
                 var limite = cells[2] ? cells[2].textContent.trim() : '';
                 var etfaCode = codeEl ? codeEl.textContent.trim() : '';
+                var etfaEl = row.querySelector('.js-lab-etfa');
+                var afectaETFA = etfaEl ? (etfaEl.checked ? 'SI' : 'NO') : 'NO';
                 var laboratorio = mapLabNameToDisplay(labEl ? labEl.value : '');
                 var key = (matrixValue + '|' + parametro + '|' + metodologia + '|' + laboratorio).toLowerCase();
 
@@ -4811,6 +4885,7 @@
                         metodo: metodologia || '—',
                         laboratorio: laboratorio,
                         matriz: matrixValue,
+                        afectaETFA: afectaETFA,
                         etfaCode: etfaCode || ''
                     };
                 }

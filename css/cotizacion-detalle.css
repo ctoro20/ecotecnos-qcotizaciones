@@ -622,6 +622,67 @@
             flex-wrap: wrap;
         }
 
+        .service-actions-dropdown {
+            position: relative;
+        }
+
+        .service-actions-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .service-actions-toggle .fa-chevron-down {
+            font-size: 10px;
+            opacity: 0.9;
+            margin-left: 2px;
+        }
+
+        .service-actions-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 230px;
+            background: #fff;
+            border: 1px solid #ebe4dd;
+            border-radius: 10px;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+            padding: 6px;
+            display: none;
+            z-index: 1200;
+        }
+
+        .service-actions-dropdown.open .service-actions-menu {
+            display: block;
+        }
+
+        .service-actions-item {
+            width: 100%;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #5f5750;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .service-actions-item i {
+            color: #ef8157;
+            width: 14px;
+            text-align: center;
+        }
+
+        .service-actions-item:hover {
+            background: #f7f3ef;
+            color: #3f3a35;
+        }
+
         /* Step 2 dummy services */
         .service-group {
             border: 1px solid #e7e4df;
@@ -670,14 +731,14 @@
             color: #ef8157;
         }
 
-        .service-group-header .group-actions i {
+        .service-group-header .group-actions > i {
             margin-left: 10px;
             cursor: pointer;
             color: #66615b;
             transition: color 0.2s;
         }
 
-        .service-group-header .group-actions i:hover {
+        .service-group-header .group-actions > i:hover {
             color: #ef8157;
         }
 
@@ -687,7 +748,7 @@
             gap: 18px;
         }
 
-        .service-group-header .group-actions i + i {
+        .service-group-header .group-actions > i + i {
             margin-left: 2px;
         }
 
@@ -906,10 +967,51 @@
         #divGruposServicioLab .lab-etfa-action {
             display: inline-flex;
             align-items: center;
+            gap: 4px;
             margin-right: 12px;
             font-size: 10px;
             color: #777;
             vertical-align: middle;
+            min-width: 86px;
+            justify-content: flex-end;
+        }
+
+        #divGruposServicioLab .lab-etfa-action .lab-etfa-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            min-width: 60px;
+            justify-content: flex-end;
+            color: #999;
+            visibility: hidden;
+        }
+
+        #divGruposServicioLab .lab-etfa-action .lab-etfa-status i {
+            color: #41b883;
+            font-size: 11px;
+        }
+
+        #divGruposServicioLab .lab-etfa-action input[type="checkbox"] {
+            accent-color: #2fa06f;
+            width: 13px;
+            height: 13px;
+            margin: 0;
+        }
+
+        #divGruposServicioLab .lab-etfa-action.is-checked {
+            color: #2fa06f;
+            font-weight: 700;
+        }
+
+        #divGruposServicioLab .lab-etfa-action.is-checked .lab-etfa-status {
+            visibility: visible;
+        }
+
+        #divGruposServicioLab .lab-etfa-action .lab-etfa-code {
+            color: #8c8c8c;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+            margin-left: 0;
         }
 
         #divGruposServicioLab .table-lct th:last-child,
