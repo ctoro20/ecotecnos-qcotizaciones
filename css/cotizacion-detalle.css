@@ -189,6 +189,11 @@
             letter-spacing: 2px;
         }
 
+        .sidebar .logo-text.logo-text-compact {
+            font-size: 22px;
+            letter-spacing: 1px;
+        }
+
         .sidebar .user {
             padding: 20px;
             border-bottom: 1px solid rgba(255,255,255,0.1);

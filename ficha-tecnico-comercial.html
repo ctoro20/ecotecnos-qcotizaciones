@@ -61,6 +61,11 @@
             letter-spacing: 2px;
         }
 
+        .sidebar .logo-text.logo-text-compact {
+            font-size: 22px;
+            letter-spacing: 1px;
+        }
+
         .sidebar .user {
             padding: 20px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -167,6 +172,35 @@
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .company-switcher {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .company-switcher label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #66615b;
+        }
+
+        .company-select {
+            padding: 8px 35px 8px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #fff;
+            background: #ef8157;
+            border: none;
+            border-radius: 20px;
+            cursor: default;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            min-width: 150px;
+            opacity: 1;
         }
 
         .ficha-status-label {
@@ -1129,7 +1163,7 @@
             <div class="logo">
                 <div class="logo-container">
                     <div class="logo-top-line"></div>
-                    <div class="logo-text">SGS</div>
+                    <div class="logo-text logo-text-compact">ECOTECNOS</div>
                 </div>
             </div>
 
@@ -1143,25 +1177,19 @@
 
             <ul class="nav">
                 <li>
-                    <a href="#">
+                    <a href="inicio.html">
                         <i class="fas fa-home"></i>
                         <span>Inicio</span>
                     </a>
                 </li>
-                <li>
-                    <a href="#">
-                        <i class="far fa-square"></i>
-                        <span>Tarifario</span>
-                    </a>
-                </li>
                 <li class="active">
-                    <a href="cotizaciones-sgs.html">
+                    <a href="index.html">
                         <i class="far fa-circle"></i>
                         <span>Listado Cotizaciones/Propuestas</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#">
+                    <a href="aprobar-cotizaciones.html">
                         <i class="fas fa-check"></i>
                         <span>Aprobar cotizaciones</span>
                     </a>
@@ -1191,6 +1219,12 @@
                         <i class="fas fa-clock"></i>
                         <span id="fichaStatusText">Pendiente de Completar</span>
                     </span>
+                    <div class="company-switcher">
+                        <label>Empresa:</label>
+                        <select id="companySelect" class="company-select" disabled>
+                            <option value="ECOTECNOS" selected>ECOTECNOS</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -1198,7 +1232,7 @@
             <div class="content">
                 <!-- Back Button -->
                 <div style="margin-bottom: 20px;">
-                    <a href="cotizaciones-sgs.html" class="btn btn-default">
+                    <a href="index.html" class="btn btn-default">
                         <i class="fas fa-arrow-left"></i> Volver
                     </a>
                 </div>

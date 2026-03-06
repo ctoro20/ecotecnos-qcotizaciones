@@ -1841,7 +1841,8 @@
 
         // Load company from localStorage
         document.addEventListener('DOMContentLoaded', function() {
-            var savedCompany = localStorage.getItem('selectedCompany') || 'SGS';
+            var savedCompany = 'ECOTECNOS';
+            localStorage.setItem('selectedCompany', savedCompany);
             document.getElementById('companySelect').value = savedCompany;
 
             // Bind events

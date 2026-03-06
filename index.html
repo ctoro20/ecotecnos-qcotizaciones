@@ -971,10 +971,8 @@
                 </div>
                 <div class="company-switcher">
                     <label>Empresa:</label>
-                    <select id="companySelect" class="company-select" onchange="switchCompany(this.value)">
+                    <select id="companySelect" class="company-select" disabled>
                         <option value="ECOTECNOS" selected>ECOTECNOS</option>
-                        <option value="CONEMI">CONEMI</option>
-                        <option value="SGS">SGS</option>
                     </select>
                 </div>
             </div>
@@ -1619,7 +1617,7 @@
     </div>
 
     <script>
-        var currentCompany = 'SGS';
+        var currentCompany = 'ECOTECNOS';
         var pendingCompany = null;
 
         // Toggle dropdown
@@ -1779,6 +1777,11 @@
             return !filter || normalizeText(value).indexOf(filter) !== -1;
         }
 
+        function getEffectiveCompanyForList(company) {
+            // La maqueta queda fija en Ecotecnos, pero el listado requerido es el de SGS.
+            return company === 'ECOTECNOS' ? 'SGS' : company;
+        }
+
         function rowMatchesFilters(row, filters) {
             var cells = row.querySelectorAll('td');
             var clientName = row.querySelector('.client-name');
@@ -1823,10 +1826,11 @@
         function applyFilters() {
             var rows = document.querySelectorAll('#tblCotizaciones tbody tr');
             var filters = getFilterValues();
+            var effectiveCompany = getEffectiveCompanyForList(filters.company);
             var visibleCount = 0;
 
             rows.forEach(function(row) {
-                var matchesCompany = row.getAttribute('data-company') === filters.company;
+                var matchesCompany = row.getAttribute('data-company') === effectiveCompany;
                 var matchesFilters = matchesCompany && rowMatchesFilters(row, filters);
 
                 row.style.display = matchesFilters ? '' : 'none';
@@ -1881,12 +1885,12 @@
 
         // Cargar empresa guardada al iniciar
         document.addEventListener('DOMContentLoaded', function() {
-            var savedCompany = localStorage.getItem('selectedCompany') || 'SGS';
-            currentCompany = savedCompany;
-            document.getElementById('companySelect').value = savedCompany;
-            updateBranding(savedCompany);
+            currentCompany = 'ECOTECNOS';
+            localStorage.setItem('selectedCompany', currentCompany);
+            document.getElementById('companySelect').value = currentCompany;
+            updateBranding(currentCompany);
             setupLiveFilters();
-            filterTableByCompany(savedCompany);
+            filterTableByCompany(currentCompany);
         });
 
     </script>
