@@ -1936,7 +1936,7 @@
         ];
 
         // Parámetros seleccionados (simulación de prellenado desde cotización)
-        var parametrosSeleccionados = [
+        var defaultParametrosSeleccionados = [
             {
                 parametro: 'Conductividad',
                 metodo: 'PI A&S-2 (Versión 3) / IGEN-2.5 versión 0 medidor multiparámetro',
@@ -1963,10 +1963,96 @@
             }
         ];
 
+        var SHARED_LAB_CATALOG_KEY = 'qcotizaciones.labCatalog';
+        var SHARED_LAB_SELECTED_KEY = 'qcotizaciones.labSelected';
+        var SHARED_FIELD_SELECTED_KEY = 'qcotizaciones.fieldSelected';
+
+        function loadSharedLabCatalog() {
+            try {
+                var raw = localStorage.getItem(SHARED_LAB_CATALOG_KEY);
+                if (!raw) return [];
+                var parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) return [];
+                return parsed
+                    .filter(function(item) { return item && item.parametro; })
+                    .map(function(item) {
+                        return {
+                            parametro: item.parametro || '',
+                            metodo: item.metodo || item.metodologia || '—',
+                            laboratorio: item.laboratorio || item.laboratorios || 'Lab. Santiago - ENV',
+                            etfaCode: item.etfaCode || ''
+                        };
+                    });
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function loadSharedLabSelected() {
+            try {
+                var raw = localStorage.getItem(SHARED_LAB_SELECTED_KEY);
+                if (!raw) return [];
+                var parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) return [];
+                return parsed
+                    .filter(function(item) { return item && item.parametro; })
+                    .map(function(item) {
+                        return {
+                            parametro: item.parametro || '',
+                            metodo: item.metodo || item.metodologia || '—',
+                            afectaETFA: item.afectaETFA || '',
+                            etfaCode: item.etfaCode || '',
+                            matriz: item.matriz || '',
+                            laboratorio: item.laboratorio || item.laboratorios || 'Lab. Santiago - ENV'
+                        };
+                    });
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveSharedLabSelected() {
+            try {
+                localStorage.setItem(SHARED_LAB_SELECTED_KEY, JSON.stringify(analisisLaboratorioSeleccionados || []));
+            } catch (e) {}
+        }
+
+        function loadSharedFieldSelected() {
+            try {
+                var raw = localStorage.getItem(SHARED_FIELD_SELECTED_KEY);
+                if (!raw) return [];
+                var parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) return [];
+                return parsed
+                    .filter(function(item) { return item && item.parametro; })
+                    .map(function(item) {
+                        return {
+                            parametro: item.parametro || '',
+                            metodo: item.metodo || '—',
+                            afectaETFA: item.afectaETFA || '',
+                            etfaCode: item.etfaCode || generarCodigoETFA(item.parametro || '', 1000000),
+                            matriz: item.matriz || '',
+                            instrumento: item.instrumento || ''
+                        };
+                    });
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveSharedFieldSelected() {
+            try {
+                localStorage.setItem(SHARED_FIELD_SELECTED_KEY, JSON.stringify(parametrosSeleccionados || []));
+            } catch (e) {}
+        }
+
+        var sharedFieldSelected = loadSharedFieldSelected();
+        var parametrosSeleccionados = sharedFieldSelected.length ? sharedFieldSelected : defaultParametrosSeleccionados;
+
         // =============================================
         // CATÁLOGO DE ANÁLISIS DE LABORATORIO
         // =============================================
-        var labCatalog = [
+        var defaultLabCatalog = [
             { parametro: 'Recuento Algal', metodo: 'Standard Methods 22th Ed. 10200F. Fluorescencia.', laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV', etfaCode: '1000862' },
             { parametro: 'Razón Adsorción Sodio Abs. Atómica', metodo: 'NCH1333. Of 87 Punto 3.7 (Cálculo).', laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV' },
             { parametro: 'Clorato', metodo: 'I-ENV-LAB-320 Ed00 Basado en EPA 300.1-1', laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV', etfaCode: '1000869' },
@@ -1975,9 +2061,11 @@
             { parametro: 'Nitrito', metodo: 'SM 4500-NO2 B Ed.24, 2023', laboratorio: 'Lab. Santiago - ENV' },
             { parametro: 'Sulfato', metodo: 'SM 4500-SO4 E Ed.24, 2023', laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV' }
         ];
+        var sharedLabCatalog = loadSharedLabCatalog();
+        var labCatalog = sharedLabCatalog.length ? sharedLabCatalog : defaultLabCatalog;
 
         // Análisis de laboratorio seleccionados (simulación de prellenado desde cotización)
-        var analisisLaboratorioSeleccionados = [
+        var defaultAnalisisLaboratorioSeleccionados = [
             {
                 parametro: 'Recuento Algal',
                 metodo: 'Standard Methods 22th Ed. 10200F. Fluorescencia.',
@@ -2003,6 +2091,21 @@
                 laboratorio: 'Lab. Santiago - ENV, Lab. Antofagasta - ENV'
             }
         ];
+        var sharedLabSelected = loadSharedLabSelected();
+        var analisisLaboratorioSeleccionados = sharedLabSelected.length
+            ? sharedLabSelected
+            : (sharedLabCatalog.length
+            ? sharedLabCatalog.slice(0, 3).map(function(item) {
+                return {
+                    parametro: item.parametro,
+                    metodo: item.metodo,
+                    afectaETFA: '',
+                    etfaCode: item.etfaCode || generarCodigoETFA(item.parametro, 2000000),
+                    matriz: '',
+                    laboratorio: item.laboratorio
+                };
+            })
+            : defaultAnalisisLaboratorioSeleccionados);
 
         // =============================================
         // CATÁLOGO DE MATERIALES
@@ -2079,6 +2182,10 @@
         var paramModalList = document.getElementById('paramModalList');
 
         function openParamModal() {
+            var latestSelected = loadSharedFieldSelected();
+            if (latestSelected.length) {
+                parametrosSeleccionados = latestSelected;
+            }
             paramModal.style.display = 'flex';
             paramModalSearch.value = '';
             renderParamModalList('');
@@ -2131,6 +2238,7 @@
                     if (!this.checked && pos !== -1) {
                         parametrosSeleccionados.splice(pos, 1);
                     }
+                    saveSharedFieldSelected();
                 });
             });
         }
@@ -2154,6 +2262,7 @@
 
         document.getElementById('paramModalApply').addEventListener('click', function() {
             closeParamModal();
+            saveSharedFieldSelected();
             renderParametrosTable();
         });
 
@@ -2165,6 +2274,14 @@
         var labModalList = document.getElementById('labModalList');
 
         function openLabModal() {
+            var latestCatalog = loadSharedLabCatalog();
+            if (latestCatalog.length) {
+                labCatalog = latestCatalog;
+            }
+            var latestSelected = loadSharedLabSelected();
+            if (latestSelected.length) {
+                analisisLaboratorioSeleccionados = latestSelected;
+            }
             labModal.style.display = 'flex';
             labModalSearch.value = '';
             renderLabModalList('');
@@ -2216,6 +2333,7 @@
                     if (!this.checked && pos !== -1) {
                         analisisLaboratorioSeleccionados.splice(pos, 1);
                     }
+                    saveSharedLabSelected();
                 });
             });
         }
@@ -2238,6 +2356,7 @@
 
         document.getElementById('labModalApply').addEventListener('click', function() {
             closeLabModal();
+            saveSharedLabSelected();
             renderLaboratorioTable();
         });
 
@@ -2464,6 +2583,13 @@
                     var field = this.getAttribute('data-field');
                     if (!isNaN(idx) && parametrosSeleccionados[idx]) {
                         parametrosSeleccionados[idx][field] = this.value;
+                        if ((field === 'afectaETFA' || field === 'matriz')
+                            && parametrosSeleccionados[idx].afectaETFA === 'SI'
+                            && parametrosSeleccionados[idx].matriz
+                            && !parametrosSeleccionados[idx].etfaCode) {
+                            parametrosSeleccionados[idx].etfaCode = generarCodigoETFA(parametrosSeleccionados[idx].parametro, 1000000);
+                        }
+                        saveSharedFieldSelected();
                         if (field === 'afectaETFA' || field === 'matriz') {
                             renderParametrosTable();
                         }
@@ -2477,6 +2603,7 @@
                     var idx = parseInt(this.getAttribute('data-remove-param'), 10);
                     if (!isNaN(idx)) {
                         parametrosSeleccionados.splice(idx, 1);
+                        saveSharedFieldSelected();
                         renderParametrosTable();
                     }
                 });
@@ -2544,6 +2671,7 @@
                     var field = this.getAttribute('data-field');
                     if (!isNaN(idx) && analisisLaboratorioSeleccionados[idx]) {
                         analisisLaboratorioSeleccionados[idx][field] = this.value;
+                        saveSharedLabSelected();
                         if (field === 'afectaETFA' || field === 'matriz') {
                             renderLaboratorioTable();
                         }
@@ -2556,6 +2684,7 @@
                     var idx = parseInt(this.getAttribute('data-remove-lab'), 10);
                     if (!isNaN(idx)) {
                         analisisLaboratorioSeleccionados.splice(idx, 1);
+                        saveSharedLabSelected();
                         renderLaboratorioTable();
                     }
                 });

@@ -1647,6 +1647,98 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .sidebar .logo-text.logo-text-compact {
+            font-size: 22px;
+            letter-spacing: 1px;
+        }
+
+        .company-confirm-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 20, 20, 0.72);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 4000;
+            padding: 16px;
+        }
+
+        .company-confirm-overlay.show {
+            display: flex;
+        }
+
+        .company-confirm-modal {
+            width: min(600px, calc(100% - 32px));
+            max-width: 600px;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+        }
+
+        .company-confirm-title {
+            padding: 28px 30px 0;
+            font-size: 22px;
+            font-weight: 600;
+            text-align: center;
+            color: #66615b;
+        }
+
+        .company-confirm-body {
+            flex: 1;
+            padding: 22px 30px 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 14px;
+            text-align: center;
+        }
+
+        .company-confirm-body p {
+            margin: 0;
+            font-size: 18px;
+            line-height: 1.5;
+            color: #66615b;
+        }
+
+        .company-confirm-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 0 30px 28px;
+        }
+
+        .btn-company-confirm,
+        .btn-company-cancel {
+            min-width: 160px;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .btn-company-cancel {
+            background: #d8d8d8;
+            color: #444;
+        }
+
+        .btn-company-cancel:hover {
+            background: #cbcbcb;
+        }
+
+        .btn-company-confirm {
+            background: #ef8157;
+            color: #fff;
+        }
+
+        .btn-company-confirm:hover {
+            background: #e5734a;
+        }
     </style>
 </head>
 <body>
@@ -1655,7 +1747,7 @@
             <div class="logo">
                 <div class="logo-container">
                     <div class="logo-top-line"></div>
-                    <div class="logo-text">SGS</div>
+                    <div class="logo-text" id="sidebarLogoText">SGS</div>
                 </div>
             </div>
             <div class="user">
@@ -1716,10 +1808,10 @@
                 </div>
                 <div class="company-switcher">
                     <label>Empresa:</label>
-                    <select id="companySelect" class="company-select">
-                        <option value="SGS" selected>SGS</option>
-                        <option value="CONEMI">CONEMI</option>
+                    <select id="companySelect" class="company-select" onchange="switchCompany(this.value)">
                         <option value="ECOTECNOS">ECOTECNOS</option>
+                        <option value="CONEMI">CONEMI</option>
+                        <option value="SGS">SGS</option>
                     </select>
                 </div>
             </div>
@@ -5725,6 +5817,82 @@
         function downloadResultadoFile() {
             alert('Descargando archivo...');
         }
+    </script>
+    <div class="company-confirm-overlay" id="companyChangeModal" aria-hidden="true">
+        <div class="company-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="companyChangeTitle">
+            <div class="company-confirm-title" id="companyChangeTitle">Cambiar empresa</div>
+            <div class="company-confirm-body">
+                <p>Si esta seguro de cambiar de empresa?</p>
+                <p>Esto lo redireccionara a la pantalla de Inicio.</p>
+            </div>
+            <div class="company-confirm-actions">
+                <button class="btn btn-company-cancel" type="button" onclick="cancelCompanyChange()">Cancelar</button>
+                <button class="btn btn-company-confirm" type="button" onclick="confirmCompanyChange()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        var currentCompany = localStorage.getItem('selectedCompany') || 'SGS';
+        var pendingCompany = null;
+
+        function updateBranding(company) {
+            var logo = document.getElementById('sidebarLogoText');
+            if (!logo) {
+                return;
+            }
+
+            logo.textContent = company;
+            logo.classList.toggle('logo-text-compact', company.length > 4);
+        }
+
+        function switchCompany(company) {
+            if (company === currentCompany) {
+                return;
+            }
+
+            pendingCompany = company;
+            openCompanyChangeModal();
+        }
+
+        function openCompanyChangeModal() {
+            var modal = document.getElementById('companyChangeModal');
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeCompanyChangeModal() {
+            var modal = document.getElementById('companyChangeModal');
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function cancelCompanyChange() {
+            document.getElementById('companySelect').value = currentCompany;
+            pendingCompany = null;
+            closeCompanyChangeModal();
+        }
+
+        function confirmCompanyChange() {
+            if (!pendingCompany) {
+                closeCompanyChangeModal();
+                return;
+            }
+
+            currentCompany = pendingCompany;
+            localStorage.setItem('selectedCompany', currentCompany);
+            closeCompanyChangeModal();
+            window.location.href = 'inicio.html';
+        }
+
+        (function initCompanySwitcher() {
+            var select = document.getElementById('companySelect');
+            if (!select) {
+                return;
+            }
+
+            select.value = currentCompany;
+            updateBranding(currentCompany);
+        })();
     </script>
 </body>
 </html>

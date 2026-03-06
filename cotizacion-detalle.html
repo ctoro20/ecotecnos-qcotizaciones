@@ -64,19 +64,13 @@
 
             <ul class="nav">
                 <li>
-                    <a href="#">
+                    <a href="inicio.html">
                         <i class="fas fa-home"></i>
                         <span>Inicio</span>
                     </a>
                 </li>
-                <li>
-                    <a href="#">
-                        <i class="far fa-square"></i>
-                        <span>Tarifario</span>
-                    </a>
-                </li>
                 <li class="active">
-                    <a href="cotizaciones-sgs.html">
+                    <a href="index.html">
                         <i class="far fa-circle"></i>
                         <span>Listado Cotizaciones/Propuestas</span>
                     </a>
@@ -88,7 +82,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#">
+                    <a href="aprobar-cotizaciones.html">
                         <i class="fas fa-check"></i>
                         <span>Aprobar cotizaciones</span>
                     </a>
@@ -126,7 +120,7 @@
             <div class="content">
                 <!-- Back Button -->
                 <div style="margin-bottom: 20px;">
-                    <a href="cotizaciones-sgs.html" class="btn btn-default">
+                    <a href="index.html" class="btn btn-default">
                         <i class="fas fa-arrow-left"></i> Volver
                     </a>
                 </div>
@@ -231,32 +225,6 @@
                             </div>
                         </div>
 
-                        <!-- Resumen de Servicios -->
-                        <div class="services-summary-section">
-                            <h6>Resumen de la propuesta</h6>
-                            <table class="services-summary-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width:40px;">#</th>
-                                        <th>Servicio</th>
-                                        <th style="width:100px;">Precio Unit.</th>
-                                        <th style="width:70px;">Cant</th>
-                                        <th style="width:80px;">Desc %</th>
-                                        <th style="width:100px;">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="summaryServicesBody">
-                                    <tr class="empty-row">
-                                        <td colspan="6">Sin servicios agregados</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <div class="services-summary-total">
-                                <span>Total:</span>
-                                <span id="summaryGrandTotal">0.00</span>
-                                <span id="summaryGrandCurrency">/CLU</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -557,6 +525,10 @@
                                     <label>Plan de muestreo / Alcance servicio</label>
                                     <textarea class="form-control" id="PlanMuestreo" rows="2"></textarea>
                                 </div>
+                                <div class="compact-form-group span-2">
+                                    <label>Codigo SalesForce</label>
+                                    <input type="text" class="form-control" id="CodigoSalesForce">
+                                </div>
                             </div>
                         </div>
 
@@ -780,7 +752,6 @@
                                                 <th style="width:90px;">Tipo Var.</th>
                                                 <th style="width:90px;">Variación</th>
                                                 <th style="width:70px;">Cant</th>
-                                                <th style="width:110px;">Precio Final</th>
                                                 <th style="width:90px;">Total</th>
                                                 <th style="width:60px;"></th>
                                             </tr>
@@ -794,10 +765,7 @@
                                                         <i class="fas fa-copy muestreo-duplicate" title="Duplicar"></i>
                                                         <span class="muestreo-code">10010168</span>
                                                     </div>
-                                                    <div class="service-tags" style="margin-top:6px;">
-                                                        <span class="service-tag">MONITOREO AGUAS (2023)</span>
-                                                        <span class="service-tag">MONITOREO AGUAS RESIDUALES (2023)</span>
-                                                    </div>
+                                                    <div class="muestreo-budget-meta">MONITOREO AGUAS (2023) /  MONITOREO AGUAS RESIDUALES (2023)</div>
                                                 </td>
                                                 <td>UND</td>
                                                 <td align="right">0.00</td>
@@ -809,12 +777,13 @@
                                                 </td>
                                                 <td align="right"><input type="number" min="0" step="0.01" value="1.00" class="muestreo-cell-input js-muestreo-variacion" disabled></td>
                                                 <td align="right"><input type="number" min="1" step="1" value="1.00" class="muestreo-cell-input js-muestreo-cantidad" disabled></td>
-                                                <td align="right" class="js-muestreo-precio-final">1.00</td>
                                                 <td align="right" class="js-muestreo-total">1.00</td>
                                                 <td class="text-center">
-                                                    <i class="fas fa-edit muestreo-edit-row"></i>
-                                                    &nbsp;&nbsp;
-                                                    <i class="fas fa-trash"></i>
+                                                    <div class="service-row-actions">
+                                                        <i class="fas fa-edit muestreo-edit-row"></i>
+                                                        <i class="fas fa-trash"></i>
+                                                        <i class="fas fa-grip-vertical service-row-drag" title="Arrastrar para reordenar" draggable="true"></i>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -849,7 +818,6 @@
                                                   <th style="width:90px;">Tipo Var.</th>
                                                   <th style="width:90px;">Variación</th>
                                                   <th style="width:70px;">Cant</th>
-                                                  <th style="width:110px;">Precio Final</th>
                                                   <th style="width:90px;">Total</th>
                                                   <th style="width:60px;"></th>
                                               </tr>
@@ -863,10 +831,7 @@
                                                           <i class="fas fa-copy muestreo-duplicate" title="Duplicar"></i>
                                                           <span class="muestreo-code">104582</span>
                                                       </div>
-                                                      <div class="service-tags" style="margin-top:6px;">
-                                                          <span class="service-tag">CONSULTORIA AMBIENTAL (2024)</span>
-                                                          <span class="service-tag">AUDITORIA AMBIENTAL</span>
-                                                      </div>
+                                                      <div class="muestreo-budget-meta">CONSULTORIA AMBIENTAL (2024) /  AUDITORIA AMBIENTAL</div>
                                                   </td>
                                                   <td>SERV</td>
                                                   <td align="right">0.00</td>
@@ -878,12 +843,13 @@
                                                   </td>
                                                   <td align="right"><input type="number" min="0" step="0.01" value="1.00" class="muestreo-cell-input js-otros-variacion" disabled></td>
                                                   <td align="right"><input type="number" min="1" step="1" value="1.00" class="muestreo-cell-input js-otros-cantidad" disabled></td>
-                                                  <td align="right" class="js-otros-precio-final">1.00</td>
                                                   <td align="right" class="js-otros-total">1.00</td>
                                                   <td class="text-center">
-                                                      <i class="fas fa-edit otros-edit-row"></i>
-                                                      &nbsp;&nbsp;
-                                                      <i class="fas fa-trash"></i>
+                                                      <div class="service-row-actions">
+                                                          <i class="fas fa-edit otros-edit-row"></i>
+                                                          <i class="fas fa-trash"></i>
+                                                          <i class="fas fa-grip-vertical service-row-drag" title="Arrastrar para reordenar" draggable="true"></i>
+                                                      </div>
                                                   </td>
                                               </tr>
                                           </tbody>
@@ -897,9 +863,14 @@
                             <button type="button" class="btn btn-default" onclick="prevStep(1)">
                                 <i class="fas fa-arrow-left"></i> Anterior
                             </button>
-                            <button type="button" class="btn btn-success" onclick="nextStep(3)">
-                                Finalizar Paso <i class="fas fa-arrow-right"></i>
-                            </button>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <button type="button" class="btn btn-default" id="btnVerResumenServicios" onclick="openBlankSummaryPopup()">
+                                    Ver resumen de servicios
+                                </button>
+                                <button type="button" class="btn btn-success" onclick="nextStep(3)">
+                                    Finalizar Paso <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -1838,6 +1809,17 @@
                             <div class="pdf-preview-header">
                                 <h4 class="section-title" style="margin-bottom:0;"><i class="fas fa-file-pdf"></i> Previsualización de Cotización</h4>
                                 <div class="pdf-toolbar">
+                                    <label class="pdf-template-control" for="pdfTemplateSelect">
+                                        <span>Plantilla</span>
+                                        <select id="pdfTemplateSelect" onchange="changePdfTemplate(this.value)">
+                                            <option value="consolidada">Propuesta Consolidada</option>
+                                            <option value="tecnica">Propuesta Técnica</option>
+                                            <option value="economica">Propuesta Económica</option>
+                                        </select>
+                                    </label>
+                                    <button class="btn-pdf-action" id="togglePdfCostsBtn" onclick="togglePdfCostsVisibility()" title="Ocultar costos en la previsualización">
+                                        <i class="fas fa-eye-slash"></i> <span id="togglePdfCostsText">Ocultar costos</span>
+                                    </button>
                                     <button class="btn-pdf-action" onclick="refreshPdfPreview()" title="Actualizar PDF">
                                         <i class="fas fa-sync-alt"></i> Actualizar
                                     </button>
@@ -1847,7 +1829,56 @@
                                 </div>
                             </div>
                             <div class="pdf-preview-container" id="pdfPreviewContainer">
+                                <div class="pdf-preview-badges">
+                                    <div class="pdf-costs-hidden-badge" id="pdfCostsHiddenBadge">Vista con costos</div>
+                                    <div class="pdf-costs-hidden-badge pdf-template-badge" id="pdfTemplateBadge">Plantilla: Propuesta Consolidada</div>
+                                </div>
                                 <iframe id="pdfPreviewFrame" src="descarga.pdf" class="pdf-preview-frame"></iframe>
+                            </div>
+                        </div>
+                        <div class="form-section-card approval-request-card" id="approvalRequestCard">
+                            <div class="approval-request-header">
+                                <h5><i class="fas fa-user-check"></i> Solicitar autorización</h5>
+                            </div>
+                            <div class="approval-request-body">
+                                <label for="approvalRequestComment">Comentario</label>
+                                <textarea id="approvalRequestComment" class="form-control" rows="3" placeholder="Escriba un comentario para la solicitud de autorización..."></textarea>
+                                <div class="approval-request-actions">
+                                    <button type="button" class="btn btn-warning" id="approvalRequestBtn" onclick="requestQuoteApproval()">Solicitar</button>
+                                </div>
+                                <div class="approval-request-status" id="approvalRequestStatus" style="display:none;"></div>
+                            </div>
+                        </div>
+                        <div class="form-section-card approval-review-card" id="approvalReviewCard">
+                            <div class="approval-request-header">
+                                <h5><i class="fas fa-clipboard-check"></i> Revisión de autorización</h5>
+                            </div>
+                            <div class="approval-review-body">
+                                <div id="approvalReviewActionsBlock">
+                                    <div class="approval-last-request" id="approvalLastRequestInfo">Aún no hay solicitudes registradas.</div>
+                                    <label for="approvalDecisionComment">Comentario del autorizador</label>
+                                    <textarea id="approvalDecisionComment" class="form-control" rows="3" placeholder="Comentario de autorización o rechazo..."></textarea>
+                                    <div class="approval-request-actions">
+                                        <button type="button" class="btn btn-success" id="approvalApproveBtn" onclick="approveQuoteRequest()" disabled>Autorizar</button>
+                                    </div>
+                                    <div class="approval-request-status" id="approvalDecisionStatus" style="display:none;"></div>
+                                </div>
+                                <div class="approval-log-title">Bitácora de autorización</div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm approval-log-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:150px;">Fecha</th>
+                                                <th style="width:130px;">Acción</th>
+                                                <th style="width:180px;">Usuario</th>
+                                                <th>Comentario</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="approvalLogBody">
+                                            <tr><td colspan="4" style="text-align:center;color:#9a9a9a;">Sin eventos</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
 
@@ -1855,8 +1886,8 @@
                             <button type="button" class="btn btn-default" onclick="prevStep(4)">
                                 <i class="fas fa-arrow-left"></i> Anterior
                             </button>
-                            <button type="button" class="btn btn-success" onclick="nextStep(6)">
-                                Aprobar Propuesta <i class="fas fa-arrow-right"></i>
+                            <button type="button" class="btn btn-success" id="step5NextBtn" onclick="nextStep(6)">
+                                Siguiente <i class="fas fa-arrow-right"></i>
                             </button>
                         </div>
                     </div>
@@ -1877,9 +1908,36 @@
                                         <span class="notif-title">Notificación pendiente</span>
                                         <span class="notif-desc">La cotización aún no ha sido enviada al cliente.</span>
                                     </div>
-                                    <button class="btn-notif-send" onclick="sendNotification()">
-                                        <i class="fas fa-paper-plane"></i> Enviar notificación
-                                    </button>
+                                    <div class="notif-actions">
+                                        <button class="btn-notif-send" onclick="sendNotification()">
+                                            <i class="fas fa-paper-plane"></i> Enviar notificación
+                                        </button>
+                                        <button class="btn-notif-send btn-notif-send-secondary" type="button" onclick="toggleExternalNotifForm(true)">
+                                            <i class="fas fa-clipboard-check"></i> Registrar envío externo
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="notif-external-form" id="notifExternalForm" style="display:none;">
+                                    <div class="notif-external-grid">
+                                        <div>
+                                            <label for="notifExternalDate">Fecha de notificación</label>
+                                            <input type="datetime-local" class="form-control" id="notifExternalDate">
+                                        </div>
+                                        <div>
+                                            <label>Archivo de respaldo</label>
+                                            <input type="file" id="notifExternalFileInput" hidden accept=".pdf,.xls,.xlsx,.doc,.docx,.png,.jpg,.jpeg,.msg,.eml">
+                                            <div class="notif-external-file-row">
+                                                <button class="btn btn-default btn-sm" type="button" id="notifExternalSelectFileBtn">
+                                                    <i class="fas fa-paperclip"></i> Seleccionar archivo
+                                                </button>
+                                                <span id="notifExternalFileName" class="notif-external-file-name">Sin archivo</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="notif-external-actions">
+                                        <button class="btn btn-default btn-sm" type="button" onclick="toggleExternalNotifForm(false)">Cancelar</button>
+                                        <button class="btn btn-success btn-sm" type="button" onclick="registerExternalNotification()">Registrar notificación</button>
+                                    </div>
                                 </div>
 
                                 <!-- Estado: enviada (oculto por defecto) -->
@@ -1893,13 +1951,14 @@
                                             <span><i class="fas fa-calendar-alt"></i> <span id="Estado_Notificacion_Fecha">--</span></span>
                                             <span><i class="fas fa-user"></i> <span id="Estado_Notificacion_Usuario">--</span></span>
                                             <span><i class="fas fa-at"></i> <span id="Estado_Notificacion_Email">--</span></span>
+                                            <span><i class="fas fa-paperclip"></i> <span id="Estado_Notificacion_Respaldo">--</span></span>
                                         </div>
                                     </div>
                                     <div class="notif-actions">
-                                        <button class="btn-notif-view" onclick="viewSentEmail()">
+                                        <button class="btn-notif-view" id="notifViewEmailBtn" onclick="viewSentEmail()">
                                             <i class="fas fa-eye"></i> Ver correo
                                         </button>
-                                        <button class="btn-notif-resend" onclick="sendNotification()">
+                                        <button class="btn-notif-resend" id="notifResendBtn" onclick="sendNotification()">
                                             <i class="fas fa-redo"></i> Reenviar
                                         </button>
                                     </div>
@@ -1972,41 +2031,12 @@
                             </div>
                         </div>
 
-                        <h4 class="section-title"><i class="fas fa-user-check"></i> Aprobación final (Supervisor)</h4>
-
-                        <div class="form-section-card">
-                            <div class="table-documents-wrapper">
-                                <table class="table-documents">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:40px;"></th>
-                                            <th>Aprobador</th>
-                                            <th>Nombre</th>
-                                            <th style="width:130px;">Fecha</th>
-                                            <th>Comentario</th>
-                                            <th style="width:120px;">Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tbodyAprobadores">
-                                        <tr class="empty-row">
-                                            <td colspan="6">
-                                                <div class="empty-state">
-                                                    <i class="fas fa-user-shield"></i>
-                                                    <span>Sin aprobadores asignados</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
                         <div class="action-buttons">
                             <button type="button" class="btn btn-default" onclick="prevStep(5)">
                                 <i class="fas fa-arrow-left"></i> Anterior
                             </button>
-                            <button type="button" class="btn btn-success">
-                                <i class="fas fa-save"></i> Guardar Aprobación
+                            <button type="button" class="btn btn-success" onclick="openFinalizeStep6Modal()">
+                                <i class="fas fa-check"></i> Finalizar
                             </button>
                         </div>
                     </div>
@@ -2064,15 +2094,35 @@
             </div>
         </div>
 
-        <button class="floating-summary-btn" id="btnFloatingResumen">
-            <i class="fas fa-file-alt"></i> Resumen
-        </button>
-
         <div class="summary-drawer-overlay" id="summaryDrawer">
             <div class="summary-drawer">
                 <div class="summary-drawer-header">
                     <span>Resumen de la propuesta</span>
-                    <button class="btn btn-default btn-sm" id="btnCerrarResumen">Cerrar</button>
+                </div>
+                <div class="summary-drawer-meta">
+                    <div class="sdm-item">
+                        <i class="fas fa-hashtag"></i>
+                        <span class="sdm-label">Cotización</span>
+                        <strong id="drawerQuoteNumber">—</strong>
+                    </div>
+                    <span class="sdm-sep">|</span>
+                    <div class="sdm-item">
+                        <i class="fas fa-building"></i>
+                        <span class="sdm-label">Cliente</span>
+                        <strong id="drawerClient">—</strong>
+                    </div>
+                    <span class="sdm-sep">|</span>
+                    <div class="sdm-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span class="sdm-label">Fecha</span>
+                        <strong id="drawerDate">—</strong>
+                    </div>
+                    <span class="sdm-sep">|</span>
+                    <div class="sdm-item">
+                        <i class="fas fa-flag"></i>
+                        <span class="sdm-label">Estado</span>
+                        <strong id="drawerStatus">—</strong>
+                    </div>
                 </div>
                 <div class="summary-drawer-body">
                     <div class="summary-doc">
@@ -2101,6 +2151,9 @@
                         </table>
                         <div class="summary-total">Total: <span id="summaryServicesTotal" style="margin-left:8px;">0.00 / CLU</span></div>
                     </div>
+                </div>
+                <div class="summary-drawer-footer">
+                    <button class="btn btn-default btn-sm" id="btnCerrarResumen" type="button" onclick="closeBlankSummaryPopup()">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -2277,6 +2330,38 @@
                 <div style="display:flex;justify-content:flex-end;gap:8px;">
                     <button class="btn btn-default btn-sm" id="customTopicCancel">Cancelar</button>
                     <button class="btn btn-warning btn-sm" id="customTopicCreate">Crear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="simple-modal-overlay" id="approvalConfirmModal" onclick="if(event.target===this){closeApprovalConfirmModal();}">
+        <div class="simple-modal" role="dialog" aria-modal="true" aria-labelledby="approvalConfirmModalTitle">
+            <div class="simple-modal-header">
+                <h4 id="approvalConfirmModalTitle">Confirmar autorización</h4>
+                <button class="btn btn-default btn-sm" type="button" onclick="closeApprovalConfirmModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="simple-modal-body">
+                <div class="tech-editor-hint" style="margin:0 0 12px 0;">¿Está seguro de autorizar esta cotización?</div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;">
+                    <button class="btn btn-default btn-sm" type="button" onclick="closeApprovalConfirmModal()">Cancelar</button>
+                    <button class="btn btn-success btn-sm" type="button" onclick="confirmApproveQuoteRequest()">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="simple-modal-overlay" id="finalizeStep6Modal" onclick="if(event.target===this){closeFinalizeStep6Modal();}">
+        <div class="simple-modal" role="dialog" aria-modal="true" aria-labelledby="finalizeStep6ModalTitle">
+            <div class="simple-modal-header">
+                <h4 id="finalizeStep6ModalTitle">Confirmar finalización</h4>
+                <button class="btn btn-default btn-sm" type="button" onclick="closeFinalizeStep6Modal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="simple-modal-body">
+                <div class="tech-editor-hint" style="margin:0 0 12px 0;">¿Está seguro de finalizar y dejar la cotización en estado Aprobada?</div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;">
+                    <button class="btn btn-default btn-sm" type="button" onclick="closeFinalizeStep6Modal()">Cancelar</button>
+                    <button class="btn btn-success btn-sm" type="button" onclick="confirmFinalizeStep6()">Confirmar</button>
                 </div>
             </div>
         </div>

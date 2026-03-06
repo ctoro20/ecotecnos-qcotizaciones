@@ -69,6 +69,11 @@
             letter-spacing: 2px;
         }
 
+        .sidebar .logo-text.logo-text-compact {
+            font-size: 22px;
+            letter-spacing: 1px;
+        }
+
         .sidebar .user {
             padding: 20px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -335,6 +340,81 @@
             display: flex;
         }
 
+        .company-confirm-overlay {
+            background: rgba(20, 20, 20, 0.72);
+        }
+
+        .company-confirm-modal {
+            width: min(600px, calc(100% - 32px));
+            max-width: 600px;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            border-radius: 16px;
+        }
+
+        .company-confirm-body {
+            flex: 1;
+            padding: 22px 30px 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 14px;
+            text-align: center;
+        }
+
+        .company-confirm-body p {
+            margin: 0;
+            font-size: 18px;
+            line-height: 1.5;
+            color: #66615b;
+        }
+
+        .company-confirm-actions {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 0 30px 28px;
+        }
+
+        .company-confirm-title {
+            padding: 28px 30px 0;
+            font-size: 22px;
+            font-weight: 600;
+            text-align: center;
+            color: #66615b;
+        }
+
+        .btn-company-confirm,
+        .btn-company-cancel {
+            min-width: 160px;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .btn-company-cancel {
+            background: #d8d8d8;
+            color: #444;
+        }
+
+        .btn-company-cancel:hover {
+            background: #cbcbcb;
+        }
+
+        .btn-company-confirm {
+            background: #ef8157;
+            color: #fff;
+        }
+
+        .btn-company-confirm:hover {
+            background: #e5734a;
+        }
+
         .record-modal {
             width: min(960px, 100%);
             background: #fff;
@@ -445,6 +525,17 @@
             margin-bottom: 20px;
         }
 
+        .filters-row-main {
+            display: flex;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .filters-row-main .filter-group {
+            flex: 1 1 180px;
+            min-width: 160px;
+        }
+
         .filter-group {
             display: flex;
             flex-direction: column;
@@ -486,11 +577,38 @@
             margin-bottom: 25px;
         }
 
+        .filters-actions-inline {
+            margin-bottom: 0;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+
+        .btn-filter-search {
+            padding: 9px 16px;
+            font-size: 11px;
+        }
+
+        .btn-toggle-filters {
+            width: 90px;
+            justify-content: center;
+            padding: 9px 12px;
+            font-size: 10px;
+            gap: 6px;
+            color: #fff;
+        }
+
+        .btn-toggle-filters .toggle-label {
+            min-width: 34px;
+            text-align: center;
+        }
+
         /* ============================================
            TABLE
            ============================================ */
         .table-responsive {
-            overflow-x: auto;
+            overflow: visible;
+            position: relative;
+            z-index: 5;
         }
 
         .table {
@@ -533,8 +651,11 @@
         /* Client cell */
         .client-name {
             font-weight: 500;
-            margin-bottom: 4px;
             font-size: 11px;
+        }
+
+        .table tbody td:first-child .badge {
+            display: none;
         }
 
         /* Badges / Labels */
@@ -625,6 +746,11 @@
         .dropdown {
             position: relative;
             display: inline-block;
+            z-index: 20;
+        }
+
+        .dropdown.dropdown-open {
+            z-index: 200;
         }
 
         .dropdown-menu {
@@ -636,7 +762,7 @@
             min-width: 150px;
             border-radius: 4px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            z-index: 1000;
+            z-index: 30;
             margin-top: 5px;
         }
 
@@ -787,7 +913,7 @@
             <div class="logo">
                 <div class="logo-container">
                     <div class="logo-top-line"></div>
-                    <div class="logo-text">SGS</div>
+                    <div class="logo-text" id="sidebarLogoText">SGS</div>
                 </div>
             </div>
 
@@ -801,19 +927,13 @@
 
             <ul class="nav">
                 <li>
-                    <a href="#">
+                    <a href="inicio.html">
                         <i class="fas fa-home"></i>
                         <span>Inicio</span>
                     </a>
                 </li>
-                <li>
-                    <a href="#">
-                        <i class="far fa-square"></i>
-                        <span>Tarifario</span>
-                    </a>
-                </li>
                 <li class="active">
-                    <a href="cotizaciones-sgs.html">
+                    <a href="index.html">
                         <i class="far fa-circle"></i>
                         <span>Listado Cotizaciones/Propuestas</span>
                     </a>
@@ -825,7 +945,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#">
+                    <a href="aprobar-cotizaciones.html">
                         <i class="fas fa-check"></i>
                         <span>Aprobar cotizaciones</span>
                     </a>
@@ -868,14 +988,14 @@
                             <i class="fas fa-file-excel"></i>
                             Descargar Cotizaciones
                         </button>
-                        <button class="btn btn-info" onclick="openRecordTypeModal()">
+                        <button class="btn btn-info" onclick="goToCotizacion()">
                             <i class="fas fa-plus"></i>
                             Crear Registro
                         </button>
                     </div>
 
                     <!-- Filters -->
-                    <div class="filters-row">
+                    <div class="filters-row filters-row-main">
                         <div class="filter-group">
                             <label>Cliente</label>
                             <input type="text" id="txtCliente" class="form-control" placeholder="Cliente">
@@ -891,6 +1011,16 @@
                         <div class="filter-group">
                             <label>Hasta</label>
                             <input type="date" id="dtHasta" class="form-control" value="2026-01-30">
+                        </div>
+                        <div class="filters-actions filters-actions-inline">
+                            <button class="btn btn-warning btn-filter-search" onclick="BindCotizaciones()">
+                                <i class="fa fa-search"></i>
+                                Buscar
+                            </button>
+                            <button class="btn btn-warning-light btn-toggle-filters" id="btnVer" aria-expanded="false">
+                                <span class="toggle-label">Más</span>
+                                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -934,17 +1064,6 @@
                         </div>
                     </div>
 
-                    <!-- Filter Actions -->
-                    <div class="filters-actions">
-                        <button class="btn btn-warning" onclick="BindCotizaciones()">
-                            <i class="fa fa-search"></i>
-                            Buscar Cotización
-                        </button>
-                        <button class="btn btn-warning-light" id="btnVer">
-                            Más
-                        </button>
-                    </div>
-
                     <!-- Table -->
                     <div class="table-responsive">
                         <table class="table" id="tblCotizaciones">
@@ -971,9 +1090,10 @@
                                     <td>650952-1</td>
                                     <td>CLU</td>
                                     <td>3.32</td>
-                                    <td>31-01-2026</td>
+                                    <td>30-01-2026</td>
                                     <td>
                                         <div class="status-text">REGISTRADO</div>
+                                        <span class="badge badge-default">En Preparación</span>
                                     </td>
                                     <td>Monitoreo planta - renovación 2026</td>
                                     <td>
@@ -1015,7 +1135,6 @@
                                             </button>
                                             <div class="dropdown-menu">
                                                 <a href="ficha-tecnico-comercial.html">Ver Ficha Técnico Comercial</a>
-                                                <a href="#" onclick="OnOpenModalHeredar(650953,5231,this)">Heredar</a>
                                                 <a href="cotizacion-detalle.html">Ver</a>
                                             </div>
                                         </div>
@@ -1044,7 +1163,6 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#" onclick="OnOpenModalHeredar(647043,5260,this)">Heredar</a>
                                                 <a href="/Cotizacion/Data/647043/1">Ver</a>
                                             </div>
                                         </div>
@@ -1060,7 +1178,7 @@
                                     <td>96.49</td>
                                     <td>19-01-2026</td>
                                     <td>
-                                        <div class="status-text">REGISTRADO</div>
+                                        <div class="status-text">PENDIENTE AUTORIZACIÓN</div>
                                         <span class="badge badge-info">Aprobar Supervisor</span>
                                     </td>
                                     <td>Prueba Chantal</td>
@@ -1074,8 +1192,7 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#" onclick="OnOpenModalHeredar(647038,5230,this)">Heredar</a>
-                                                <a href="/Cotizacion/Data/647038/1">Editar</a>
+                                                <a href="cotizacion-detalle.html">Editar</a>
                                                 <a href="#" onclick="OnOpenModalPropuestas(647038,this)">Propuestas</a>
                                                 <a href="#" onclick="OnOpenModalAnular(647038,this)">Anular</a>
                                             </div>
@@ -1092,7 +1209,7 @@
                                     <td>2.00</td>
                                     <td>16-01-2026</td>
                                     <td>
-                                        <div class="status-text">REGISTRADO</div>
+                                        <div class="status-text">PENDIENTE AUTORIZACIÓN</div>
                                         <span class="badge badge-info">Aprobar Supervisor</span>
                                     </td>
                                     <td>Prueba Chantal</td>
@@ -1106,8 +1223,7 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#" onclick="OnOpenModalHeredar(647037,5230,this)">Heredar</a>
-                                                <a href="/Cotizacion/Data/647037/1">Editar</a>
+                                                <a href="cotizacion-detalle.html">Editar</a>
                                                 <a href="#" onclick="OnOpenModalPropuestas(647037,this)">Propuestas</a>
                                                 <a href="#" onclick="OnOpenModalAnular(647037,this)">Anular</a>
                                             </div>
@@ -1137,7 +1253,6 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#" onclick="OnOpenModalHeredar(647036,5260,this)">Heredar</a>
                                                 <a href="/Cotizacion/Data/647036/1">Ver</a>
                                             </div>
                                         </div>
@@ -1167,8 +1282,7 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#" onclick="OnOpenModalHeredar(647035,5260,this)">Heredar</a>
-                                                <a href="/Cotizacion/Data/647035/1">Editar</a>
+                                                <a href="cotizacion-detalle.html">Editar</a>
                                                 <a href="#" onclick="OnOpenModalPropuestas(647035,this)">Propuestas</a>
                                                 <a href="#" onclick="OnOpenModalAnular(647035,this)">Anular</a>
                                             </div>
@@ -1187,7 +1301,8 @@
                                     <td>25,450.00</td>
                                     <td>28-01-2026</td>
                                     <td>
-                                        <div class="status-text">APROBADO</div>
+                                        <div class="status-text">REGISTRADO</div>
+                                        <span class="badge badge-default">En Preparación</span>
                                     </td>
                                     <td>Muestreo ambiental zona norte</td>
                                     <td>
@@ -1200,8 +1315,9 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#">Heredar</a>
-                                                <a href="#">Ver</a>
+                                                <a href="cotizacion-detalle.html">Editar</a>
+                                                <a href="#">Propuestas</a>
+                                                <a href="#">Anular</a>
                                             </div>
                                         </div>
                                     </td>
@@ -1230,8 +1346,7 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#">Heredar</a>
-                                                <a href="#">Editar</a>
+                                                <a href="cotizacion-detalle.html">Editar</a>
                                                 <a href="#">Propuestas</a>
                                                 <a href="#">Anular</a>
                                             </div>
@@ -1261,7 +1376,6 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#">Heredar</a>
                                                 <a href="#">Ver</a>
                                             </div>
                                         </div>
@@ -1291,8 +1405,7 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#">Heredar</a>
-                                                <a href="#">Editar</a>
+                                                <a href="cotizacion-detalle.html">Editar</a>
                                                 <a href="#">Propuestas</a>
                                                 <a href="#">Anular</a>
                                             </div>
@@ -1311,7 +1424,8 @@
                                     <td>15,200,000</td>
                                     <td>29-01-2026</td>
                                     <td>
-                                        <div class="status-text">APROBADO</div>
+                                        <div class="status-text">REGISTRADO</div>
+                                        <span class="badge badge-default">En Preparación</span>
                                     </td>
                                     <td>Muestreo efluentes industriales</td>
                                     <td>
@@ -1324,8 +1438,9 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#">Heredar</a>
-                                                <a href="#">Ver</a>
+                                                <a href="cotizacion-detalle.html">Editar</a>
+                                                <a href="#">Propuestas</a>
+                                                <a href="#">Anular</a>
                                             </div>
                                         </div>
                                     </td>
@@ -1354,8 +1469,7 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#">Heredar</a>
-                                                <a href="#">Editar</a>
+                                                <a href="cotizacion-detalle.html">Editar</a>
                                                 <a href="#">Propuestas</a>
                                                 <a href="#">Anular</a>
                                             </div>
@@ -1385,7 +1499,6 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#">Heredar</a>
                                                 <a href="#">Ver</a>
                                             </div>
                                         </div>
@@ -1415,8 +1528,7 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#">Heredar</a>
-                                                <a href="#">Editar</a>
+                                                <a href="cotizacion-detalle.html">Editar</a>
                                                 <a href="#">Propuestas</a>
                                                 <a href="#">Anular</a>
                                             </div>
@@ -1446,7 +1558,6 @@
                                                 Opciones <i class="fas fa-caret-down caret"></i>
                                             </button>
                                             <div class="dropdown-menu">
-                                                <a href="#">Heredar</a>
                                                 <a href="#">Ver</a>
                                             </div>
                                         </div>
@@ -1489,69 +1600,55 @@
         </div>
     </div>
 
-    <div class="record-modal-overlay" id="recordTypeModal" aria-hidden="true">
-        <div class="record-modal" role="dialog" aria-modal="true" aria-labelledby="recordModalTitle">
-            <div class="record-modal-header">
-                <div class="record-modal-title" id="recordModalTitle">
-                    <i class="fas fa-layer-group"></i>
-                    Seleccione el tipo de registro
-                </div>
-                <button class="record-modal-close" onclick="closeRecordTypeModal()" aria-label="Cerrar">
-                    <i class="fas fa-times"></i>
-                </button>
+    <div class="record-modal-overlay company-confirm-overlay" id="companyChangeModal" aria-hidden="true">
+        <div class="record-modal company-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="companyChangeTitle">
+            <div class="company-confirm-title" id="companyChangeTitle">Cambiar empresa</div>
+            <div class="company-confirm-body">
+                <p>Si esta seguro de cambiar de empresa?</p>
+                <p>Esto lo redireccionara a la pantalla de Inicio.</p>
             </div>
-            <div class="record-modal-body">
-                <div class="record-option">
-                    <span class="option-tag">Cotización Spot</span>
-                    <h3>Cotización rápida de servicios</h3>
-                    <p>Flujo actual orientado a servicios individuales, con generación inmediata de PDF y seguimiento simple.</p>
-                    <div class="option-meta">
-                        <span><i class="fas fa-check"></i> Pasos: Datos, Servicios, Condiciones, PDF, Aprobación</span>
-                        <span><i class="fas fa-clock"></i> Ideal para solicitudes puntuales</span>
-                    </div>
-                    <div class="option-actions">
-                        <span class="badge badge-success">Actual</span>
-                        <button class="btn btn-success btn-sm" onclick="goToCotizacion()">
-                            Continuar
-                        </button>
-                    </div>
-                </div>
-                <div class="record-option">
-                    <span class="option-tag">Propuesta / Licitación</span>
-                    <h3>Gestión completa de oportunidades</h3>
-                    <p>Registro y seguimiento de propuestas con control de plazos, repositorio documental y constructores técnico/económico.</p>
-                    <div class="option-meta">
-                        <span><i class="fas fa-check"></i> Pasos: Oportunidad, Plazos, Documentos, Técnica, Económica, Resultados</span>
-                        <span><i class="fas fa-flag"></i> Ideal para procesos competitivos</span>
-                    </div>
-                    <div class="option-actions">
-                        <span class="badge badge-info">Nuevo</span>
-                        <button class="btn btn-info btn-sm" onclick="goToPropuesta()">
-                            Continuar
-                        </button>
-                    </div>
-                </div>
+            <div class="company-confirm-actions">
+                <button class="btn btn-company-cancel" type="button" onclick="cancelCompanyChange()">
+                    Cancelar
+                </button>
+                <button class="btn btn-company-confirm" type="button" onclick="confirmCompanyChange()">
+                    Confirmar
+                </button>
             </div>
         </div>
     </div>
 
     <script>
+        var currentCompany = 'SGS';
+        var pendingCompany = null;
+
         // Toggle dropdown
         function toggleDropdown(btn) {
             event.stopPropagation();
+            var currentDropdown = btn.parentElement;
 
             // Close all other dropdowns
+            document.querySelectorAll('.dropdown').forEach(function(dropdown) {
+                if (dropdown !== currentDropdown) {
+                    dropdown.classList.remove('dropdown-open');
+                }
+            });
+
             document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
                 if (menu !== btn.nextElementSibling) {
                     menu.classList.remove('show');
                 }
             });
 
+            currentDropdown.classList.toggle('dropdown-open', !btn.nextElementSibling.classList.contains('show'));
             btn.nextElementSibling.classList.toggle('show');
         }
 
         // Close dropdowns when clicking outside
         document.addEventListener('click', function() {
+            document.querySelectorAll('.dropdown').forEach(function(dropdown) {
+                dropdown.classList.remove('dropdown-open');
+            });
             document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
                 menu.classList.remove('show');
             });
@@ -1561,6 +1658,8 @@
         document.getElementById('btnVer').addEventListener('click', function() {
             var filtros = document.querySelectorAll('.masFiltros');
             var isHidden = filtros[0].hasAttribute('hidden');
+            var label = this.querySelector('.toggle-label');
+            var icon = this.querySelector('i');
 
             filtros.forEach(function(el) {
                 if (isHidden) {
@@ -1570,59 +1669,183 @@
                 }
             });
 
-            this.textContent = isHidden ? 'Menos' : 'Más';
+            label.textContent = isHidden ? 'Menos' : 'Más';
+            this.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+            icon.classList.toggle('fa-chevron-down', !isHidden);
+            icon.classList.toggle('fa-chevron-up', isHidden);
         });
 
         // Placeholder functions
         function DescargarCotizaciones() { console.log('Descargar cotizaciones'); }
-        function BindCotizaciones() { console.log('Buscar cotizaciones'); }
-        function OnOpenModalHeredar(id, dept, el) { console.log('Heredar', id); }
+        function BindCotizaciones() { applyFilters(); }
         function OnOpenModalPropuestas(id, el) { console.log('Propuestas', id); }
         function OnOpenModalAnular(id, el) { console.log('Anular', id); }
-
-        function openRecordTypeModal() {
-            var modal = document.getElementById('recordTypeModal');
-            modal.classList.add('show');
-            modal.setAttribute('aria-hidden', 'false');
-        }
-
-        function closeRecordTypeModal() {
-            var modal = document.getElementById('recordTypeModal');
-            modal.classList.remove('show');
-            modal.setAttribute('aria-hidden', 'true');
-        }
 
         function goToCotizacion() {
             window.location.href = 'cotizacion-detalle.html';
         }
 
-        function goToPropuesta() {
-            window.location.href = 'propuesta-detalle.html';
+        function updateBranding(company) {
+            var logo = document.getElementById('sidebarLogoText');
+            if (!logo) {
+                return;
+            }
+
+            logo.textContent = company;
+            logo.classList.toggle('logo-text-compact', company.length > 4);
         }
 
         // Company switcher
         function switchCompany(company) {
-            console.log('Empresa seleccionada:', company);
-            localStorage.setItem('selectedCompany', company);
-            filterTableByCompany(company);
+            if (company === currentCompany) {
+                return;
+            }
+
+            pendingCompany = company;
+            openCompanyChangeModal();
+        }
+
+        function openCompanyChangeModal() {
+            var modal = document.getElementById('companyChangeModal');
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeCompanyChangeModal() {
+            var modal = document.getElementById('companyChangeModal');
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function cancelCompanyChange() {
+            document.getElementById('companySelect').value = currentCompany;
+            pendingCompany = null;
+            closeCompanyChangeModal();
+        }
+
+        function confirmCompanyChange() {
+            if (!pendingCompany) {
+                closeCompanyChangeModal();
+                return;
+            }
+
+            currentCompany = pendingCompany;
+            localStorage.setItem('selectedCompany', currentCompany);
+            closeCompanyChangeModal();
+            window.location.href = 'inicio.html';
+        }
+
+        function normalizeText(value) {
+            return (value || '').toString().trim().toLowerCase();
+        }
+
+        function parseDisplayDate(value) {
+            if (!value) {
+                return null;
+            }
+
+            var parts = value.split('-');
+            if (parts.length !== 3) {
+                return null;
+            }
+
+            var day = parseInt(parts[0], 10);
+            var month = parseInt(parts[1], 10) - 1;
+            var year = parseInt(parts[2], 10);
+            var date = new Date(year, month, day);
+
+            if (isNaN(date.getTime())) {
+                return null;
+            }
+
+            date.setHours(0, 0, 0, 0);
+            return date;
+        }
+
+        function getFilterValues() {
+            return {
+                company: document.getElementById('companySelect').value,
+                cliente: normalizeText(document.getElementById('txtCliente').value),
+                cotizacion: normalizeText(document.getElementById('txtCotizacion').value),
+                desde: document.getElementById('dtDesde').value,
+                hasta: document.getElementById('dtHasta').value,
+                estado: document.getElementById('ddlEstado').value,
+                vendedor: normalizeText(document.getElementById('txtEjecutivo').value),
+                encargado: normalizeText(document.getElementById('txtResponsable').value)
+            };
+        }
+
+        function matchesTextFilter(value, filter) {
+            return !filter || normalizeText(value).indexOf(filter) !== -1;
+        }
+
+        function rowMatchesFilters(row, filters) {
+            var cells = row.querySelectorAll('td');
+            var clientName = row.querySelector('.client-name');
+            var statusText = row.querySelector('.status-text');
+            var vendedor = row.querySelector('.responsable-vendedor');
+            var encargado = row.querySelector('.responsable-encargado');
+            var rowDate = parseDisplayDate(cells[4] ? cells[4].textContent.trim() : '');
+            var fromDate = filters.desde ? new Date(filters.desde + 'T00:00:00') : null;
+            var toDate = filters.hasta ? new Date(filters.hasta + 'T00:00:00') : null;
+
+            if (fromDate && rowDate && rowDate < fromDate) {
+                return false;
+            }
+
+            if (toDate && rowDate && rowDate > toDate) {
+                return false;
+            }
+
+            if (!matchesTextFilter(clientName ? clientName.textContent : '', filters.cliente)) {
+                return false;
+            }
+
+            if (!matchesTextFilter(cells[1] ? cells[1].textContent : '', filters.cotizacion)) {
+                return false;
+            }
+
+            if (filters.estado !== '-1' && normalizeText(statusText ? statusText.textContent : '') !== normalizeText(filters.estado)) {
+                return false;
+            }
+
+            if (!matchesTextFilter(vendedor ? vendedor.textContent : '', filters.vendedor)) {
+                return false;
+            }
+
+            if (!matchesTextFilter(encargado ? encargado.textContent : '', filters.encargado)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function applyFilters() {
+            var rows = document.querySelectorAll('#tblCotizaciones tbody tr');
+            var filters = getFilterValues();
+            var visibleCount = 0;
+
+            rows.forEach(function(row) {
+                var matchesCompany = row.getAttribute('data-company') === filters.company;
+                var matchesFilters = matchesCompany && rowMatchesFilters(row, filters);
+
+                row.style.display = matchesFilters ? '' : 'none';
+
+                if (matchesFilters) {
+                    visibleCount++;
+                }
+            });
+
+            updatePaginationInfo(visibleCount);
         }
 
         // Filter table rows by company
         function filterTableByCompany(company) {
-            var rows = document.querySelectorAll('#tblCotizaciones tbody tr');
-            var visibleCount = 0;
-
-            rows.forEach(function(row) {
-                if (row.getAttribute('data-company') === company) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-
-            // Update pagination info
-            updatePaginationInfo(visibleCount);
+            var companySelect = document.getElementById('companySelect');
+            if (companySelect.value !== company) {
+                companySelect.value = company;
+            }
+            applyFilters();
         }
 
         // Update pagination display
@@ -1632,22 +1855,40 @@
             console.log('Registros visibles:', count);
         }
 
+        function setupLiveFilters() {
+            var filterIds = [
+                'txtCliente',
+                'txtCotizacion',
+                'dtDesde',
+                'dtHasta',
+                'ddlEstado',
+                'txtEjecutivo',
+                'txtResponsable',
+                'ddlDivision',
+                'ddlDepartamento'
+            ];
+
+            filterIds.forEach(function(id) {
+                var field = document.getElementById(id);
+                if (!field) {
+                    return;
+                }
+
+                field.addEventListener('input', applyFilters);
+                field.addEventListener('change', applyFilters);
+            });
+        }
+
         // Cargar empresa guardada al iniciar
         document.addEventListener('DOMContentLoaded', function() {
             var savedCompany = localStorage.getItem('selectedCompany') || 'SGS';
+            currentCompany = savedCompany;
             document.getElementById('companySelect').value = savedCompany;
+            updateBranding(savedCompany);
+            setupLiveFilters();
             filterTableByCompany(savedCompany);
         });
 
-        document.addEventListener('click', function(event) {
-            var modal = document.getElementById('recordTypeModal');
-            if (!modal.classList.contains('show')) {
-                return;
-            }
-            if (event.target === modal) {
-                closeRecordTypeModal();
-            }
-        });
     </script>
 </body>
 </html>

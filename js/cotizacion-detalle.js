@@ -2,6 +2,12 @@
         let viewingStep = 1;
         let selectedClient = null;
         let quoteSaved = false;
+        let draggedLabGroup = null;
+        let labDropTarget = null;
+        let labDropInsertAfter = false;
+        let draggedServiceRow = null;
+        let serviceDropTargetRow = null;
+        let serviceDropInsertAfter = false;
 
         // Dummy client data for demo
         const clientesDemo = [
@@ -178,6 +184,40 @@
             if (params.get('prefill') === '1') {
                 applyDummyQuote();
             }
+            var targetStep = parseInt(params.get('step') || '', 10);
+            if (!isNaN(targetStep) && targetStep >= 1 && targetStep <= 6) {
+                while (currentStep < targetStep) {
+                    nextStep(currentStep + 1);
+                }
+                if (currentStep > targetStep) {
+                    currentStep = targetStep;
+                    viewingStep = targetStep;
+                    showStepPanel(targetStep);
+                    document.querySelectorAll('.stepper-item').forEach(function(item) {
+                        item.classList.remove('active', 'viewing');
+                        var stepNum = parseInt(item.getAttribute('data-step') || '0', 10);
+                        item.classList.toggle('completed', stepNum > 0 && stepNum < targetStep);
+                    });
+                    var activeItem = document.querySelector('.stepper-item[data-step="' + targetStep + '"]');
+                    if (activeItem) activeItem.classList.add('active');
+                    updateStepperViewing(targetStep);
+                }
+            }
+            if (params.get('auth_review') === '1') {
+                var requestUser = params.get('auth_user') || getCurrentUserName();
+                var requestComment = params.get('auth_comment') || 'Solicitud de autorizacion enviada para revision.';
+                var requestDate = formatApprovalDateTime(new Date());
+                approvalWorkflow.status = 'requested';
+                approvalWorkflow.lastRequest = { user: requestUser, date: requestDate, comment: requestComment };
+                approvalWorkflow.log = [{
+                    date: requestDate,
+                    action: 'Solicitud',
+                    user: requestUser,
+                    comment: requestComment
+                }];
+                setQuoteSummaryStatus('Pendiente de autorización');
+                renderApprovalWorkflowUI();
+            }
         }
 
         function applyDummyQuote() {
@@ -212,9 +252,8 @@
             updateSummaryQuoteNumber('650952', 'Registrado');
             updateSummaryProposal('N° 1');
 
-            // Completar paso 1 y paso 2, saltar a paso 3
-            nextStep(2);
-            nextStep(3);
+            // Mantenerse en paso 1 por defecto al abrir desde "Editar".
+            // La navegación a otro paso se controla por querystring (step=...).
 
             // Precargar Paso 3: Datos propios
             setInputValue('DireccionMuestreo', 'Fundo Playa Venado - Ruta 225 Km. 16, Ensenada, 5550000 Puerto Varas, Los Lagos');
@@ -354,21 +393,106 @@
             }
         }
 
-        function openResumenDrawer() {
-            var drawer = document.getElementById('summaryDrawer');
-            if (drawer) {
-                drawer.style.display = 'flex';
+        function ensureSummaryDrawerReady() {
+            var popup = document.getElementById('summaryDrawer');
+            if (!popup) {
+                var wrapper = document.createElement('div');
+                wrapper.innerHTML =
+                    '<div class="summary-drawer-overlay" id="summaryDrawer">' +
+                        '<div class="summary-drawer">' +
+                            '<div class="summary-drawer-header">' +
+                                '<span>Resumen de la propuesta</span>' +
+                            '</div>' +
+                            '<div class="summary-drawer-meta">' +
+                                '<div class="sdm-item">' +
+                                    '<i class="fas fa-hashtag"></i>' +
+                                    '<span class="sdm-label">Cotización</span>' +
+                                    '<strong id="drawerQuoteNumber">—</strong>' +
+                                '</div>' +
+                                '<span class="sdm-sep">|</span>' +
+                                '<div class="sdm-item">' +
+                                    '<i class="fas fa-building"></i>' +
+                                    '<span class="sdm-label">Cliente</span>' +
+                                    '<strong id="drawerClient">—</strong>' +
+                                '</div>' +
+                                '<span class="sdm-sep">|</span>' +
+                                '<div class="sdm-item">' +
+                                    '<i class="far fa-calendar-alt"></i>' +
+                                    '<span class="sdm-label">Fecha</span>' +
+                                    '<strong id="drawerDate">—</strong>' +
+                                '</div>' +
+                                '<span class="sdm-sep">|</span>' +
+                                '<div class="sdm-item">' +
+                                    '<i class="fas fa-flag"></i>' +
+                                    '<span class="sdm-label">Estado</span>' +
+                                    '<strong id="drawerStatus">—</strong>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="summary-drawer-body">' +
+                                '<div class="summary-doc">' +
+                                    '<h5>Servicios</h5>' +
+                                    '<table class="summary-table">' +
+                                        '<thead>' +
+                                            '<tr>' +
+                                                '<th style="width:32px;">#</th>' +
+                                                '<th>Servicio</th>' +
+                                                '<th style="width:80px;">Precio Unit.</th>' +
+                                                '<th style="width:60px;">Cant</th>' +
+                                                '<th style="width:70px;">Desc %</th>' +
+                                                '<th style="width:80px;">Total</th>' +
+                                            '</tr>' +
+                                        '</thead>' +
+                                        '<tbody id="summaryServicesBody"></tbody>' +
+                                    '</table>' +
+                                    '<div class="summary-total">Total: <span id="summaryServicesTotal" style="margin-left:8px;">0.00 / CLU</span></div>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="summary-drawer-footer">' +
+                                '<button class="btn btn-default btn-sm" type="button" onclick="closeBlankSummaryPopup()">Cerrar</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                popup = wrapper.firstElementChild;
+                document.body.appendChild(popup);
+            } else if (popup.parentElement !== document.body) {
+                document.body.appendChild(popup);
+            }
+            return popup;
+        }
+
+        function openBlankSummaryPopup() {
+            var popup = ensureSummaryDrawerReady();
+            if (popup) {
+                updateHeaderServicesSummary();
+                var el = document.getElementById('drawerQuoteNumber');
+                if (el) el.textContent = (document.getElementById('summaryQuoteNumber')?.textContent || '—').trim();
+                el = document.getElementById('drawerClient');
+                if (el) el.textContent = (document.getElementById('summaryClient')?.textContent || '—').trim();
+                el = document.getElementById('drawerDate');
+                if (el) el.textContent = (document.getElementById('summaryDate')?.textContent || '—').trim();
+                el = document.getElementById('drawerStatus');
+                if (el) {
+                    var statusText = (document.querySelector('#summaryStatus span:last-child')?.textContent || '').trim();
+                    el.textContent = statusText || '—';
+                }
+                popup.style.display = 'flex';
+                popup.classList.add('show');
                 document.body.classList.add('no-scroll');
             }
         }
 
-        function closeResumenDrawer() {
-            var drawer = document.getElementById('summaryDrawer');
-            if (drawer) {
-                drawer.style.display = 'none';
+        function closeBlankSummaryPopup() {
+            var popup = document.getElementById('summaryDrawer');
+            if (popup) {
+                popup.classList.remove('show');
+                popup.style.display = 'none';
                 document.body.classList.remove('no-scroll');
             }
         }
+
+        // Exponer explícitamente para handlers inline (fallback robusto).
+        window.openBlankSummaryPopup = openBlankSummaryPopup;
+        window.closeBlankSummaryPopup = closeBlankSummaryPopup;
 
         function updateSelectedServicesCount() {
             var countEl = document.getElementById('selectedServicesCount');
@@ -435,7 +559,7 @@
             });
 
             if (rows.length === 0) {
-                tbody.innerHTML = '<tr class="empty-row"><td colspan="14" style="text-align:center;color:#9a9a9a;">Sin servicios en este grupo.</td></tr>';
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="12" style="text-align:center;color:#9a9a9a;">Sin servicios en este grupo.</td></tr>';
                 var subtotalEmpty = group.querySelector('.service-subtotal');
                 if (subtotalEmpty) {
                     subtotalEmpty.textContent = 'SubTotal 0.00 / CLU';
@@ -458,7 +582,8 @@
                 if (numCell) {
                     numCell.textContent = (index + 1).toString();
                 }
-                var totalCell = tr.querySelectorAll('td')[9];
+                syncLabRowComputedValues(tr);
+                var totalCell = tr.querySelectorAll('td')[10];
                 if (totalCell) {
                     var totalVal = parseFloat(totalCell.textContent.replace(',', '.')) || 0;
                     subtotal += totalVal;
@@ -469,9 +594,248 @@
             if (subtotalEl) {
                 subtotalEl.textContent = 'SubTotal ' + subtotal.toFixed(2) + ' / CLU';
             }
+            if (typeof syncSharedLabCatalogFromCotizacion === 'function') {
+                syncSharedLabCatalogFromCotizacion();
+            }
             // Actualizar resumen en cabecera
             if (typeof updateHeaderServicesSummary === 'function') {
                 updateHeaderServicesSummary();
+            }
+        }
+
+        function resolveLabMainRow(row) {
+            return row || null;
+        }
+
+        function findLabControl(mainRow, selector) {
+            return mainRow ? mainRow.querySelector(selector) : null;
+        }
+
+        function ensureLabSecondaryRow(mainRow, laboratorio, tiempo, etfaChecked) {
+            var row = resolveLabMainRow(mainRow);
+            if (!row) return null;
+            var labOptions = ['Santiago', 'Antofagasta'];
+            var selectedLab = labOptions.indexOf(laboratorio) !== -1 ? laboratorio : 'Santiago';
+            var responseTime = (tiempo || '12').toString();
+            var isEtfa = !!etfaChecked;
+            var cells = row.querySelectorAll('td');
+            if (cells.length < 12) return null;
+
+            // Laboratorio y Tresp juntos después de LD; ETFA en acciones
+            var labCell = cells[3];
+            var timeCell = cells[4];
+            var actionCell = cells[cells.length - 1];
+
+            row.querySelectorAll('.lab-inline-lab, .lab-inline-time, .lab-inline-etfa, .lab-etfa-action').forEach(function(el) {
+                el.remove();
+            });
+
+            if (labCell) {
+                var labHtml =
+                    '<div class="lab-inline-cell lab-inline-lab">' +
+                        '<select class="lab-cell-input lab-cell-select lab-cell-lab lab-edit-control js-lab-laboratorio" disabled>' +
+                            labOptions.map(function(opt) {
+                                var selected = opt === selectedLab ? ' selected' : '';
+                                return '<option value="' + opt.replace(/"/g, '&quot;') + '"' + selected + '>' + opt + '</option>';
+                            }).join('') +
+                        '</select>' +
+                    '</div>';
+                labCell.innerHTML = labHtml;
+            }
+
+            if (timeCell) {
+                var timeHtml =
+                    '<div class="lab-inline-cell lab-inline-time">' +
+                        '<input type="number" min="0" step="1" value="' + responseTime + '" class="lab-cell-input lab-cell-tiempo lab-edit-control js-lab-tiempo" disabled>' +
+                    '</div>';
+                timeCell.innerHTML = timeHtml;
+            }
+
+            if (actionCell) {
+                var etfaHtml =
+                    '<label class="lab-etfa-inline lab-etfa-action"><input type="checkbox" class="js-lab-etfa" ' + (isEtfa ? 'checked ' : '') + 'disabled> ETFA</label>';
+                var firstIcon = actionCell.querySelector('i');
+                if (firstIcon) {
+                    firstIcon.insertAdjacentHTML('beforebegin', etfaHtml);
+                } else {
+                    actionCell.insertAdjacentHTML('beforeend', etfaHtml);
+                }
+            }
+            return row;
+        }
+
+        function syncLabRowComputedValues(row) {
+            var mainRow = resolveLabMainRow(row);
+            if (!mainRow) return;
+            var cells = mainRow.querySelectorAll('td');
+            if (cells.length < 11) return;
+
+            var precio = parseFloat((cells[6].textContent || '0').replace(',', '.')) || 0;
+            var tipoSelect = findLabControl(mainRow, '.js-lab-tipo');
+            var variacionInput = findLabControl(mainRow, '.js-lab-variacion');
+            var cantidadInput = findLabControl(mainRow, '.js-lab-cantidad');
+            var tipo = tipoSelect ? tipoSelect.value : (cells[7].textContent || 'PORCENTAJE').trim();
+            var variacion = variacionInput ? parseFloat((variacionInput.value || '0').replace(',', '.')) || 0 : (parseFloat((cells[8].textContent || '0').replace(',', '.')) || 0);
+            var cantidad = cantidadInput ? parseFloat((cantidadInput.value || '1').replace(',', '.')) || 1 : (parseFloat((cells[9].textContent || '1').replace(',', '.')) || 1);
+            var precioFinal = tipo === 'PORCENTAJE'
+                ? (precio + (precio * variacion / 100))
+                : (precio + variacion);
+            var total = precioFinal * cantidad;
+
+            cells[10].textContent = total.toFixed(2);
+        }
+
+        function decorateLabServiceRow(row) {
+            var mainRow = resolveLabMainRow(row);
+            if (!mainRow) {
+                return;
+            }
+            mainRow.classList.add('lab-main-row');
+
+            var cells = mainRow.querySelectorAll('td');
+            if (cells.length < 10) {
+                return;
+            }
+
+            var hasOldColumns = cells.length >= 13;
+            var tipo = (cells[7].textContent || 'PORCENTAJE').trim();
+            var variacion = (parseFloat((cells[8].textContent || '0').replace(',', '.')) || 0).toFixed(2);
+            var cantidad = (parseFloat((cells[9].textContent || '1').replace(',', '.')) || 1).toFixed(2);
+            var serviceCell = cells[1];
+            if (serviceCell) {
+                var oldExtra = serviceCell.querySelector('.lab-service-extra');
+                if (oldExtra) {
+                    oldExtra.remove();
+                }
+            }
+            var existingLab = mainRow.querySelector('.js-lab-laboratorio');
+            var existingTime = mainRow.querySelector('.js-lab-tiempo');
+            var existingEtfa = mainRow.querySelector('.js-lab-etfa');
+            var currentLabControl = findLabControl(mainRow, '.js-lab-laboratorio');
+            var currentTimeControl = findLabControl(mainRow, '.js-lab-tiempo');
+            var currentEtfaControl = findLabControl(mainRow, '.js-lab-etfa');
+            var laboratorio = hasOldColumns
+                ? (cells[9].textContent || '').trim()
+                : ((existingLab && existingLab.value) || (currentLabControl && currentLabControl.value) || 'Santiago');
+            var tiempo = hasOldColumns
+                ? (cells[10].textContent || '12').trim()
+                : ((existingTime && existingTime.value) || (currentTimeControl && currentTimeControl.value) || '12');
+            var etfaChecked = hasOldColumns
+                ? !!mainRow.querySelector('td:nth-child(12) input[type="checkbox"]:checked')
+                : !!((existingEtfa && existingEtfa.checked) || (currentEtfaControl && currentEtfaControl.checked));
+
+            if (!mainRow.querySelector('.js-lab-tipo')) {
+                cells[7].innerHTML =
+                    '<select class="lab-cell-input lab-cell-select lab-edit-control js-lab-tipo" disabled>' +
+                        '<option value="PORCENTAJE"' + (tipo === 'PORCENTAJE' ? ' selected' : '') + '>Porcentaje</option>' +
+                        '<option value="FIJO"' + (tipo === 'FIJO' ? ' selected' : '') + '>Fijo</option>' +
+                    '</select>';
+            }
+
+            if (!mainRow.querySelector('.js-lab-variacion')) {
+                cells[8].innerHTML =
+                    '<input type="number" min="0" step="0.01" value="' + variacion + '" class="lab-cell-input lab-edit-control js-lab-variacion" disabled>';
+            }
+
+            if (!mainRow.querySelector('.js-lab-cantidad')) {
+                cells[9].innerHTML =
+                    '<input type="number" min="1" step="1" value="' + cantidad + '" class="lab-cell-input lab-edit-control js-lab-cantidad" disabled>';
+            }
+
+            if (hasOldColumns) {
+                mainRow.deleteCell(11);
+                mainRow.deleteCell(10);
+                mainRow.deleteCell(9);
+                cells = mainRow.querySelectorAll('td');
+            }
+
+            // Estructura nueva: Laboratorio y Tresp después de LD
+            if (cells.length === 10) {
+                var labTd = mainRow.insertCell(3);
+                labTd.innerHTML = '';
+                var timeTd = mainRow.insertCell(4);
+                timeTd.innerHTML = '';
+                cells = mainRow.querySelectorAll('td');
+            } else if (cells.length === 11) {
+                var timeTdOnly = mainRow.insertCell(4);
+                timeTdOnly.innerHTML = '';
+                cells = mainRow.querySelectorAll('td');
+            }
+            ensureLabSecondaryRow(mainRow, laboratorio, tiempo, etfaChecked);
+
+            var editIcon = mainRow.querySelector('i.fa-edit');
+            if (editIcon) {
+                editIcon.classList.add('lab-edit-row');
+                editIcon.title = mainRow.classList.contains('is-editing') ? 'Guardar cambios' : 'Editar';
+            }
+
+            var actionCell = cells[cells.length - 1];
+            if (actionCell && !actionCell.querySelector('.lab-cancel-row')) {
+                var trashIcon = actionCell.querySelector('i.fa-trash');
+                var cancelIcon = document.createElement('i');
+                cancelIcon.className = 'fas fa-times lab-cancel-row';
+                cancelIcon.title = 'Cancelar edición';
+                if (trashIcon) {
+                    actionCell.insertBefore(cancelIcon, trashIcon);
+                } else {
+                    actionCell.appendChild(cancelIcon);
+                }
+            }
+        }
+
+        function decorateAllLabServiceRows() {
+            document.querySelectorAll('#divGruposServicioLab .service-group tbody tr').forEach(function(row) {
+                if (row.classList.contains('empty-row')) return;
+                decorateLabServiceRow(row);
+            });
+        }
+
+        function getLabRowSnapshot(row) {
+            var mainRow = resolveLabMainRow(row);
+            return {
+                tipo: findLabControl(mainRow, '.js-lab-tipo') ? findLabControl(mainRow, '.js-lab-tipo').value : 'PORCENTAJE',
+                variacion: findLabControl(mainRow, '.js-lab-variacion') ? findLabControl(mainRow, '.js-lab-variacion').value : '0.00',
+                cantidad: findLabControl(mainRow, '.js-lab-cantidad') ? findLabControl(mainRow, '.js-lab-cantidad').value : '1.00',
+                laboratorio: findLabControl(mainRow, '.js-lab-laboratorio') ? findLabControl(mainRow, '.js-lab-laboratorio').value : 'Santiago',
+                tiempo: findLabControl(mainRow, '.js-lab-tiempo') ? findLabControl(mainRow, '.js-lab-tiempo').value : '12',
+                etfa: !!(findLabControl(mainRow, '.js-lab-etfa') && findLabControl(mainRow, '.js-lab-etfa').checked)
+            };
+        }
+
+        function applyLabRowSnapshot(row, snapshot) {
+            var mainRow = resolveLabMainRow(row);
+            if (!mainRow || !snapshot) return;
+            var tipo = findLabControl(mainRow, '.js-lab-tipo');
+            var variacion = findLabControl(mainRow, '.js-lab-variacion');
+            var cantidad = findLabControl(mainRow, '.js-lab-cantidad');
+            var laboratorio = findLabControl(mainRow, '.js-lab-laboratorio');
+            var tiempo = findLabControl(mainRow, '.js-lab-tiempo');
+            var etfa = findLabControl(mainRow, '.js-lab-etfa');
+
+            if (tipo) tipo.value = snapshot.tipo;
+            if (variacion) variacion.value = snapshot.variacion;
+            if (cantidad) cantidad.value = snapshot.cantidad;
+            if (laboratorio) laboratorio.value = snapshot.laboratorio;
+            if (tiempo) tiempo.value = snapshot.tiempo;
+            if (etfa) etfa.checked = snapshot.etfa;
+        }
+
+        function setLabRowEditingState(row, isEditing) {
+            var mainRow = resolveLabMainRow(row);
+            if (!mainRow) return;
+            mainRow.classList.toggle('is-editing', isEditing);
+            mainRow.querySelectorAll('.lab-edit-control').forEach(function(input) {
+                input.disabled = !isEditing;
+            });
+            mainRow.querySelectorAll('.js-lab-etfa').forEach(function(input) {
+                input.disabled = !isEditing;
+            });
+
+            var editIcon = mainRow.querySelector('.lab-edit-row');
+            if (editIcon) {
+                editIcon.classList.toggle('fa-save', isEditing);
+                editIcon.classList.toggle('fa-edit', !isEditing);
+                editIcon.title = isEditing ? 'Guardar cambios' : 'Editar';
             }
         }
 
@@ -490,7 +854,6 @@
                 var variacionInput = row.querySelector('.js-muestreo-variacion');
                 var cantidadInput = row.querySelector('.js-muestreo-cantidad');
                 var tipoSelect = row.querySelector('.js-muestreo-tipo');
-                var precioFinalCell = row.querySelector('.js-muestreo-precio-final');
                 var totalCell = row.querySelector('.js-muestreo-total');
                 var precio = precioCell ? parseFloat(precioCell.textContent.replace(',', '.')) || 0 : 0;
                 var variacion = variacionInput ? parseFloat(variacionInput.value.replace(',', '.')) || 0 : 0;
@@ -500,9 +863,6 @@
                     ? (precio + (precio * variacion / 100))
                     : (precio + variacion);
                 var total = precioFinal * cantidad;
-                if (precioFinalCell) {
-                    precioFinalCell.textContent = precioFinal.toFixed(2);
-                }
                 if (totalCell) {
                     totalCell.textContent = total.toFixed(2);
                 }
@@ -510,7 +870,7 @@
             var subtotalEl = container.querySelector('.service-subtotal');
             if (subtotalEl) {
                 var subtotal = rows.reduce(function(sum, row) {
-                    var totalCell = row.querySelectorAll('td')[8];
+                    var totalCell = row.querySelectorAll('td')[7];
                     var totalVal = totalCell ? parseFloat(totalCell.textContent.replace(',', '.')) || 0 : 0;
                     return sum + totalVal;
                 }, 0);
@@ -554,7 +914,7 @@
             if (!tbody) return;
 
             // Remove empty placeholder row
-            var emptyRow = tbody.querySelector('tr td[colspan]');
+            var emptyRow = tbody.querySelector('tr.empty-row td[colspan]');
             if (emptyRow) {
                 emptyRow.parentElement.remove();
             }
@@ -573,26 +933,30 @@
                 var ld = card.getAttribute('data-ld') || '';
                 var unidad = card.getAttribute('data-unidad') || '';
                 var precio = card.getAttribute('data-precio') || '0';
-                var laboratorio = card.getAttribute('data-lab') || '';
+                var codeEl = card.querySelector('.service-card-code');
+                var serviceCode = codeEl ? codeEl.textContent.trim() : '';
+                if (!serviceCode) {
+                    var etfaCode = card.getAttribute('data-etfa-code') || '';
+                    serviceCode = etfaCode || '00000000';
+                }
 
                 var precioNum = parseFloat(precio.replace(',', '.')) || 0;
 
                 var tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td class="text-center">' + (currentCount + idx + 1) + '</td>' +
-                    '<td>' + name + '</td>' +
+                    '<td><span class="lab-service-name">' + name + '</span><span class="lab-service-code"><strong>' + serviceCode + '</strong><span class="lab-service-separator"> / </span><span class="lab-service-method">' + metodo + '</span></span></td>' +
                     '<td>' + ld + '</td>' +
-                    '<td>' + metodo + '</td>' +
+                    '<td></td>' +
+                    '<td></td>' +
                     '<td>' + unidad + '</td>' +
                     '<td align="right">' + precioNum.toFixed(2) + '</td>' +
-                    '<td>PORCENTAJE</td>' +
-                    '<td align="right">0.00</td>' +
-                    '<td align="right">1.00</td>' +
+                    '<td><select class="lab-cell-input lab-cell-select lab-edit-control js-lab-tipo" disabled><option value="PORCENTAJE" selected>Porcentaje</option><option value="FIJO">Fijo</option></select></td>' +
+                    '<td align="right"><input type="number" min="0" step="0.01" value="0.00" class="lab-cell-input lab-edit-control js-lab-variacion" disabled></td>' +
+                    '<td align="right"><input type="number" min="1" step="1" value="1.00" class="lab-cell-input lab-edit-control js-lab-cantidad" disabled></td>' +
                     '<td align="right">' + precioNum.toFixed(2) + '</td>' +
-                    '<td>' + laboratorio + '</td>' +
-                    '<td align="right">12</td>' +
-                    '<td><input type="checkbox" disabled></td>' +
-                    '<td style="width:110px"><i class="fas fa-edit"></i> <i class="fas fa-trash"></i></td>';
+                    '<td style="width:110px"><i class="fas fa-edit lab-edit-row" title="Editar"></i> <i class="fas fa-times lab-cancel-row" title="Cancelar edición"></i> <i class="fas fa-trash" title="Eliminar"></i></td>';
+                tr.classList.add('lab-main-row');
 
                 tbody.appendChild(tr);
             });
@@ -629,7 +993,6 @@
                                     '<th style="width:90px;">Tipo Var.</th>' +
                                     '<th style="width:90px;">Variación</th>' +
                                     '<th style="width:70px;">Cant</th>' +
-                                    '<th style="width:110px;">Precio Final</th>' +
                                     '<th style="width:90px;">Total</th>' +
                                     '<th style="width:60px;"></th>' +
                                 '</tr>' +
@@ -655,6 +1018,7 @@
                 var cantidad = '1.00';
                 var precioFinal = precio;
                 var total = (parseFloat(precioFinal) * parseFloat(cantidad)).toFixed(2);
+                var budgetMeta = [productoVal, presentacionVal].filter(function(value) { return !!value; }).join(' / ');
                 var codeEl = card.querySelector('.service-card-code');
                 var codigo = codeEl ? codeEl.textContent.trim() : '';
 
@@ -667,25 +1031,22 @@
                               '<i class="fas fa-copy muestreo-duplicate" title="Duplicar"></i>' +
                               '<span class="muestreo-code">' + codigo + '</span>' +
                           '</div>' +
-                        '<div class="service-tags" style="margin-top:6px;">' +
-                            '<span class="service-tag">' + productoVal.toUpperCase() + '</span>' +
-                            '<span class="service-tag">' + presentacionVal.toUpperCase() + '</span>' +
-                        '</div>' +
+                        '<div class="muestreo-budget-meta">' + (budgetMeta || '-') + '</div>' +
                     '</td>' +
                     '<td>' + unidad + '</td>' +
                     '<td align="right">' + precio + '</td>' +
                     '<td><select class="muestreo-cell-input js-muestreo-tipo" disabled><option value="FIJO"' + (tipoVar === 'FIJO' ? ' selected' : '') + '>FIJO</option><option value="PORCENTAJE"' + (tipoVar === 'PORCENTAJE' ? ' selected' : '') + '>PORCENTAJE</option></select></td>' +
                     '<td align="right"><input type="number" min="0" step="0.01" value="' + variacion + '" class="muestreo-cell-input js-muestreo-variacion" disabled></td>' +
                     '<td align="right"><input type="number" min="1" step="1" value="' + cantidad + '" class="muestreo-cell-input js-muestreo-cantidad" disabled></td>' +
-                    '<td align="right" class="js-muestreo-precio-final">' + precioFinal + '</td>' +
                     '<td align="right" class="js-muestreo-total">' + total + '</td>' +
-                    '<td class="text-center"><i class="fas fa-edit muestreo-edit-row"></i>&nbsp;&nbsp;<i class="fas fa-trash"></i></td>';
+                    '<td class="text-center"><div class="service-row-actions"><i class="fas fa-edit muestreo-edit-row"></i><i class="fas fa-trash"></i><i class="fas fa-grip-vertical service-row-drag" title="Arrastrar para reordenar" draggable="true"></i></div></td>';
 
                 tbody.appendChild(tr);
             });
 
             var subtotalEl = container.querySelector('.service-subtotal');
             updateMuestreoRowsAndSubtotal();
+            refreshSortableServiceRows('divDetalleServicioMuestreo');
 
             document.querySelectorAll('#modalBuscarServicios .service-select-checkbox:checked').forEach(function(cb) {
                 cb.checked = false;
@@ -717,7 +1078,6 @@
                                     '<th style="width:90px;">Tipo Var.</th>' +
                                     '<th style="width:90px;">Variación</th>' +
                                     '<th style="width:70px;">Cant</th>' +
-                                    '<th style="width:110px;">Precio Final</th>' +
                                     '<th style="width:90px;">Total</th>' +
                                     '<th style="width:60px;"></th>' +
                                 '</tr>' +
@@ -744,6 +1104,7 @@
                 var cantidad = '1.00';
                 var precioFinal = precioNum;
                 var total = precioFinal * parseFloat(cantidad);
+                var budgetMeta = [productoVal, presentacionVal].filter(function(value) { return !!value; }).join(' / ');
                 var codeEl = card.querySelector('.service-card-code-pill');
                 var codigo = codeEl ? codeEl.textContent.trim() : '';
 
@@ -756,24 +1117,21 @@
                             '<i class="fas fa-copy muestreo-duplicate" title="Duplicar"></i>' +
                             '<span class="muestreo-code">' + codigo + '</span>' +
                         '</div>' +
-                        '<div class="service-tags" style="margin-top:6px;">' +
-                            '<span class="service-tag">' + (productoVal || '').toUpperCase() + '</span>' +
-                            '<span class="service-tag">' + (presentacionVal || '').toUpperCase() + '</span>' +
-                        '</div>' +
+                        '<div class="muestreo-budget-meta">' + (budgetMeta || '-') + '</div>' +
                     '</td>' +
                     '<td>' + unidad + '</td>' +
                     '<td align="right">' + precioNum.toFixed(2) + '</td>' +
                     '<td><select class="muestreo-cell-input js-otros-tipo" disabled><option value="FIJO"' + (tipoVar === 'FIJO' ? ' selected' : '') + '>FIJO</option><option value="PORCENTAJE"' + (tipoVar === 'PORCENTAJE' ? ' selected' : '') + '>PORCENTAJE</option></select></td>' +
                     '<td align="right"><input type="number" min="0" step="0.01" value="' + variacion + '" class="muestreo-cell-input js-otros-variacion" disabled></td>' +
                     '<td align="right"><input type="number" min="1" step="1" value="' + cantidad + '" class="muestreo-cell-input js-otros-cantidad" disabled></td>' +
-                    '<td align="right" class="js-otros-precio-final">' + precioFinal.toFixed(2) + '</td>' +
                     '<td align="right" class="js-otros-total">' + total.toFixed(2) + '</td>' +
-                    '<td class="text-center"><i class="fas fa-edit otros-edit-row"></i>&nbsp;&nbsp;<i class="fas fa-trash"></i></td>';
+                    '<td class="text-center"><div class="service-row-actions"><i class="fas fa-edit otros-edit-row"></i><i class="fas fa-trash"></i><i class="fas fa-grip-vertical service-row-drag" title="Arrastrar para reordenar" draggable="true"></i></div></td>';
 
                 tbody.appendChild(tr);
             });
 
             updateOtrosRowsAndSubtotal();
+            refreshSortableServiceRows('divDetalleServicioMon');
 
             document.querySelectorAll('#modalBuscarServicios .service-select-checkbox:checked').forEach(function(cb) {
                 cb.checked = false;
@@ -797,7 +1155,6 @@
                 var variacionInput = row.querySelector('.js-otros-variacion');
                 var cantidadInput = row.querySelector('.js-otros-cantidad');
                 var tipoSelect = row.querySelector('.js-otros-tipo');
-                var precioFinalCell = row.querySelector('.js-otros-precio-final');
                 var totalCell = row.querySelector('.js-otros-total');
                 var precio = precioCell ? parseFloat(precioCell.textContent.replace(',', '.')) || 0 : 0;
                 var variacion = variacionInput ? parseFloat(variacionInput.value.replace(',', '.')) || 0 : 0;
@@ -807,9 +1164,6 @@
                     ? (precio + (precio * variacion / 100))
                     : (precio + variacion);
                 var total = precioFinal * cantidad;
-                if (precioFinalCell) {
-                    precioFinalCell.textContent = precioFinal.toFixed(2);
-                }
                 if (totalCell) {
                     totalCell.textContent = total.toFixed(2);
                 }
@@ -818,7 +1172,7 @@
             var subtotalEl = container.querySelector('.service-subtotal');
             if (subtotalEl) {
                 var subtotal = rows.reduce(function(sum, row) {
-                    var totalCell = row.querySelectorAll('td')[8];
+                    var totalCell = row.querySelectorAll('td')[7];
                     var totalVal = totalCell ? parseFloat(totalCell.textContent.replace(',', '.')) || 0 : 0;
                     return sum + totalVal;
                 }, 0);
@@ -965,13 +1319,15 @@
                 '<div class="service-group" data-group-name="' + safeName.replace(/"/g, '&quot;') + '">' +
                     '<div class="service-group-header">' +
                         '<div class="group-title">' +
-                            '<i class="fas fa-expand-alt text-warning"></i>' +
+                            '<i class="fas fa-grip-vertical group-drag-handle" title="Arrastrar grupo para reordenar" draggable="true"></i>' +
                             'Grupo ' + grupoIndex + ': ' + safeName +
                         '</div>' +
                         '<div class="group-actions">' +
+                            '<i class="fas fa-arrow-up" title="Subir grupo"></i>' +
+                            '<i class="fas fa-arrow-down" title="Bajar grupo"></i>' +
                             '<i class="fas fa-pen"></i>' +
                             '<i class="fas fa-trash"></i>' +
-                            '<button class="btn btn-success btn-sm js-open-service-modal" data-context="lab"><i class="fas fa-plus"></i> Agregar servicio</button>' +
+                            '<button class="btn btn-success btn-sm js-open-service-modal" data-context="lab"><i class="fas fa-plus"></i> Servicio</button>' +
                         '</div>' +
                     '</div>' +
                     '<div class="service-tags">' + (tagsHtml || '<span class="service-tag">Sin producto</span>') + '</div>' +
@@ -979,12 +1335,12 @@
                         '<table class="table table-lct">' +
                             '<thead>' +
                                 '<tr>' +
-                                    '<th>#</th><th>Servicio</th><th>LD*</th><th>Metodología</th><th>Unidad</th><th>Precio Unit.</th>' +
-                                    '<th>Tipo Var.</th><th>Variación</th><th>Cant</th><th>Total</th><th>Laboratorio</th><th>Tiempo Resp.</th><th>ETFA</th><th></th>' +
+                                    '<th>#</th><th>Servicio</th><th>LD*</th><th>Laboratorio</th><th>T. Resp.</th><th>Unidad</th><th>Precio Unit.</th>' +
+                                    '<th>Tipo Var.</th><th>Variación</th><th>Cant</th><th>Total</th><th></th>' +
                                 '</tr>' +
                             '</thead>' +
                             '<tbody>' +
-                                '<tr class="empty-row"><td colspan="14" style="text-align:center;color:#9a9a9a;">Sin servicios en este grupo.</td></tr>' +
+                                '<tr class="empty-row"><td colspan="12" style="text-align:center;color:#9a9a9a;">Sin servicios en este grupo.</td></tr>' +
                             '</tbody>' +
                         '</table>' +
                     '</div>' +
@@ -993,6 +1349,7 @@
 
             document.getElementById('divGruposServicioLab').insertAdjacentHTML('beforeend', grupoHtml);
             renumberGroups();
+            refreshLabGroupDragHandles();
             closeNuevoGrupoModal();
         }
 
@@ -1017,8 +1374,290 @@
                     var name = group.dataset.groupName || titleEl.textContent.trim();
                     name = name.replace(/^Grupo\s+\d+\s*:\s*/i, '');
                     group.dataset.groupName = name;
-                    titleEl.innerHTML = '<i class="fas fa-expand-alt text-warning"></i>Grupo ' + (idx + 1) + ': ' + name;
+                    titleEl.innerHTML = '<i class="fas fa-grip-vertical group-drag-handle" title="Arrastrar grupo para reordenar" draggable="true"></i>Grupo ' + (idx + 1) + ': ' + name;
                 }
+            });
+        }
+
+        function moveLabGroup(group, direction) {
+            var container = document.getElementById('divGruposServicioLab');
+            if (!container || !group) {
+                return;
+            }
+
+            if (direction === 'up' && group.previousElementSibling) {
+                container.insertBefore(group, group.previousElementSibling);
+            } else if (direction === 'down' && group.nextElementSibling) {
+                container.insertBefore(group.nextElementSibling, group);
+            } else {
+                return;
+            }
+
+            renumberGroups();
+            updateHeaderServicesSummary();
+        }
+
+        function refreshSortableServiceRows(containerId) {
+            var container = document.getElementById(containerId);
+            if (!container) {
+                return;
+            }
+
+            container.querySelectorAll('tbody tr').forEach(function(row) {
+                row.classList.add('sortable-service-row');
+                var handle = row.querySelector('.service-row-drag');
+                if (handle) {
+                    handle.setAttribute('draggable', 'true');
+                    handle.setAttribute('title', 'Arrastrar para reordenar');
+                }
+            });
+        }
+
+        function clearSortableServiceState(tbody) {
+            if (tbody) {
+                tbody.querySelectorAll('tr').forEach(function(row) {
+                    row.classList.remove('drag-target-before', 'drag-target-after', 'is-dragging');
+                });
+            }
+            serviceDropTargetRow = null;
+            serviceDropInsertAfter = false;
+        }
+
+        function getSortableServiceDropTarget(tbody, clientY) {
+            var rows = Array.from(tbody.querySelectorAll('tr:not(.is-dragging)'));
+
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                var rect = row.getBoundingClientRect();
+                if (clientY < rect.top + rect.height / 2) {
+                    return {
+                        element: row,
+                        insertAfter: false
+                    };
+                }
+
+                if (clientY < rect.bottom) {
+                    return {
+                        element: row,
+                        insertAfter: true
+                    };
+                }
+            }
+
+            return {
+                element: rows.length ? rows[rows.length - 1] : null,
+                insertAfter: true
+            };
+        }
+
+        function initSortableServiceTable(containerId, renumberFn) {
+            var container = document.getElementById(containerId);
+            if (!container) {
+                return;
+            }
+
+            var tbody = container.querySelector('tbody');
+            if (!tbody) {
+                return;
+            }
+
+            refreshSortableServiceRows(containerId);
+
+            if (tbody.dataset.sortReady === 'true') {
+                return;
+            }
+
+            tbody.dataset.sortReady = 'true';
+
+            tbody.addEventListener('dragstart', function(e) {
+                var handle = e.target.closest('.service-row-drag');
+                if (!handle) {
+                    e.preventDefault();
+                    return;
+                }
+
+                var row = handle.closest('tr');
+                if (!row) {
+                    e.preventDefault();
+                    return;
+                }
+
+                draggedServiceRow = row;
+                draggedServiceRow.classList.add('is-dragging');
+
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', 'service-row');
+                }
+            });
+
+            tbody.addEventListener('dragover', function(e) {
+                if (!draggedServiceRow) {
+                    return;
+                }
+
+                e.preventDefault();
+                clearSortableServiceState(tbody);
+                draggedServiceRow.classList.add('is-dragging');
+
+                var targetData = getSortableServiceDropTarget(tbody, e.clientY);
+                if (targetData.element) {
+                    serviceDropTargetRow = targetData.element;
+                    serviceDropInsertAfter = targetData.insertAfter;
+                    targetData.element.classList.add(targetData.insertAfter ? 'drag-target-after' : 'drag-target-before');
+                }
+            });
+
+            tbody.addEventListener('drop', function(e) {
+                if (!draggedServiceRow) {
+                    return;
+                }
+
+                e.preventDefault();
+
+                if (serviceDropTargetRow && serviceDropTargetRow !== draggedServiceRow) {
+                    if (serviceDropInsertAfter) {
+                        tbody.insertBefore(draggedServiceRow, serviceDropTargetRow.nextElementSibling);
+                    } else {
+                        tbody.insertBefore(draggedServiceRow, serviceDropTargetRow);
+                    }
+                } else if (!serviceDropTargetRow) {
+                    tbody.appendChild(draggedServiceRow);
+                }
+            });
+
+            tbody.addEventListener('dragend', function() {
+                if (!draggedServiceRow) {
+                    clearSortableServiceState(tbody);
+                    return;
+                }
+
+                draggedServiceRow.classList.remove('is-dragging');
+                draggedServiceRow = null;
+                clearSortableServiceState(tbody);
+                refreshSortableServiceRows(containerId);
+                renumberFn();
+            });
+        }
+
+        function refreshLabGroupDragHandles() {
+            document.querySelectorAll('#divGruposServicioLab .service-group .group-drag-handle').forEach(function(handleEl) {
+                handleEl.setAttribute('draggable', 'true');
+                handleEl.setAttribute('title', 'Arrastrar grupo para reordenar');
+            });
+        }
+
+        function clearLabGroupDropState() {
+            document.querySelectorAll('#divGruposServicioLab .service-group').forEach(function(group) {
+                group.classList.remove('drag-target-before', 'drag-target-after', 'is-dragging');
+            });
+            labDropTarget = null;
+            labDropInsertAfter = false;
+        }
+
+        function getLabGroupDropTarget(container, clientY) {
+            var groups = Array.from(container.querySelectorAll('.service-group:not(.is-dragging)'));
+
+            for (var i = 0; i < groups.length; i++) {
+                var group = groups[i];
+                var rect = group.getBoundingClientRect();
+                if (clientY < rect.top + rect.height / 2) {
+                    return {
+                        element: group,
+                        insertAfter: false
+                    };
+                }
+
+                if (clientY < rect.bottom) {
+                    return {
+                        element: group,
+                        insertAfter: true
+                    };
+                }
+            }
+
+            return {
+                element: groups.length ? groups[groups.length - 1] : null,
+                insertAfter: true
+            };
+        }
+
+        function initLabGroupDragAndDrop() {
+            var container = document.getElementById('divGruposServicioLab');
+            if (!container || container.dataset.dragReady === 'true') {
+                refreshLabGroupDragHandles();
+                return;
+            }
+
+            container.dataset.dragReady = 'true';
+            refreshLabGroupDragHandles();
+
+            container.addEventListener('dragstart', function(e) {
+                var handle = e.target.closest('.group-drag-handle');
+                if (!handle) {
+                    e.preventDefault();
+                    return;
+                }
+
+                draggedLabGroup = handle.closest('.service-group');
+                if (!draggedLabGroup) {
+                    e.preventDefault();
+                    return;
+                }
+
+                draggedLabGroup.classList.add('is-dragging');
+                if (e.dataTransfer) {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', draggedLabGroup.dataset.groupName || '');
+                }
+            });
+
+            container.addEventListener('dragover', function(e) {
+                if (!draggedLabGroup) {
+                    return;
+                }
+
+                e.preventDefault();
+                clearLabGroupDropState();
+                draggedLabGroup.classList.add('is-dragging');
+
+                var targetData = getLabGroupDropTarget(container, e.clientY);
+                if (targetData.element) {
+                    labDropTarget = targetData.element;
+                    labDropInsertAfter = targetData.insertAfter;
+                    targetData.element.classList.add(targetData.insertAfter ? 'drag-target-after' : 'drag-target-before');
+                }
+            });
+
+            container.addEventListener('drop', function(e) {
+                if (!draggedLabGroup) {
+                    return;
+                }
+
+                e.preventDefault();
+
+                if (labDropTarget && labDropTarget !== draggedLabGroup) {
+                    if (labDropInsertAfter) {
+                        container.insertBefore(draggedLabGroup, labDropTarget.nextElementSibling);
+                    } else {
+                        container.insertBefore(draggedLabGroup, labDropTarget);
+                    }
+                } else if (!labDropTarget) {
+                    container.appendChild(draggedLabGroup);
+                }
+            });
+
+            container.addEventListener('dragend', function() {
+                if (!draggedLabGroup) {
+                    clearLabGroupDropState();
+                    return;
+                }
+
+                draggedLabGroup.classList.remove('is-dragging');
+                draggedLabGroup = null;
+                clearLabGroupDropState();
+                renumberGroups();
+                updateHeaderServicesSummary();
             });
         }
 
@@ -1161,19 +1800,16 @@
 
             document.getElementById('AtendedorId').addEventListener('change', onContactChange);
 
-            var btnResumen = document.getElementById('btnFloatingResumen');
-            if (btnResumen) {
-                btnResumen.addEventListener('click', openResumenDrawer);
+            var btnVerResumenServicios = document.getElementById('btnVerResumenServicios');
+            if (btnVerResumenServicios) {
+                btnVerResumenServicios.addEventListener('click', openBlankSummaryPopup);
             }
-            var btnCerrarResumen = document.getElementById('btnCerrarResumen');
-            if (btnCerrarResumen) {
-                btnCerrarResumen.addEventListener('click', closeResumenDrawer);
-            }
+            ensureSummaryDrawerReady();
             var summaryDrawer = document.getElementById('summaryDrawer');
             if (summaryDrawer) {
                 summaryDrawer.addEventListener('click', function(e) {
                     if (e.target === summaryDrawer) {
-                        closeResumenDrawer();
+                        closeBlankSummaryPopup();
                     }
                 });
             }
@@ -1195,6 +1831,9 @@
             document.getElementById('btnCerrarModalGrupo').addEventListener('click', closeNuevoGrupoModal);
             document.getElementById('btnCancelarGrupoNuevo').addEventListener('click', closeNuevoGrupoModal);
             document.getElementById('btnGuardarGrupoNuevo').addEventListener('click', addGrupoServicio);
+
+            initSortableServiceTable('divDetalleServicioMuestreo', updateMuestreoRowsAndSubtotal);
+            initSortableServiceTable('divDetalleServicioMon', updateOtrosRowsAndSubtotal);
 
             // Buscador de servicios modal events
             var btnCerrarServicios2 = document.getElementById('btnCerrarModalServicios2');
@@ -1275,6 +1914,11 @@
 
             // Group edit/delete actions (delegated)
             initGroupDataFromTitles();
+            decorateAllLabServiceRows();
+            document.querySelectorAll('#divGruposServicioLab .service-group').forEach(function(group) {
+                updateGroupRowsAndSubtotal(group);
+            });
+            initLabGroupDragAndDrop();
             document.getElementById('divGruposServicioLab').addEventListener('click', function(e) {
                 var serviceBtn = e.target.closest('.js-open-service-modal');
                 if (serviceBtn) {
@@ -1284,14 +1928,52 @@
                     return;
                 }
 
-                var rowAction = e.target.closest('i.fa-edit, i.fa-trash');
+                var rowAction = e.target.closest('i.fa-edit, i.fa-save, i.fa-times, i.fa-trash');
                 if (rowAction && !rowAction.closest('.group-actions')) {
-                    var row = rowAction.closest('tr');
+                    var row = resolveLabMainRow(rowAction.closest('tr'));
                     var group = rowAction.closest('.service-group');
                     if (row && group) {
-                        row.remove();
-                        updateGroupRowsAndSubtotal(group);
+                        if (rowAction.classList.contains('lab-edit-row')) {
+                            if (row.classList.contains('is-editing')) {
+                                // Guardar cambios
+                                setLabRowEditingState(row, false);
+                                syncLabRowComputedValues(row);
+                                updateGroupRowsAndSubtotal(group);
+                                delete row.dataset.labSnapshot;
+                            } else {
+                                // Entrar en edición con snapshot para posible cancelación
+                                row.dataset.labSnapshot = JSON.stringify(getLabRowSnapshot(row));
+                                setLabRowEditingState(row, true);
+                            }
+                        } else if (rowAction.classList.contains('lab-cancel-row')) {
+                            var snapshot = null;
+                            if (row.dataset.labSnapshot) {
+                                try {
+                                    snapshot = JSON.parse(row.dataset.labSnapshot);
+                                } catch (err) {
+                                    snapshot = null;
+                                }
+                            }
+                            applyLabRowSnapshot(row, snapshot);
+                            setLabRowEditingState(row, false);
+                            syncLabRowComputedValues(row);
+                            updateGroupRowsAndSubtotal(group);
+                            delete row.dataset.labSnapshot;
+                        } else {
+                            row.remove();
+                            updateGroupRowsAndSubtotal(group);
+                        }
                     }
+                    return;
+                }
+
+                if (e.target.classList.contains('fa-arrow-up') && e.target.closest('.group-actions')) {
+                    moveLabGroup(e.target.closest('.service-group'), 'up');
+                    return;
+                }
+
+                if (e.target.classList.contains('fa-arrow-down') && e.target.closest('.group-actions')) {
+                    moveLabGroup(e.target.closest('.service-group'), 'down');
                     return;
                 }
 
@@ -1366,6 +2048,32 @@
                 }
             });
 
+            document.getElementById('divGruposServicioLab').addEventListener('input', function(e) {
+                if (e.target.classList.contains('js-lab-variacion') || e.target.classList.contains('js-lab-cantidad') || e.target.classList.contains('js-lab-tiempo')) {
+                    var row = resolveLabMainRow(e.target.closest('tr'));
+                    var group = e.target.closest('.service-group');
+                    if (row) {
+                        syncLabRowComputedValues(row);
+                    }
+                    if (group) {
+                        updateGroupRowsAndSubtotal(group);
+                    }
+                }
+            });
+
+            document.getElementById('divGruposServicioLab').addEventListener('change', function(e) {
+                if (e.target.classList.contains('js-lab-tipo') || e.target.classList.contains('js-lab-laboratorio')) {
+                    var row = resolveLabMainRow(e.target.closest('tr'));
+                    var group = e.target.closest('.service-group');
+                    if (row) {
+                        syncLabRowComputedValues(row);
+                    }
+                    if (group) {
+                        updateGroupRowsAndSubtotal(group);
+                    }
+                }
+            });
+
             document.querySelectorAll('.js-open-service-modal').forEach(function(btn) {
                 if (btn.closest('#divGruposServicioLab')) return;
                 btn.addEventListener('click', function() {
@@ -1396,10 +2104,11 @@
                 }
                 var copy = e.target.closest('i.fa-copy');
                 if (copy) {
-                    var copyRow = copy.closest('tr');
+                        var copyRow = copy.closest('tr');
                         if (copyRow && copyRow.parentElement) {
                             var cloned = copyRow.cloneNode(true);
                             copyRow.parentElement.insertBefore(cloned, copyRow.nextSibling);
+                            refreshSortableServiceRows('divDetalleServicioMuestreo');
                             updateMuestreoRowsAndSubtotal();
                         }
                         return;
@@ -1447,6 +2156,7 @@
                         if (copyRow && copyRow.parentElement) {
                             var cloned = copyRow.cloneNode(true);
                             copyRow.parentElement.insertBefore(cloned, copyRow.nextSibling);
+                            refreshSortableServiceRows('divDetalleServicioMon');
                             updateOtrosRowsAndSubtotal();
                         }
                         return;
@@ -1481,6 +2191,7 @@
                 if (e.key === 'Escape') {
                     closeClientModal();
                     closeBuscarServiciosModal();
+                    closeBlankSummaryPopup();
                 }
             });
 
@@ -1489,6 +2200,7 @@
 
             // Inicializar barra demo en paso 1
             applyDemoStep(1);
+            applyPrefillFromUrl();
             updateStepperViewing(viewingStep);
         });
 
@@ -1628,6 +2340,7 @@
 
                 statusEl.classList.remove('draft');
                 statusEl.innerHTML = '<i class="fas fa-check-circle"></i><span>' + (status || 'Registrado') + '</span>';
+                syncApprovalPanelsByQuoteStatus();
             }
         }
 
@@ -1635,6 +2348,9 @@
         function updateSummaryProposal(propuesta) {
             var badgeEl = document.getElementById('summaryProposalBadge');
             var numberEl = document.getElementById('summaryProposalNumber');
+            if (!badgeEl || !numberEl) {
+                return;
+            }
             var hasValue = !!propuesta;
 
             numberEl.textContent = hasValue ? propuesta : '—';
@@ -1677,7 +2393,7 @@
             labGroups.forEach(function(group) {
                 var titleEl = group.querySelector('.group-title');
                 var subtotalEl = group.querySelector('.service-subtotal');
-                var rows = group.querySelectorAll('tbody tr:not(.empty-row)');
+                var rows = group.querySelectorAll('tbody tr.lab-main-row:not(.empty-row)');
                 var serviceCount = rows.length;
 
                 if (serviceCount === 0) return;
@@ -1728,13 +2444,21 @@
                     var variacion = variacionInput ? parseFloat(variacionInput.value) || 0 : 0;
                     var total = totalCell ? parseFloat(totalCell.textContent.replace(',', '.')) || 0 : 0;
 
-                    // Obtener tags
-                    var tagsContainer = row.querySelector('.service-tags');
+                    // Obtener producto/presentación desde tags o texto compacto
                     var tags = [];
+                    var tagsContainer = row.querySelector('.service-tags');
                     if (tagsContainer) {
                         tagsContainer.querySelectorAll('.service-tag').forEach(function(tag) {
                             tags.push(tag.textContent.trim());
                         });
+                    }
+                    if (!tags.length) {
+                        var budgetMetaEl = row.querySelector('.muestreo-budget-meta');
+                        if (budgetMetaEl) {
+                            tags = budgetMetaEl.textContent.split('/').map(function(part) {
+                                return part.trim();
+                            }).filter(function(part) { return !!part; });
+                        }
                     }
 
                     services.push({
@@ -1767,13 +2491,21 @@
                     var variacion = variacionInput ? parseFloat(variacionInput.value) || 0 : 0;
                     var total = totalCell ? parseFloat(totalCell.textContent.replace(',', '.')) || 0 : 0;
 
-                    // Obtener tags
-                    var tagsContainer = row.querySelector('.service-tags');
+                    // Obtener producto/presentación desde tags o texto compacto
                     var tags = [];
+                    var tagsContainer = row.querySelector('.service-tags');
                     if (tagsContainer) {
                         tagsContainer.querySelectorAll('.service-tag').forEach(function(tag) {
                             tags.push(tag.textContent.trim());
                         });
+                    }
+                    if (!tags.length) {
+                        var budgetMetaEl = row.querySelector('.muestreo-budget-meta');
+                        if (budgetMetaEl) {
+                            tags = budgetMetaEl.textContent.split('/').map(function(part) {
+                                return part.trim();
+                            }).filter(function(part) { return !!part; });
+                        }
                     }
 
                     services.push({
@@ -1796,35 +2528,37 @@
                 html = '<tr class="empty-row"><td colspan="6">Sin servicios agregados</td></tr>';
             } else {
                 services.forEach(function(service, index) {
-                    // Tags en línea
-                    var tagsHtml = '';
-                    if (service.tags && service.tags.length > 0) {
-                        service.tags.forEach(function(tag) {
-                            tagsHtml += '<span class="service-tag">' + tag + '</span>';
-                        });
-                    }
+                    var metaText = (service.tags || []).filter(function(tag) { return !!tag; }).join(' /  ');
 
                     html += '<tr>';
                     html += '<td>' + (index + 1) + '</td>';
 
                     if (service.type === 'lab-group') {
-                        // Grupo de laboratorio: nombre + badge cantidad + tags en línea
+                        // Grupo de laboratorio: nombre + cantidad + producto/presentación en segunda línea
                         // Precio unitario = total del grupo, cantidad = 1, descuento = 0
                         html += '<td><div class="service-name-inline">';
-                        html += '<i class="fas ' + service.icon + '"></i> ';
+                        html += '<div class="summary-service-main">';
+                        html += '<i class="fas ' + service.icon + '"></i>';
                         html += '<span>' + service.name + '</span>';
-                        html += '<span class="service-count-badge">' + service.serviceCount + ' servicios</span>';
-                        html += tagsHtml;
+                        html += '<span class="summary-service-count">' + service.serviceCount + ' servicios</span>';
+                        html += '</div>';
+                        if (metaText) {
+                            html += '<div class="summary-service-meta">' + metaText + '</div>';
+                        }
                         html += '</div></td>';
                         html += '<td>' + formatNumber(service.total) + '</td>';
                         html += '<td>1</td>';
                         html += '<td>0.00</td>';
                     } else {
-                        // Servicio individual: nombre + tags en línea
+                        // Servicio individual: nombre + producto/presentación en segunda línea
                         html += '<td><div class="service-name-inline">';
-                        html += '<i class="fas ' + service.icon + '"></i> ';
+                        html += '<div class="summary-service-main">';
+                        html += '<i class="fas ' + service.icon + '"></i>';
                         html += '<span>' + service.name + '</span>';
-                        html += tagsHtml;
+                        html += '</div>';
+                        if (metaText) {
+                            html += '<div class="summary-service-meta">' + metaText + '</div>';
+                        }
                         html += '</div></td>';
                         html += '<td>' + formatNumber(service.precio) + '</td>';
                         html += '<td>' + service.cant + '</td>';
@@ -1842,12 +2576,16 @@
             var currency = document.getElementById('summaryCurrency')?.textContent || 'CLU';
             var grandTotalEl = document.getElementById('summaryGrandTotal');
             var grandCurrencyEl = document.getElementById('summaryGrandCurrency');
+            var drawerTotalEl = document.getElementById('summaryServicesTotal');
 
             if (grandTotalEl) {
                 grandTotalEl.textContent = formatNumber(grandTotal);
             }
             if (grandCurrencyEl) {
                 grandCurrencyEl.textContent = '/' + currency;
+            }
+            if (drawerTotalEl) {
+                drawerTotalEl.textContent = formatNumber(grandTotal) + ' /' + currency;
             }
 
             // También actualizar el total en la barra superior
@@ -1863,6 +2601,8 @@
             initDocumentosAdjuntos();
             // Inicializar funcionalidades del Paso 5
             initAprobacionUpload();
+            initExternalNotificationRegister();
+            renderApprovalWorkflowUI();
         });
 
         // =============================================
@@ -2112,10 +2852,175 @@
         // PASO 4: PREVISUALIZACIÓN PDF
         // =============================================
 
+        var pdfHideCosts = false;
+        var pdfTemplateMode = 'consolidada';
+        var approvalWorkflow = {
+            role: 'requester',
+            status: 'none',
+            lastRequest: null,
+            log: []
+        };
+
+        function getSummaryStatusText() {
+            var statusEl = document.getElementById('summaryStatus');
+            if (!statusEl) return '';
+            var span = statusEl.querySelector('span');
+            return ((span && span.textContent) || statusEl.textContent || '').trim();
+        }
+
+        function getCurrentQuoteNumberValue() {
+            var numberEl = document.getElementById('summaryQuoteNumber');
+            if (!numberEl) return '';
+            return (numberEl.textContent || '').replace('#', '').trim();
+        }
+
+        function setQuoteSummaryStatus(statusText) {
+            var number = getCurrentQuoteNumberValue();
+            if (!number) return;
+            updateSummaryQuoteNumber(number, statusText);
+        }
+
+        function syncApprovalPanelsByQuoteStatus() {
+            var requestCard = document.getElementById('approvalRequestCard');
+            var reviewCard = document.getElementById('approvalReviewCard');
+            var status = getSummaryStatusText().toLowerCase();
+            if (!requestCard || !reviewCard) return;
+
+            if (status.indexOf('registrado') !== -1) {
+                requestCard.style.display = '';
+                reviewCard.style.display = 'none';
+                return;
+            }
+            if (
+                status.indexOf('pendiente de aprobación') !== -1 ||
+                status.indexOf('pendiente aprobacion') !== -1 ||
+                status.indexOf('pendiente de autorización') !== -1 ||
+                status.indexOf('pendiente de autorizacion') !== -1 ||
+                status.indexOf('aprobado') !== -1 ||
+                status.indexOf('autorizada') !== -1
+            ) {
+                requestCard.style.display = 'none';
+                reviewCard.style.display = '';
+                return;
+            }
+            requestCard.style.display = 'none';
+            reviewCard.style.display = 'none';
+        }
+
+        function syncStep5NextButtonLabel() {
+            var btn = document.getElementById('step5NextBtn');
+            if (!btn) return;
+            btn.innerHTML = 'Siguiente <i class="fas fa-arrow-right"></i>';
+        }
+
+        function getCurrentUserName() {
+            var userEl = document.getElementById('NombreUsuarioSistema');
+            return userEl ? (userEl.textContent || '').trim() || 'Usuario' : 'Usuario';
+        }
+
+        function formatApprovalDateTime(dateObj) {
+            return ('0' + dateObj.getDate()).slice(-2) + '/' +
+                ('0' + (dateObj.getMonth() + 1)).slice(-2) + '/' +
+                dateObj.getFullYear() + ' ' +
+                ('0' + dateObj.getHours()).slice(-2) + ':' +
+                ('0' + dateObj.getMinutes()).slice(-2);
+        }
+
+        function renderApprovalWorkflowUI() {
+            var infoEl = document.getElementById('approvalLastRequestInfo');
+            var approveBtn = document.getElementById('approvalApproveBtn');
+            var logBody = document.getElementById('approvalLogBody');
+            var reviewActionsBlock = document.getElementById('approvalReviewActionsBlock');
+
+            if (infoEl) {
+                if (approvalWorkflow.lastRequest) {
+                    infoEl.textContent = 'Solicitó: ' + approvalWorkflow.lastRequest.user + ' | Fecha: ' + approvalWorkflow.lastRequest.date +
+                        ' | Comentario: ' + approvalWorkflow.lastRequest.comment;
+                } else {
+                    infoEl.textContent = 'Aún no hay solicitudes registradas.';
+                }
+            }
+
+            if (approveBtn) {
+                approveBtn.disabled = !(approvalWorkflow.status === 'requested');
+            }
+
+            if (reviewActionsBlock) {
+                reviewActionsBlock.style.display = approvalWorkflow.status === 'approved' ? 'none' : '';
+            }
+
+            if (logBody) {
+                if (!approvalWorkflow.log.length) {
+                    logBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#9a9a9a;">Sin eventos</td></tr>';
+                } else {
+                    logBody.innerHTML = approvalWorkflow.log.map(function(item) {
+                        return '<tr>' +
+                            '<td>' + item.date + '</td>' +
+                            '<td>' + item.action + '</td>' +
+                            '<td>' + item.user + '</td>' +
+                            '<td>' + item.comment + '</td>' +
+                        '</tr>';
+                    }).join('');
+                }
+            }
+            syncApprovalPanelsByQuoteStatus();
+            syncStep5NextButtonLabel();
+        }
+
+        function getPdfTemplateLabel(mode) {
+            if (mode === 'tecnica') return 'Propuesta Técnica';
+            if (mode === 'economica') return 'Propuesta Económica';
+            return 'Propuesta Consolidada';
+        }
+
+        function applyPdfCostsVisibilityUI() {
+            var container = document.getElementById('pdfPreviewContainer');
+            var badge = document.getElementById('pdfCostsHiddenBadge');
+            var toggleBtn = document.getElementById('togglePdfCostsBtn');
+            var toggleText = document.getElementById('togglePdfCostsText');
+            var templateBadge = document.getElementById('pdfTemplateBadge');
+            var templateSelect = document.getElementById('pdfTemplateSelect');
+            if (container) container.classList.remove('hide-costs');
+            if (badge) badge.textContent = pdfHideCosts ? 'Vista sin costos' : 'Vista con costos';
+            if (templateBadge) templateBadge.textContent = 'Plantilla: ' + getPdfTemplateLabel(pdfTemplateMode);
+            if (templateSelect && templateSelect.value !== pdfTemplateMode) templateSelect.value = pdfTemplateMode;
+            if (toggleText) toggleText.textContent = pdfHideCosts ? 'Mostrar costos' : 'Ocultar costos';
+            if (toggleBtn) {
+                toggleBtn.title = pdfHideCosts ? 'Mostrar costos en la previsualización' : 'Ocultar costos en la previsualización';
+                var icon = toggleBtn.querySelector('i');
+                if (icon) icon.className = pdfHideCosts ? 'fas fa-eye' : 'fas fa-eye-slash';
+            }
+        }
+
+        function buildPdfPreviewUrl() {
+            var params = [];
+            if (pdfHideCosts) params.push('hide_costs=1');
+            params.push('template=' + encodeURIComponent(pdfTemplateMode));
+            params.push('t=' + Date.now());
+            return 'descarga.pdf?' + params.join('&');
+        }
+
+        function togglePdfCostsVisibility() {
+            pdfHideCosts = !pdfHideCosts;
+            applyPdfCostsVisibilityUI();
+            refreshPdfPreview();
+        }
+
+        function changePdfTemplate(value) {
+            var next = (value || '').toLowerCase();
+            if (next !== 'tecnica' && next !== 'economica' && next !== 'consolidada') {
+                next = 'consolidada';
+            }
+            pdfTemplateMode = next;
+            applyPdfCostsVisibilityUI();
+            refreshPdfPreview();
+        }
+
         function refreshPdfPreview() {
             var container = document.getElementById('pdfPreviewContainer');
             var frame = document.getElementById('pdfPreviewFrame');
             if (!container || !frame) return;
+            applyPdfCostsVisibilityUI();
 
             // Mostrar loading overlay
             var overlay = document.createElement('div');
@@ -2125,7 +3030,7 @@
 
             // Simular regeneración
             setTimeout(function() {
-                frame.src = 'descarga.pdf?t=' + Date.now();
+                frame.src = buildPdfPreviewUrl();
                 frame.onload = function() {
                     overlay.remove();
                     frame.onload = null;
@@ -2144,6 +3049,98 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+        }
+
+        function requestQuoteApproval() {
+            var commentEl = document.getElementById('approvalRequestComment');
+            var statusEl = document.getElementById('approvalRequestStatus');
+            var btnEl = document.getElementById('approvalRequestBtn');
+            if (!commentEl || !statusEl || !btnEl) return;
+
+            var comment = (commentEl.value || '').trim();
+            if (!comment) {
+                commentEl.focus();
+                return;
+            }
+
+            var now = new Date();
+            var dateStr = formatApprovalDateTime(now);
+            var user = getCurrentUserName();
+
+            statusEl.style.display = '';
+            statusEl.textContent = 'Solicitud enviada el ' + dateStr + '.';
+            btnEl.disabled = true;
+            btnEl.textContent = 'Solicitado';
+
+            approvalWorkflow.status = 'requested';
+            approvalWorkflow.lastRequest = { user: user, date: dateStr, comment: comment };
+            approvalWorkflow.log.unshift({
+                date: dateStr,
+                action: 'Solicitud',
+                user: user,
+                comment: comment
+            });
+            setQuoteSummaryStatus('Pendiente de autorización');
+            renderApprovalWorkflowUI();
+        }
+
+        function onApprovalRoleChange(value) {
+            approvalWorkflow.role = value === 'approver' ? 'approver' : 'requester';
+            renderApprovalWorkflowUI();
+        }
+
+        function openApprovalConfirmModal() {
+            var modal = document.getElementById('approvalConfirmModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+        }
+
+        function closeApprovalConfirmModal() {
+            var modal = document.getElementById('approvalConfirmModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+        }
+
+        function approveQuoteRequest() {
+            if (approvalWorkflow.status !== 'requested') return;
+            var commentEl = document.getElementById('approvalDecisionComment');
+            var comment = ((commentEl && commentEl.value) || '').trim();
+            if (!comment) {
+                if (commentEl) commentEl.focus();
+                return;
+            }
+            openApprovalConfirmModal();
+        }
+
+        function confirmApproveQuoteRequest() {
+            if (approvalWorkflow.status !== 'requested') return;
+            var commentEl = document.getElementById('approvalDecisionComment');
+            var statusEl = document.getElementById('approvalDecisionStatus');
+            var comment = ((commentEl && commentEl.value) || '').trim();
+            if (!comment) {
+                closeApprovalConfirmModal();
+                if (commentEl) commentEl.focus();
+                return;
+            }
+
+            var now = new Date();
+            var dateStr = formatApprovalDateTime(now);
+            var user = getCurrentUserName();
+
+            approvalWorkflow.status = 'approved';
+            approvalWorkflow.log.unshift({
+                date: dateStr,
+                action: 'Autorización',
+                user: user,
+                comment: comment
+            });
+            setQuoteSummaryStatus('Autorizada');
+            if (statusEl) {
+                statusEl.style.display = '';
+                statusEl.textContent = 'Autorización registrada el ' + dateStr + '.';
+            }
+            closeApprovalConfirmModal();
+            renderApprovalWorkflowUI();
         }
 
         // =============================================
@@ -2324,6 +3321,8 @@
         }
 
         var lastSentEmail = null;
+        var lastNotificationRecord = null;
+        var externalNotificationFile = null;
 
         function closeNotifModal() {
             var modal = document.getElementById('modalNotificacion');
@@ -2342,6 +3341,70 @@
             }
         }
 
+        function toggleExternalNotifForm(show) {
+            var form = document.getElementById('notifExternalForm');
+            if (!form) return;
+            form.style.display = show ? '' : 'none';
+        }
+
+        function initExternalNotificationRegister() {
+            var selectBtn = document.getElementById('notifExternalSelectFileBtn');
+            var fileInput = document.getElementById('notifExternalFileInput');
+            var fileNameEl = document.getElementById('notifExternalFileName');
+            var dateEl = document.getElementById('notifExternalDate');
+            if (dateEl && !dateEl.value) {
+                var now = new Date();
+                dateEl.value = now.getFullYear() + '-' +
+                    ('0' + (now.getMonth() + 1)).slice(-2) + '-' +
+                    ('0' + now.getDate()).slice(-2) + 'T' +
+                    ('0' + now.getHours()).slice(-2) + ':' +
+                    ('0' + now.getMinutes()).slice(-2);
+            }
+            if (selectBtn && fileInput) {
+                selectBtn.addEventListener('click', function() {
+                    fileInput.click();
+                });
+                fileInput.addEventListener('change', function() {
+                    externalNotificationFile = (fileInput.files && fileInput.files[0]) ? fileInput.files[0] : null;
+                    if (fileNameEl) fileNameEl.textContent = externalNotificationFile ? externalNotificationFile.name : 'Sin archivo';
+                });
+            }
+        }
+
+        function registerExternalNotification() {
+            var dateEl = document.getElementById('notifExternalDate');
+            var fileInput = document.getElementById('notifExternalFileInput');
+            var fileNameEl = document.getElementById('notifExternalFileName');
+            var rawDate = dateEl ? dateEl.value : '';
+            if (!rawDate) {
+                if (dateEl) dateEl.focus();
+                return;
+            }
+            if (!externalNotificationFile) {
+                if (fileInput) fileInput.focus();
+                return;
+            }
+
+            var userName = getCurrentUserName();
+            var d = new Date(rawDate);
+            var dateStr = ('0' + d.getDate()).slice(-2) + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + d.getFullYear() + ' ' +
+                ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+
+            lastNotificationRecord = {
+                fechaEnvio: dateStr,
+                usuario: userName,
+                email: 'Registro externo',
+                respaldo: externalNotificationFile.name,
+                isExternal: true
+            };
+
+            if (fileInput) fileInput.value = '';
+            externalNotificationFile = null;
+            if (fileNameEl) fileNameEl.textContent = 'Sin archivo';
+            toggleExternalNotifForm(false);
+            showNotifSent();
+        }
+
         function confirmSendNotification() {
             var btn = document.querySelector('#modalNotificacion .btn-notif-send');
             if (btn) {
@@ -2353,6 +3416,20 @@
                     btn.innerHTML = originalHTML;
                     btn.disabled = false;
                     saveSentEmailSnapshot();
+                    var userEl = document.getElementById('NombreUsuarioSistema');
+                    var userName = userEl ? userEl.textContent.trim() : 'Usuario';
+                    var emailText = '';
+                    if (lastSentEmail && lastSentEmail.para) {
+                        var emailMatch = lastSentEmail.para.match(/<([^>]+)>/);
+                        emailText = emailMatch ? emailMatch[1] : lastSentEmail.para;
+                    }
+                    lastNotificationRecord = {
+                        fechaEnvio: lastSentEmail ? lastSentEmail.fechaEnvio : '',
+                        usuario: userName,
+                        email: emailText || '--',
+                        respaldo: '--',
+                        isExternal: false
+                    };
                     closeNotifModal();
                     showNotifSent();
                 }, 1500);
@@ -2460,25 +3537,53 @@
         function showNotifSent() {
             var pending = document.getElementById('notifStatePending');
             var sent = document.getElementById('notifStateSent');
+            var extForm = document.getElementById('notifExternalForm');
             if (pending) pending.style.display = 'none';
             if (sent) sent.style.display = 'flex';
+            if (extForm) extForm.style.display = 'none';
 
-            if (lastSentEmail) {
-                var fechaEl = document.getElementById('Estado_Notificacion_Fecha');
-                var userNotifEl = document.getElementById('Estado_Notificacion_Usuario');
-                var emailEl = document.getElementById('Estado_Notificacion_Email');
-
+            var fechaEl = document.getElementById('Estado_Notificacion_Fecha');
+            var userNotifEl = document.getElementById('Estado_Notificacion_Usuario');
+            var emailEl = document.getElementById('Estado_Notificacion_Email');
+            var respaldoEl = document.getElementById('Estado_Notificacion_Respaldo');
+            var viewBtn = document.getElementById('notifViewEmailBtn');
+            var resendBtn = document.getElementById('notifResendBtn');
+            var rec = lastNotificationRecord;
+            if (!rec && lastSentEmail) {
                 var userEl = document.getElementById('NombreUsuarioSistema');
                 var userName = userEl ? userEl.textContent.trim() : 'Usuario';
-
-                if (fechaEl) fechaEl.textContent = lastSentEmail.fechaEnvio;
-                if (userNotifEl) userNotifEl.textContent = userName;
-
-                // Extraer email del campo Para
-                var emailMatch = lastSentEmail.para.match(/<([^>]+)>/);
-                var emailText = emailMatch ? emailMatch[1] : lastSentEmail.para;
-                if (emailEl) emailEl.textContent = emailText;
+                var emailMatch = lastSentEmail.para ? lastSentEmail.para.match(/<([^>]+)>/) : null;
+                rec = {
+                    fechaEnvio: lastSentEmail.fechaEnvio,
+                    usuario: userName,
+                    email: emailMatch ? emailMatch[1] : (lastSentEmail.para || '--'),
+                    respaldo: '--',
+                    isExternal: false
+                };
             }
+            if (fechaEl) fechaEl.textContent = rec ? (rec.fechaEnvio || '--') : '--';
+            if (userNotifEl) userNotifEl.textContent = rec ? (rec.usuario || '--') : '--';
+            if (emailEl) emailEl.textContent = rec ? (rec.email || '--') : '--';
+            if (respaldoEl) respaldoEl.textContent = rec ? (rec.respaldo || '--') : '--';
+            if (viewBtn) viewBtn.style.display = rec && rec.isExternal ? 'none' : '';
+            if (resendBtn) resendBtn.style.display = '';
+        }
+
+        function openFinalizeStep6Modal() {
+            var modal = document.getElementById('finalizeStep6Modal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+        }
+
+        function closeFinalizeStep6Modal() {
+            var modal = document.getElementById('finalizeStep6Modal');
+            if (!modal) return;
+            modal.style.display = 'none';
+        }
+
+        function confirmFinalizeStep6() {
+            closeFinalizeStep6Modal();
+            setQuoteSummaryStatus('Aprobada');
         }
 
         // =============================================
@@ -2660,6 +3765,8 @@
             viewingStep = 1;
             quoteSaved = false;
             lastSentEmail = null;
+            lastNotificationRecord = null;
+            externalNotificationFile = null;
             evaluacionFile = null;
             aprobacionFile = null;
             documentosFiles = {};
@@ -2678,8 +3785,16 @@
             // Resetear notificación
             var pending = document.getElementById('notifStatePending');
             var sent = document.getElementById('notifStateSent');
+            var extForm = document.getElementById('notifExternalForm');
             if (pending) pending.style.display = '';
             if (sent) sent.style.display = 'none';
+            if (extForm) extForm.style.display = 'none';
+            var extDate = document.getElementById('notifExternalDate');
+            if (extDate) extDate.value = '';
+            var extFile = document.getElementById('notifExternalFileInput');
+            if (extFile) extFile.value = '';
+            var extFileName = document.getElementById('notifExternalFileName');
+            if (extFileName) extFileName.textContent = 'Sin archivo';
 
             // Resetear evaluación económica
             var uploadArea = document.getElementById('uploadEvaluacion');
@@ -2774,7 +3889,8 @@
 
         function demoPrefillStep5() {
             var frame = document.getElementById('pdfPreviewFrame');
-            if (frame) frame.src = 'descarga.pdf?t=' + Date.now();
+            applyPdfCostsVisibilityUI();
+            if (frame) frame.src = buildPdfPreviewUrl();
         }
 
         function demoPrefillStep6() {
@@ -2864,20 +3980,477 @@
             profesionales: ['Introducción', 'Listado de profesionales'],
             coordinaciones: ['Unidad coordinadora', 'Movilización en terreno', 'Ropa de trabajo'],
             autorizaciones: ['Introducción', 'Autorizaciones a solicitar'],
-            metodologias_fq: ['Protocolo de muestreo / Estudio', 'Parámetros a Analizar y Laboratorios', 'Parámetros medidos in situ'],
-            metodologias_bio: ['Resumen', 'Contenido'],
+            metodologias_fq: ['Protocolo de muestreo', 'Parámetros a Analizar y Laboratorios', 'Parámetros medidos in situ'],
+            metodologias_bio: ['Protocolo de muestreo'],
             metodologias_fis: ['Resumen', 'Contenido']
         };
 
         var techDrafts = {};
         var activeTechId = '';
-        var activeMetFQSubsection = 'protocolo_estudio';
+        var activeMetFQSubsection = '';
+        var activeMetFQMatrixId = '';
+        var activeMetBioSubsection = '';
+        var activeMetBioMatrixId = '';
+        var metFQMatrixOptions = [
+            { value: 'AGUA_MAR_E', label: 'Agua de Mar (E)' },
+            { value: 'AGUA_INDUSTRIAL_G', label: 'Agua para fines industriales (G)' },
+            { value: 'AGUA_RESIDUAL_F', label: 'Agua Residual (F)' },
+            { value: 'AGUA_SUPERFICIAL_D', label: 'Agua Superficial (D)' },
+            { value: 'BIOTAS_U', label: 'Biotas (U)' },
+            { value: 'SED_ACUATICOS_SUB', label: 'Sedimentos Acuáticos Submareales' },
+            { value: 'SED_ACUATICOS_INTER', label: 'Sedimentos Acuáticos Intermareales' },
+            { value: 'SED_MARINOS_SUB', label: 'Sedimentos Marinos Submareales' },
+            { value: 'SED_MARINOS_INTER', label: 'Sedimentos Marinos Intermareales' }
+        ];
+        var preloadedMetFQMatrices = ['AGUA_MAR_E', 'AGUA_RESIDUAL_F'];
+        var metBioMatrixOptions = [
+            { value: 'FITOPLANCTON', label: 'Fitoplancton' },
+            { value: 'ZOOPLANCTON', label: 'Zooplancton' },
+            { value: 'ICTIOPLANCTON', label: 'Ictioplancton' },
+            { value: 'MACROBENTONICA_SUB', label: 'Macrobentónica Submareal de Sustrato Blando' },
+            { value: 'MACROBENTONICA_INTER', label: 'Macrobentónica Intermareal de Sustrato Blando' },
+            { value: 'CENSO_AVES_MAM_REP', label: 'Censo Aves, Mamíferos Marinos y Reptiles' },
+            { value: 'BANCOS_NAT_RH', label: 'Bancos Naturales de Recursos Hidrobiológicos' },
+            { value: 'ICTIOFAUNA_LITORAL', label: 'Ictiofauna Litoral' },
+            { value: 'EPI_SUB_DURO', label: 'Epibentónica Submareal de Sustrato Duro' },
+            { value: 'EPI_INTER_DURO', label: 'Epibentónica Intermareal de Sustrato Duro' },
+            { value: 'FILMACIONES_ROV', label: 'Filmaciones ROV' }
+        ];
+        var preloadedMetBioMatrices = ['FITOPLANCTON', 'ZOOPLANCTON'];
+        var metBioClassicMatrices = ['FITOPLANCTON', 'ZOOPLANCTON', 'ICTIOPLANCTON', 'MACROBENTONICA_SUB', 'MACROBENTONICA_INTER', 'CENSO_AVES_MAM_REP'];
+        var metBioTransectasMatrices = ['CENSO_AVES_MAM_REP', 'BANCOS_NAT_RH', 'ICTIOFAUNA_LITORAL', 'EPI_SUB_DURO', 'EPI_INTER_DURO', 'MACROBENTONICA_INTER', 'FILMACIONES_ROV'];
+        var metBioEspecificacionesMatrices = ['CENSO_AVES_MAM_REP', 'FITOPLANCTON', 'ZOOPLANCTON'];
+
+        function getMetFQMatrixLabel(value) {
+            var found = metFQMatrixOptions.find(function(opt) { return opt.value === value; });
+            return found ? found.label : value;
+        }
+
+        function getMetBioMatrixLabel(value) {
+            var found = metBioMatrixOptions.find(function(opt) { return opt.value === value; });
+            return found ? found.label : value;
+        }
+
+        function getActiveMetFQMatrixValue() {
+            var draft = techDrafts.metodologias_fq || {};
+            var group = (draft.matrix_groups || []).find(function(g) { return g.id === activeMetFQMatrixId; });
+            return group ? group.matriz : 'AGUA_MAR_E';
+        }
+
+        function getActiveMetBioMatrixValue() {
+            var draft = techDrafts.metodologias_bio || {};
+            var group = (draft.matrix_groups || []).find(function(g) { return g.id === activeMetBioMatrixId; });
+            return group ? group.matriz : 'FITOPLANCTON';
+        }
+
+        function getMetBioSubsectionsForMatrix(matrixValue) {
+            var subs = [];
+            if (metBioClassicMatrices.indexOf(matrixValue) !== -1) {
+                subs.push({ id: 'protocolo_estudio', title: 'Protocolo de muestreo' });
+            }
+            if (metBioTransectasMatrices.indexOf(matrixValue) !== -1) {
+                subs.push({ id: 'protocolo_transectas', title: 'Protocolo de muestreo Transectas' });
+            }
+            if (metBioEspecificacionesMatrices.indexOf(matrixValue) !== -1) {
+                subs.push({ id: 'especificaciones', title: 'Especificaciones' });
+            }
+            return subs;
+        }
+
+        function buildEmptyMetFQGroup(id, matriz) {
+            return {
+                id: id,
+                matriz: matriz,
+                protocolo_intro: '',
+                protocolo_puntos: [],
+                protocolo_imagen: '',
+                protocolo_imagen_name: '',
+                protocolo_descripcion: '',
+                selectedParams: [],
+                params_intro: '',
+                texto_final: '',
+                in_situ_intro: '',
+                in_situ_selected: [],
+                in_situ_final: '',
+                updatedAt: ''
+            };
+        }
+
+        function buildMetFQGroupFromRoot(id, matriz, draft) {
+            return {
+                id: id,
+                matriz: matriz,
+                protocolo_intro: draft.protocolo_intro || '',
+                protocolo_puntos: Array.isArray(draft.protocolo_puntos) ? JSON.parse(JSON.stringify(draft.protocolo_puntos)) : [],
+                protocolo_imagen: draft.protocolo_imagen || '',
+                protocolo_imagen_name: draft.protocolo_imagen_name || '',
+                protocolo_descripcion: draft.protocolo_descripcion || '',
+                selectedParams: Array.isArray(draft.selectedParams) ? JSON.parse(JSON.stringify(draft.selectedParams)) : [],
+                params_intro: draft.params_intro || '',
+                texto_final: draft.texto_final || '',
+                in_situ_intro: draft.in_situ_intro || '',
+                in_situ_selected: Array.isArray(draft.in_situ_selected) ? JSON.parse(JSON.stringify(draft.in_situ_selected)) : [],
+                in_situ_final: draft.in_situ_final || '',
+                updatedAt: draft.updatedAt || ''
+            };
+        }
+
+        function applyMetFQGroupToRoot(group, draft) {
+            if (!group || !draft) return;
+            draft.protocolo_intro = group.protocolo_intro || '';
+            draft.protocolo_puntos = Array.isArray(group.protocolo_puntos) ? JSON.parse(JSON.stringify(group.protocolo_puntos)) : [];
+            draft.protocolo_imagen = group.protocolo_imagen || '';
+            draft.protocolo_imagen_name = group.protocolo_imagen_name || '';
+            draft.protocolo_descripcion = group.protocolo_descripcion || '';
+            draft.selectedParams = Array.isArray(group.selectedParams) ? JSON.parse(JSON.stringify(group.selectedParams)) : [];
+            draft.params_intro = group.params_intro || '';
+            draft.texto_final = group.texto_final || '';
+            draft.in_situ_intro = group.in_situ_intro || '';
+            draft.in_situ_selected = Array.isArray(group.in_situ_selected) ? JSON.parse(JSON.stringify(group.in_situ_selected)) : [];
+            draft.in_situ_final = group.in_situ_final || '';
+            draft.updatedAt = group.updatedAt || draft.updatedAt || '';
+        }
+
+        function syncRootToActiveMetFQGroup() {
+            var draft = techDrafts.metodologias_fq;
+            if (!draft || !Array.isArray(draft.matrix_groups) || !draft.matrix_groups.length) return;
+            var active = draft.matrix_groups.find(function(g) { return g.id === activeMetFQMatrixId; }) || draft.matrix_groups[0];
+            if (!active) return;
+            var snap = buildMetFQGroupFromRoot(active.id, active.matriz, draft);
+            Object.assign(active, snap);
+            draft.active_matrix_id = active.id;
+        }
+
+        function ensureMetFQMatrixGroups() {
+            var draft = techDrafts.metodologias_fq;
+            if (!draft) return;
+            if (!Array.isArray(draft.matrix_groups)) draft.matrix_groups = [];
+
+            preloadedMetFQMatrices.forEach(function(matrixValue) {
+                var existing = draft.matrix_groups.find(function(g) { return g && g.matriz === matrixValue; });
+                if (!existing) {
+                    draft.matrix_groups.push(buildEmptyMetFQGroup('matrix_' + matrixValue, matrixValue));
+                }
+            });
+
+            if (!draft.active_matrix_id || !draft.matrix_groups.some(function(g) { return g.id === draft.active_matrix_id; })) {
+                draft.active_matrix_id = draft.matrix_groups[0].id;
+            }
+
+            activeMetFQMatrixId = draft.active_matrix_id;
+            var activeGroup = draft.matrix_groups.find(function(g) { return g.id === activeMetFQMatrixId; }) || draft.matrix_groups[0];
+            if (activeGroup) {
+                applyMetFQGroupToRoot(activeGroup, draft);
+            }
+        }
+
+        function renderMetFQMatrixGroups() {
+            if (activeTechId !== 'metodologias_fq') return;
+            ensureMetFQMatrixGroups();
+            var draft = techDrafts.metodologias_fq;
+            if (!draft) return;
+
+            var chipsEl = document.getElementById('techMetFQMatrixChips');
+            var selectEl = document.getElementById('techMetFQMatrixSelect');
+            if (selectEl) {
+                var activeGroup = (draft.matrix_groups || []).find(function(g) { return g.id === activeMetFQMatrixId; });
+                selectEl.value = activeGroup ? activeGroup.matriz : 'AGUA_MAR_E';
+            }
+            if (!chipsEl) return;
+            var lockedByStep2 = getLockedMetFQMatricesFromStep2();
+            chipsEl.innerHTML = (draft.matrix_groups || []).map(function(group) {
+                var activeCls = group.id === activeMetFQMatrixId ? ' active' : '';
+                var removable = !lockedByStep2[group.matriz];
+                return '<button type="button" class="tech-metfq-chip' + activeCls + '" data-metfq-group-id="' + group.id + '">' +
+                    '<span class="chip-label">' + getMetFQMatrixLabel(group.matriz) + '</span>' +
+                    (removable ? '<span class="chip-remove" data-metfq-remove-group-id="' + group.id + '" title="Quitar matriz">&times;</span>' : '') +
+                '</button>';
+            }).join('');
+
+            chipsEl.querySelectorAll('button[data-metfq-group-id]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var groupId = this.getAttribute('data-metfq-group-id');
+                    if (!groupId || groupId === activeMetFQMatrixId) return;
+                    syncActiveDraft(true);
+                    ensureMetFQMatrixGroups();
+                    var draftNow = techDrafts.metodologias_fq;
+                    var group = (draftNow.matrix_groups || []).find(function(g) { return g.id === groupId; });
+                    if (!group) return;
+                    activeMetFQMatrixId = group.id;
+                    activeMetFQSubsection = '';
+                    draftNow.active_matrix_id = group.id;
+                    applyMetFQGroupToRoot(group, draftNow);
+                    buildTechTree();
+                    selectTechItem('metodologias_fq', { skipSyncCurrent: true });
+                });
+            });
+            chipsEl.querySelectorAll('[data-metfq-remove-group-id]').forEach(function(removeBtn) {
+                removeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var groupId = this.getAttribute('data-metfq-remove-group-id');
+                    if (!groupId) return;
+                    syncActiveDraft(true);
+                    ensureMetFQMatrixGroups();
+                    var draftNow = techDrafts.metodologias_fq;
+                    var index = (draftNow.matrix_groups || []).findIndex(function(g) { return g.id === groupId; });
+                    if (index === -1) return;
+                    var target = draftNow.matrix_groups[index];
+                    var lockedNow = getLockedMetFQMatricesFromStep2();
+                    if (lockedNow[target.matriz]) return;
+                    draftNow.matrix_groups.splice(index, 1);
+                    if (!draftNow.matrix_groups.length) {
+                        ensureMetFQMatrixGroups();
+                    }
+                    var fallback = draftNow.matrix_groups[0];
+                    if (groupId === activeMetFQMatrixId && fallback) {
+                        activeMetFQMatrixId = fallback.id;
+                        activeMetFQSubsection = '';
+                        draftNow.active_matrix_id = fallback.id;
+                        applyMetFQGroupToRoot(fallback, draftNow);
+                    } else if (fallback && !draftNow.matrix_groups.some(function(g) { return g.id === draftNow.active_matrix_id; })) {
+                        draftNow.active_matrix_id = fallback.id;
+                    }
+                    draftNow.dirty = true;
+                    updateTechStatus('Cambios sin guardar');
+                    buildTechTree();
+                    selectTechItem('metodologias_fq', { skipSyncCurrent: true });
+                });
+            });
+        }
+
+        function buildEmptyMetBioGroup(id, matriz) {
+            return {
+                id: id,
+                matriz: matriz,
+                protocolo_intro: '',
+                protocolo_puntos: [],
+                protocolo_imagen: '',
+                protocolo_imagen_name: '',
+                protocolo_descripcion: '',
+                transectas_intro: '',
+                transectas_puntos: [],
+                transectas_imagen: '',
+                transectas_imagen_name: '',
+                transectas_descripcion: '',
+                especificaciones_texto: '',
+                especificaciones_descripcion: '',
+                fitoplancton_cualitativo: false,
+                fitoplancton_cuantitativo: false,
+                zoo_ictio_vertical_diurno: false,
+                zoo_ictio_vertical_nocturno: false,
+                zoo_ictio_horizontal_diurno: false,
+                zoo_ictio_horizontal_nocturno: false,
+                censo_mar_diurno: false,
+                censo_mar_nocturno: false,
+                censo_tierra_diurno: false,
+                censo_tierra_nocturno: false,
+                updatedAt: ''
+            };
+        }
+
+        function buildMetBioGroupFromRoot(id, matriz, draft) {
+            return {
+                id: id,
+                matriz: matriz,
+                protocolo_intro: draft.protocolo_intro || '',
+                protocolo_puntos: Array.isArray(draft.protocolo_puntos) ? JSON.parse(JSON.stringify(draft.protocolo_puntos)) : [],
+                protocolo_imagen: draft.protocolo_imagen || '',
+                protocolo_imagen_name: draft.protocolo_imagen_name || '',
+                protocolo_descripcion: draft.protocolo_descripcion || '',
+                transectas_intro: draft.transectas_intro || '',
+                transectas_puntos: Array.isArray(draft.transectas_puntos) ? JSON.parse(JSON.stringify(draft.transectas_puntos)) : [],
+                transectas_imagen: draft.transectas_imagen || '',
+                transectas_imagen_name: draft.transectas_imagen_name || '',
+                transectas_descripcion: draft.transectas_descripcion || '',
+                especificaciones_texto: draft.especificaciones_texto || '',
+                especificaciones_descripcion: draft.especificaciones_descripcion || '',
+                fitoplancton_cualitativo: !!draft.fitoplancton_cualitativo,
+                fitoplancton_cuantitativo: !!draft.fitoplancton_cuantitativo,
+                zoo_ictio_vertical_diurno: !!draft.zoo_ictio_vertical_diurno,
+                zoo_ictio_vertical_nocturno: !!draft.zoo_ictio_vertical_nocturno,
+                zoo_ictio_horizontal_diurno: !!draft.zoo_ictio_horizontal_diurno,
+                zoo_ictio_horizontal_nocturno: !!draft.zoo_ictio_horizontal_nocturno,
+                censo_mar_diurno: !!draft.censo_mar_diurno,
+                censo_mar_nocturno: !!draft.censo_mar_nocturno,
+                censo_tierra_diurno: !!draft.censo_tierra_diurno,
+                censo_tierra_nocturno: !!draft.censo_tierra_nocturno,
+                updatedAt: draft.updatedAt || ''
+            };
+        }
+
+        function applyMetBioGroupToRoot(group, draft) {
+            if (!group || !draft) return;
+            draft.protocolo_intro = group.protocolo_intro || '';
+            draft.protocolo_puntos = Array.isArray(group.protocolo_puntos) ? JSON.parse(JSON.stringify(group.protocolo_puntos)) : [];
+            draft.protocolo_imagen = group.protocolo_imagen || '';
+            draft.protocolo_imagen_name = group.protocolo_imagen_name || '';
+            draft.protocolo_descripcion = group.protocolo_descripcion || '';
+            draft.transectas_intro = group.transectas_intro || '';
+            draft.transectas_puntos = Array.isArray(group.transectas_puntos) ? JSON.parse(JSON.stringify(group.transectas_puntos)) : [];
+            draft.transectas_imagen = group.transectas_imagen || '';
+            draft.transectas_imagen_name = group.transectas_imagen_name || '';
+            draft.transectas_descripcion = group.transectas_descripcion || '';
+            draft.especificaciones_texto = group.especificaciones_texto || '';
+            draft.especificaciones_descripcion = group.especificaciones_descripcion || '';
+            draft.fitoplancton_cualitativo = !!group.fitoplancton_cualitativo;
+            draft.fitoplancton_cuantitativo = !!group.fitoplancton_cuantitativo;
+            draft.zoo_ictio_vertical_diurno = !!group.zoo_ictio_vertical_diurno;
+            draft.zoo_ictio_vertical_nocturno = !!group.zoo_ictio_vertical_nocturno;
+            draft.zoo_ictio_horizontal_diurno = !!group.zoo_ictio_horizontal_diurno;
+            draft.zoo_ictio_horizontal_nocturno = !!group.zoo_ictio_horizontal_nocturno;
+            draft.censo_mar_diurno = !!group.censo_mar_diurno;
+            draft.censo_mar_nocturno = !!group.censo_mar_nocturno;
+            draft.censo_tierra_diurno = !!group.censo_tierra_diurno;
+            draft.censo_tierra_nocturno = !!group.censo_tierra_nocturno;
+            draft.updatedAt = group.updatedAt || draft.updatedAt || '';
+        }
+
+        function syncRootToActiveMetBioGroup() {
+            var draft = techDrafts.metodologias_bio;
+            if (!draft || !Array.isArray(draft.matrix_groups) || !draft.matrix_groups.length) return;
+            var active = draft.matrix_groups.find(function(g) { return g.id === activeMetBioMatrixId; }) || draft.matrix_groups[0];
+            if (!active) return;
+            var snap = buildMetBioGroupFromRoot(active.id, active.matriz, draft);
+            Object.assign(active, snap);
+            draft.active_matrix_id = active.id;
+        }
+
+        function ensureMetBioMatrixGroups() {
+            var draft = techDrafts.metodologias_bio;
+            if (!draft) return;
+            if (!Array.isArray(draft.matrix_groups)) draft.matrix_groups = [];
+
+            if (draft.matrix_groups.length === 0 && !draft._matrix_seeded) {
+                preloadedMetBioMatrices.forEach(function(matrixValue) {
+                    var existing = draft.matrix_groups.find(function(g) { return g && g.matriz === matrixValue; });
+                    if (!existing) {
+                        draft.matrix_groups.push(buildEmptyMetBioGroup('matrix_bio_' + matrixValue, matrixValue));
+                    }
+                });
+                draft._matrix_seeded = true;
+            }
+
+            if (draft.matrix_groups.length === 0) {
+                draft.active_matrix_id = '';
+                activeMetBioMatrixId = '';
+                return;
+            }
+
+            if (!draft.active_matrix_id || !draft.matrix_groups.some(function(g) { return g.id === draft.active_matrix_id; })) {
+                draft.active_matrix_id = draft.matrix_groups[0].id;
+            }
+
+            activeMetBioMatrixId = draft.active_matrix_id;
+            var activeGroup = draft.matrix_groups.find(function(g) { return g.id === activeMetBioMatrixId; }) || draft.matrix_groups[0];
+            if (activeGroup) {
+                applyMetBioGroupToRoot(activeGroup, draft);
+            }
+        }
+
+        function renderMetBioMatrixGroups() {
+            if (activeTechId !== 'metodologias_bio') return;
+            ensureMetBioMatrixGroups();
+            var draft = techDrafts.metodologias_bio;
+            if (!draft) return;
+
+            var chipsEl = document.getElementById('techMetBioMatrixChips');
+            var selectEl = document.getElementById('techMetBioMatrixSelect');
+            if (selectEl) {
+                var activeGroup = (draft.matrix_groups || []).find(function(g) { return g.id === activeMetBioMatrixId; });
+                selectEl.value = activeGroup ? activeGroup.matriz : 'FITOPLANCTON';
+            }
+            if (!chipsEl) return;
+            chipsEl.innerHTML = (draft.matrix_groups || []).map(function(group) {
+                var activeCls = group.id === activeMetBioMatrixId ? ' active' : '';
+                return '<button type="button" class="tech-metfq-chip' + activeCls + '" data-metbio-group-id="' + group.id + '">' +
+                    '<span class="chip-label">' + getMetBioMatrixLabel(group.matriz) + '</span>' +
+                    '<span class="chip-remove" data-metbio-remove-group-id="' + group.id + '" title="Quitar matriz">&times;</span>' +
+                '</button>';
+            }).join('');
+
+            chipsEl.querySelectorAll('button[data-metbio-group-id]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var groupId = this.getAttribute('data-metbio-group-id');
+                    if (!groupId || groupId === activeMetBioMatrixId) return;
+                    syncActiveDraft(true);
+                    ensureMetBioMatrixGroups();
+                    var draftNow = techDrafts.metodologias_bio;
+                    var group = (draftNow.matrix_groups || []).find(function(g) { return g.id === groupId; });
+                    if (!group) return;
+                    activeMetBioMatrixId = group.id;
+                    activeMetBioSubsection = '';
+                    draftNow.active_matrix_id = group.id;
+                    applyMetBioGroupToRoot(group, draftNow);
+                    buildTechTree();
+                    selectTechItem('metodologias_bio', { skipSyncCurrent: true });
+                });
+            });
+            chipsEl.querySelectorAll('[data-metbio-remove-group-id]').forEach(function(removeBtn) {
+                removeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var groupId = this.getAttribute('data-metbio-remove-group-id');
+                    if (!groupId) return;
+                    syncActiveDraft(true);
+                    ensureMetBioMatrixGroups();
+                    var draftNow = techDrafts.metodologias_bio;
+                    var index = (draftNow.matrix_groups || []).findIndex(function(g) { return g.id === groupId; });
+                    if (index === -1) return;
+                    draftNow.matrix_groups.splice(index, 1);
+                    if (!draftNow.matrix_groups.length) {
+                        activeMetBioMatrixId = '';
+                        activeMetBioSubsection = '';
+                        draftNow.active_matrix_id = '';
+                        draftNow.protocolo_intro = '';
+                        draftNow.protocolo_puntos = [];
+                        draftNow.protocolo_imagen = '';
+                        draftNow.protocolo_imagen_name = '';
+                        draftNow.protocolo_descripcion = '';
+                        draftNow.transectas_intro = '';
+                        draftNow.transectas_puntos = [];
+                        draftNow.transectas_imagen = '';
+                        draftNow.transectas_imagen_name = '';
+                        draftNow.transectas_descripcion = '';
+                        draftNow.especificaciones_texto = '';
+                        draftNow.especificaciones_descripcion = '';
+                        draftNow.fitoplancton_cualitativo = false;
+                        draftNow.fitoplancton_cuantitativo = false;
+                        draftNow.zoo_ictio_vertical_diurno = false;
+                        draftNow.zoo_ictio_vertical_nocturno = false;
+                        draftNow.zoo_ictio_horizontal_diurno = false;
+                        draftNow.zoo_ictio_horizontal_nocturno = false;
+                        draftNow.censo_mar_diurno = false;
+                        draftNow.censo_mar_nocturno = false;
+                        draftNow.censo_tierra_diurno = false;
+                        draftNow.censo_tierra_nocturno = false;
+                    }
+                    var fallback = draftNow.matrix_groups[0];
+                    if (groupId === activeMetBioMatrixId && fallback) {
+                        activeMetBioMatrixId = fallback.id;
+                        activeMetBioSubsection = '';
+                        draftNow.active_matrix_id = fallback.id;
+                        applyMetBioGroupToRoot(fallback, draftNow);
+                    } else if (fallback && !draftNow.matrix_groups.some(function(g) { return g.id === draftNow.active_matrix_id; })) {
+                        draftNow.active_matrix_id = fallback.id;
+                    }
+                    draftNow.dirty = true;
+                    updateTechStatus('Cambios sin guardar');
+                    buildTechTree();
+                    selectTechItem('metodologias_bio', { skipSyncCurrent: true });
+                });
+            });
+        }
         var quillEditors = {};
         var suppressQuillSync = false;
         var techMetFQSubsections = [
-            { id: 'protocolo_estudio', title: 'Protocolo de muestreo / Estudio', fields: ['Introducción', 'Puntos de muestreo', 'Imagen asociada', 'Descripción'] },
+            { id: 'protocolo_estudio', title: 'Protocolo de muestreo', fields: ['Introducción', 'Puntos de muestreo', 'Imagen asociada', 'Descripción'] },
             { id: 'parametros_laboratorios', title: 'Parámetros a Analizar y Laboratorios', fields: ['Texto introductorio', 'Control de análisis', 'Texto final'] },
             { id: 'parametros_in_situ', title: 'Parámetros medidos in situ', fields: ['Texto introductorio', 'Parámetros de terreno', 'Texto final'] }
+        ];
+        var techMetBioSubsections = [
+            { id: 'protocolo_estudio', title: 'Protocolo de muestreo', fields: ['Introducción', 'Puntos de muestreo', 'Imagen asociada', 'Descripción'] },
+            { id: 'protocolo_transectas', title: 'Protocolo de muestreo Transectas', fields: ['Introducción', 'Puntos de muestreo', 'Imagen asociada', 'Descripción'] }
         ];
 
         function escapeHtml(text) {
@@ -3062,7 +4635,31 @@
         };
 
         techDrafts.metodologias_fq = { protocolo_intro: '', protocolo_puntos: [], protocolo_imagen: '', protocolo_imagen_name: '', protocolo_descripcion: '', selectedParams: [], params_intro: '', texto_final: '', in_situ_intro: '', in_situ_selected: [], in_situ_final: '', updatedAt: '' };
-        techDrafts.metodologias_bio = { summary: '', content: '', notes: '', updatedAt: '' };
+        techDrafts.metodologias_bio = {
+            protocolo_intro: '',
+            protocolo_puntos: [],
+            protocolo_imagen: '',
+            protocolo_imagen_name: '',
+            protocolo_descripcion: '',
+            transectas_intro: '',
+            transectas_puntos: [],
+            transectas_imagen: '',
+            transectas_imagen_name: '',
+            transectas_descripcion: '',
+            especificaciones_texto: '',
+            especificaciones_descripcion: '',
+            fitoplancton_cualitativo: false,
+            fitoplancton_cuantitativo: false,
+            zoo_ictio_vertical_diurno: false,
+            zoo_ictio_vertical_nocturno: false,
+            zoo_ictio_horizontal_diurno: false,
+            zoo_ictio_horizontal_nocturno: false,
+            censo_mar_diurno: false,
+            censo_mar_nocturno: false,
+            censo_tierra_diurno: false,
+            censo_tierra_nocturno: false,
+            updatedAt: ''
+        };
         techDrafts.metodologias_fis = { summary: '', content: '', notes: '', updatedAt: '' };
 
         var techFQParametroCatalog = [
@@ -3085,6 +4682,178 @@
             { parametro: 'Surfactantes aniónicos (SAAM)', unidad: 'mg/L', limite: '0.05', metodologia: 'Standard Methods 5540-BC, Ed 23 2017.', laboratorios: 'Lab. Santiago - ENV' },
             { parametro: 'Turbiedad', unidad: 'NTU', limite: '0.05', metodologia: 'Standard Methods 2130. B. Ed 23 2017.', laboratorios: 'Lab. Santiago - ENV' }
         ];
+        var SHARED_LAB_CATALOG_KEY = 'qcotizaciones.labCatalog';
+        var SHARED_LAB_SELECTED_KEY = 'qcotizaciones.labSelected';
+        var SHARED_FIELD_SELECTED_KEY = 'qcotizaciones.fieldSelected';
+
+        function normalizeLabSelectedItem(item) {
+            return {
+                parametro: item.parametro || '',
+                unidad: item.unidad || '—',
+                limite: item.limite || '—',
+                metodologia: item.metodologia || item.metodo || '—',
+                laboratorios: item.laboratorios || item.laboratorio || 'Lab. Santiago - ENV',
+                matriz: item.matriz || '',
+                afectaETFA: item.afectaETFA || '',
+                etfaCode: item.etfaCode || '',
+                laboratorio: item.laboratorio || item.laboratorios || 'Lab. Santiago - ENV'
+            };
+        }
+
+        function saveSharedLabSelected(selected) {
+            try {
+                localStorage.setItem(SHARED_LAB_SELECTED_KEY, JSON.stringify((selected || []).map(normalizeLabSelectedItem)));
+            } catch (e) {}
+        }
+
+        function loadSharedLabSelected() {
+            try {
+                var raw = localStorage.getItem(SHARED_LAB_SELECTED_KEY);
+                if (!raw) return [];
+                var parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) return [];
+                return parsed.map(normalizeLabSelectedItem).filter(function(item) { return !!item.parametro; });
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function normalizeFieldSelectedItem(item) {
+            return {
+                parametro: item.parametro || '',
+                metodo: item.metodo || '—',
+                matriz: item.matriz || '',
+                afectaETFA: item.afectaETFA || '',
+                etfaCode: item.etfaCode || '',
+                instrumento: item.instrumento || ''
+            };
+        }
+
+        function saveSharedFieldSelected(selected) {
+            try {
+                localStorage.setItem(SHARED_FIELD_SELECTED_KEY, JSON.stringify((selected || []).map(normalizeFieldSelectedItem)));
+            } catch (e) {}
+        }
+
+        function loadSharedFieldSelected() {
+            try {
+                var raw = localStorage.getItem(SHARED_FIELD_SELECTED_KEY);
+                if (!raw) return [];
+                var parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) return [];
+                return parsed.map(normalizeFieldSelectedItem).filter(function(item) { return !!item.parametro; });
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function generarCodigoEtfa(parametro, base) {
+            var text = (parametro || '').toString();
+            var hash = 0;
+            for (var i = 0; i < text.length; i++) {
+                hash = (hash * 31 + text.charCodeAt(i)) % 900000;
+            }
+            return String((base || 2000000) + hash);
+        }
+
+        function mapLabNameToDisplay(labName) {
+            var raw = (labName || '').toString().trim();
+            if (!raw) return 'Lab. Santiago - ENV';
+            if (raw.toLowerCase().indexOf('lab.') === 0) return raw;
+            return 'Lab. ' + raw + ' - ENV';
+        }
+
+        function mapPresentationToMatrixValue(presentationText) {
+            var normalized = (presentationText || '').toString().toLowerCase();
+            if (normalized.indexOf('mar') !== -1) return 'AGUA_MAR_E';
+            if (normalized.indexOf('residual') !== -1) return 'AGUA_RESIDUAL_F';
+            return '';
+        }
+
+        function collectLabCatalogFromCotizacionGrid() {
+            var rows = Array.from(document.querySelectorAll('#divGruposServicioLab .service-group tbody tr:not(.empty-row)'));
+            var byKey = {};
+
+            rows.forEach(function(row) {
+                if (row.classList.contains('empty-row')) return;
+                var cells = row.querySelectorAll('td');
+                if (!cells || cells.length < 11) return;
+
+                var nameEl = row.querySelector('.lab-service-name');
+                var methodEl = row.querySelector('.lab-service-method');
+                var codeEl = row.querySelector('.lab-service-code strong');
+                var labEl = row.querySelector('.js-lab-laboratorio');
+                var groupEl = row.closest('.service-group');
+                var presentationTag = '';
+                if (groupEl) {
+                    var tags = Array.from(groupEl.querySelectorAll('.service-tags .service-tag')).map(function(el) { return (el.textContent || '').trim(); });
+                    presentationTag = tags.length > 1 ? tags[1] : (tags[0] || '');
+                }
+                var matrixValue = mapPresentationToMatrixValue(presentationTag);
+                if (!matrixValue) return;
+
+                var parametro = nameEl ? nameEl.textContent.trim() : (cells[1] ? cells[1].textContent.trim() : '');
+                var metodologia = methodEl ? methodEl.textContent.trim() : '';
+                if (!parametro) return;
+                var unidad = cells[5] ? cells[5].textContent.trim() : '';
+                var limite = cells[2] ? cells[2].textContent.trim() : '';
+                var etfaCode = codeEl ? codeEl.textContent.trim() : '';
+                var laboratorio = mapLabNameToDisplay(labEl ? labEl.value : '');
+                var key = (matrixValue + '|' + parametro + '|' + metodologia + '|' + laboratorio).toLowerCase();
+
+                if (!byKey[key]) {
+                    byKey[key] = {
+                        parametro: parametro,
+                        unidad: unidad || '—',
+                        limite: limite || '—',
+                        metodologia: metodologia || '—',
+                        laboratorios: laboratorio,
+                        metodo: metodologia || '—',
+                        laboratorio: laboratorio,
+                        matriz: matrixValue,
+                        etfaCode: etfaCode || ''
+                    };
+                }
+            });
+
+            return Object.keys(byKey).map(function(k) { return byKey[k]; });
+        }
+
+        function getLabCatalogByMatrixFromStep2(matrixValue) {
+            var all = syncSharedLabCatalogFromCotizacion();
+            return all
+                .filter(function(item) { return (item.matriz || '') === (matrixValue || ''); })
+                .map(normalizeLabSelectedItem);
+        }
+
+        function getLockedMetFQMatricesFromStep2() {
+            var locked = {};
+            syncSharedLabCatalogFromCotizacion().forEach(function(item) {
+                var matrixValue = (item && item.matriz) ? item.matriz : '';
+                if (matrixValue) locked[matrixValue] = true;
+            });
+            return locked;
+        }
+
+        function syncSharedLabCatalogFromCotizacion() {
+            var fromGrid = collectLabCatalogFromCotizacionGrid();
+            if (fromGrid.length > 0) {
+                techFQParametroCatalog = fromGrid.slice();
+                try {
+                    localStorage.setItem(SHARED_LAB_CATALOG_KEY, JSON.stringify(fromGrid));
+                } catch (e) {}
+                return fromGrid;
+            }
+            try {
+                var raw = localStorage.getItem(SHARED_LAB_CATALOG_KEY);
+                if (!raw) return techFQParametroCatalog.slice();
+                var parsed = JSON.parse(raw);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    techFQParametroCatalog = parsed.slice();
+                }
+            } catch (e) {}
+            return techFQParametroCatalog.slice();
+        }
 
         var techInSituCatalog = [
             { parametro: 'Conductividad', metodo: 'PI A&S-2 (Versión 3) / IGEN-2.5 versión 0 medidor multiparámetro' },
@@ -3170,14 +4939,14 @@
                     '<button class="tech-tree-expand' + expanded + '" data-expand="' + section.id + '"><i class="fas fa-caret-right"></i></button>' +
                     '<i class="fas fa-folder"></i>' +
                     '<span class="tech-tree-name" data-tech-name="' + section.id + '">' + section.title + '</span>' +
-                    (section.isCustom ? '<div class="tech-tree-menu" data-menu="' + section.id + '">' +
+                    '<div class="tech-tree-menu" data-menu="' + section.id + '">' +
                         '<button class="tech-tree-menu-btn" data-menu-btn="' + section.id + '"><i class="fas fa-ellipsis-v"></i></button>' +
                         '<div class="tech-tree-menu-content">' +
-                            '<button data-menu-edit="' + section.id + '"><i class="fas fa-pen"></i> Editar nombre</button>' +
+                            (section.isCustom ? '<button data-menu-edit="' + section.id + '"><i class="fas fa-pen"></i> Editar nombre</button>' : '') +
                             '<button data-menu-add-field="' + section.id + '"><i class="fas fa-plus"></i> Agregar campo</button>' +
-                            '<button data-menu-delete="' + section.id + '"><i class="fas fa-trash"></i> Eliminar sección</button>' +
+                            (section.isCustom ? '<button data-menu-delete="' + section.id + '"><i class="fas fa-trash"></i> Eliminar sección</button>' : '') +
                         '</div>' +
-                    '</div>' : '') +
+                    '</div>' +
                     '<label class="tech-tree-toggle">' +
                         '<input type="checkbox" data-tech-toggle="' + section.id + '"' + (section.enabled === false ? '' : ' checked') + '>' +
                     '</label>' +
@@ -3202,17 +4971,41 @@
                     });
                 } else {
                     if (section.id === 'metodologias_fq') {
-                        techMetFQSubsections.forEach(function(sub) {
-                            var activeSub = (activeTechId === 'metodologias_fq' && activeMetFQSubsection === sub.id) ? ' active' : '';
-                            html += '<div class="tech-tree-item tech-tree-subsection' + activeSub + '" data-tech-id="metodologias_fq" data-metfq-subsection="' + sub.id + '">' +
-                                '<i class="fas fa-folder"></i>' +
-                                '<span class="tech-tree-name">' + sub.title + '</span>' +
+                        ensureMetFQMatrixGroups();
+                        var fqDraft = techDrafts.metodologias_fq || {};
+                        var groups = fqDraft.matrix_groups || [];
+                        groups.forEach(function(group) {
+                            var groupActive = (activeTechId === 'metodologias_fq' && activeMetFQMatrixId === group.id && !activeMetFQSubsection) ? ' active' : '';
+                            html += '<div class="tech-tree-item tech-tree-subsection' + groupActive + '" data-tech-id="metodologias_fq" data-metfq-group-id="' + group.id + '">' +
+                                '<i class="fas fa-layer-group"></i>' +
+                                '<span class="tech-tree-name tech-tree-matrix-name">' + getMetFQMatrixLabel(group.matriz) + '</span>' +
                             '</div>';
                             html += '<div class="tech-tree-subfields">';
-                            (sub.fields || []).forEach(function(f) {
-                                html += '<div class="tech-tree-field">' +
-                                    '<i class="fas fa-file-alt" style="color:#b5b0a8;"></i>' +
-                                    '<span>' + f + '</span>' +
+                            techMetFQSubsections.forEach(function(sub) {
+                                var activeSub = (activeTechId === 'metodologias_fq' && activeMetFQMatrixId === group.id && activeMetFQSubsection === sub.id) ? ' active' : '';
+                                html += '<div class="tech-tree-item tech-tree-subsection' + activeSub + '" data-tech-id="metodologias_fq" data-metfq-group-id="' + group.id + '" data-metfq-subsection="' + sub.id + '">' +
+                                    '<i class="fas fa-file-alt"></i>' +
+                                    '<span class="tech-tree-name">' + sub.title + '</span>' +
+                                '</div>';
+                            });
+                            html += '</div>';
+                        });
+                    } else if (section.id === 'metodologias_bio') {
+                        ensureMetBioMatrixGroups();
+                        var bioDraft = techDrafts.metodologias_bio || {};
+                        var bioGroups = bioDraft.matrix_groups || [];
+                        bioGroups.forEach(function(group) {
+                            var groupActive = (activeTechId === 'metodologias_bio' && activeMetBioMatrixId === group.id && !activeMetBioSubsection) ? ' active' : '';
+                            html += '<div class="tech-tree-item tech-tree-subsection' + groupActive + '" data-tech-id="metodologias_bio" data-metbio-group-id="' + group.id + '">' +
+                                '<i class="fas fa-layer-group"></i>' +
+                                '<span class="tech-tree-name tech-tree-matrix-name">' + getMetBioMatrixLabel(group.matriz) + '</span>' +
+                            '</div>';
+                            html += '<div class="tech-tree-subfields">';
+                            getMetBioSubsectionsForMatrix(group.matriz).forEach(function(sub) {
+                                var activeSub = (activeTechId === 'metodologias_bio' && activeMetBioMatrixId === group.id && activeMetBioSubsection === sub.id) ? ' active' : '';
+                                html += '<div class="tech-tree-item tech-tree-subsection' + activeSub + '" data-tech-id="metodologias_bio" data-metbio-group-id="' + group.id + '" data-metbio-subsection="' + sub.id + '">' +
+                                    '<i class="fas fa-file-alt"></i>' +
+                                    '<span class="tech-tree-name">' + sub.title + '</span>' +
                                 '</div>';
                             });
                             html += '</div>';
@@ -3225,23 +5018,82 @@
                             '</div>';
                         });
                     }
-                }
-                if (section.isCustom) {
-                    // add-field moved to contextual menu
+                    // Campos extra agregados por el usuario a esta sección de plantilla
+                    (section.extraFields || []).forEach(function(f) {
+                        html += '<div class="tech-tree-field" draggable="true" data-field-parent="' + section.id + '" data-field-name="' + escapeHtml(f) + '">' +
+                            '<i class="fas fa-file-alt" style="color:#b5b0a8;"></i>' +
+                            '<span class="tech-tree-field-name">' + escapeHtml(f) + '</span>' +
+                            '<div class="tech-tree-menu" data-menu-field="' + section.id + '" data-menu-field-name="' + escapeHtml(f) + '">' +
+                                '<button class="tech-tree-menu-btn" data-menu-field-btn="' + section.id + '" data-menu-field-name="' + escapeHtml(f) + '"><i class="fas fa-ellipsis-v"></i></button>' +
+                                '<div class="tech-tree-menu-content">' +
+                                    '<button data-menu-field-edit="' + section.id + '" data-menu-field-name="' + escapeHtml(f) + '"><i class="fas fa-pen"></i> Editar</button>' +
+                                    '<button data-menu-field-delete="' + section.id + '" data-menu-field-name="' + escapeHtml(f) + '"><i class="fas fa-trash"></i> Eliminar</button>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>';
+                    });
                 }
                 html += '</div>';
             });
 
             tree.innerHTML = html ? '<div class="tech-tree-list">' + html + '</div>' : '<div class="tech-editor-hint" style="padding:10px 12px;">Sin resultados</div>';
+
+            // Ocultar botón + cuando la sección activa es de plantilla (no custom)
+            var addBtn = document.getElementById('techAddTopicBtn');
+            if (addBtn) {
+                var activeSection = getAllSections().find(function(s) { return s.id === activeTechId; });
+                var isActiveCustom = !activeSection || activeSection.isCustom;
+                addBtn.style.display = isActiveCustom ? '' : 'none';
+            }
+
             tree.querySelectorAll('.tech-tree-item[data-tech-id]').forEach(function(row) {
                 row.addEventListener('click', function(e) {
-                    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'LABEL' || e.target.tagName === 'BUTTON' || e.target.tagName === 'I')) return;
+                    if (e.target && (e.target.closest('.tech-tree-menu') || e.target.closest('.tech-tree-toggle') || e.target.closest('[data-expand]'))) return;
                     var id = this.getAttribute('data-tech-id');
                     var subId = this.getAttribute('data-metfq-subsection');
+                    var groupId = this.getAttribute('data-metfq-group-id');
+                    var bioSubId = this.getAttribute('data-metbio-subsection');
+                    var bioGroupId = this.getAttribute('data-metbio-group-id');
                     var section = getAllSections().find(function(s) { return s.id === id; });
                     if (section && section.enabled === false) return;
-                    if (id === 'metodologias_fq' && subId) activeMetFQSubsection = subId;
-                    selectTechItem(this.getAttribute('data-tech-id'));
+                    if (id === 'metodologias_fq') {
+                        var skipCurrentSync = activeTechId === 'metodologias_fq';
+                        if (skipCurrentSync) {
+                            syncRootToActiveMetFQGroup();
+                        }
+                        if (groupId) {
+                            ensureMetFQMatrixGroups();
+                            var fqDraft = techDrafts.metodologias_fq || {};
+                            var group = (fqDraft.matrix_groups || []).find(function(g) { return g.id === groupId; });
+                            if (group) {
+                                activeMetFQMatrixId = groupId;
+                                fqDraft.active_matrix_id = groupId;
+                                applyMetFQGroupToRoot(group, fqDraft);
+                            }
+                        }
+                        activeMetFQSubsection = subId || '';
+                        selectTechItem(id, { skipSyncCurrent: skipCurrentSync });
+                        return;
+                    } else if (id === 'metodologias_bio') {
+                        var skipBioSync = activeTechId === 'metodologias_bio';
+                        if (skipBioSync) {
+                            syncRootToActiveMetBioGroup();
+                        }
+                        if (bioGroupId) {
+                            ensureMetBioMatrixGroups();
+                            var bioDraftNow = techDrafts.metodologias_bio || {};
+                            var bioGroup = (bioDraftNow.matrix_groups || []).find(function(g) { return g.id === bioGroupId; });
+                            if (bioGroup) {
+                                activeMetBioMatrixId = bioGroupId;
+                                bioDraftNow.active_matrix_id = bioGroupId;
+                                applyMetBioGroupToRoot(bioGroup, bioDraftNow);
+                            }
+                        }
+                        activeMetBioSubsection = bioSubId || '';
+                        selectTechItem(id, { skipSyncCurrent: skipBioSync });
+                        return;
+                    }
+                    selectTechItem(id);
                 });
             });
 
@@ -3320,8 +5172,13 @@
                     var id = this.getAttribute('data-menu-add-field');
                     var section = getAllSections().find(function(s) { return s.id === id; });
                     if (!section) return;
-                    section.fields = section.fields || [];
-                    section.fields.push('Nuevo campo');
+                    if (section.isCustom) {
+                        section.fields = section.fields || [];
+                        section.fields.push('Nuevo campo');
+                    } else {
+                        section.extraFields = section.extraFields || [];
+                        section.extraFields.push('Nuevo campo');
+                    }
                     techTreeState.expanded[id] = true;
                     buildTechTree();
                     if (activeTechId === id) selectTechItem(id);
@@ -3375,14 +5232,15 @@
                     nameEl.replaceWith(input);
                     input.focus();
                     function save() {
-                        var fields = section.fields || [];
-                        var index = fields.indexOf(name);
                         var newVal = input.value.trim() || name;
-                        if (index >= 0) fields[index] = newVal;
-                        if (techDrafts[id] && techDrafts[id].fields && name !== newVal) {
-                            if (Object.prototype.hasOwnProperty.call(techDrafts[id].fields, name)) {
-                                techDrafts[id].fields[newVal] = techDrafts[id].fields[name];
-                                delete techDrafts[id].fields[name];
+                        var arr = section.isCustom ? (section.fields || []) : (section.extraFields || []);
+                        var index = arr.indexOf(name);
+                        if (index >= 0) arr[index] = newVal;
+                        var draftKey = section.isCustom ? 'fields' : 'extraFields';
+                        if (techDrafts[id] && techDrafts[id][draftKey] && name !== newVal) {
+                            if (Object.prototype.hasOwnProperty.call(techDrafts[id][draftKey], name)) {
+                                techDrafts[id][draftKey][newVal] = techDrafts[id][draftKey][name];
+                                delete techDrafts[id][draftKey][name];
                             }
                         }
                         buildTechTree();
@@ -3405,7 +5263,11 @@
                     var name = this.getAttribute('data-menu-field-name');
                     var section = getAllSections().find(function(s) { return s.id === id; });
                     if (!section) return;
-                    section.fields = (section.fields || []).filter(function(f) { return f !== name; });
+                    if (section.isCustom) {
+                        section.fields = (section.fields || []).filter(function(f) { return f !== name; });
+                    } else {
+                        section.extraFields = (section.extraFields || []).filter(function(f) { return f !== name; });
+                    }
                     buildTechTree();
                     if (activeTechId === id) selectTechItem(id);
                 });
@@ -3612,13 +5474,16 @@
 
             if (activeTechId === 'metodologias_fq') {
                 var puntosProtocolo = draft.protocolo_puntos || [];
-                var protocolHtml = '<table class="tech-fq-protocol-table"><thead><tr><th>#</th><th>Nombre Estación</th><th>Lugar de Muestreo</th><th>Coordenadas Geográficas</th><th>Matriz</th></tr></thead><tbody>';
+                var protocolHtml = '<table class="tech-fq-protocol-table"><thead><tr><th>#</th><th>Estación</th><th>Lugar</th><th>Matriz</th><th>Latitud</th><th>Longitud</th><th>Est.</th><th>Rep.</th><th>Muestras</th></tr></thead><tbody>';
                 if (puntosProtocolo.length) {
                     puntosProtocolo.forEach(function(p, idx) {
-                        protocolHtml += '<tr><td>' + (idx + 1) + '</td><td>' + (p.estacion || '—') + '</td><td>' + (p.lugar || '—') + '</td><td>' + (p.coordenadas || '—') + '</td><td>' + (p.matriz || '—') + '</td></tr>';
+                        var e = parseInt(p.estratos, 10) || 1;
+                        var r = parseInt(p.replicas, 10) || 1;
+                        var m = Math.max(1, parseInt(p.muestras, 10) || (e * r));
+                        protocolHtml += '<tr><td>' + (idx + 1) + '</td><td>' + (p.nombre || p.estacion || '—') + '</td><td>' + (p.lugar || '—') + '</td><td>' + (p.matriz || '—') + '</td><td>' + (p.latitud || p.coordenadas || '—') + '</td><td>' + (p.longitud || '—') + '</td><td>' + e + '</td><td>' + r + '</td><td>' + m + '</td></tr>';
                     });
                 } else {
-                    protocolHtml += '<tr><td colspan="5" style="text-align:center;color:#aaa;">Sin puntos de muestreo</td></tr>';
+                    protocolHtml += '<tr><td colspan="9" style="text-align:center;color:#aaa;">Sin puntos de muestreo</td></tr>';
                 }
                 protocolHtml += '</tbody></table>';
                 var parametros = draft.selectedParams || [];
@@ -3642,7 +5507,7 @@
                 }
                 inSituHtml += '</tbody></table>';
                 container.innerHTML =
-                    '<div class="tech-doc-title">Protocolo de muestreo / Estudio</div>' +
+                    '<div class="tech-doc-title">Protocolo de muestreo</div>' +
                     '<div class="tech-doc-text">' + (sanitizeTechHtml(draft.protocolo_intro) || '—') + '</div>' +
                     protocolHtml +
                     '<div class="tech-doc-title">Imagen asociada</div>' +
@@ -3774,7 +5639,7 @@
                     }
                     tblInSituHtml += '</tbody></table>';
                     body =
-                        '<div class="tech-doc-title">Protocolo de muestreo / Estudio</div>' +
+                        '<div class="tech-doc-title">Protocolo de muestreo</div>' +
                         '<div class="tech-doc-text">' + (sanitizeTechHtml(draft.protocolo_intro) || '—') + '</div>' +
                         tblProtocolHtml +
                         '<div class="tech-doc-title">Imagen asociada</div>' +
@@ -3926,111 +5791,349 @@
 
         function renderMetFQTable() {
             var tbody = document.getElementById('techMetFQParamTableBody');
+            var table = document.getElementById('techMetFQParamTable');
             if (!tbody) return;
             var draft = techDrafts.metodologias_fq || {};
-            var selected = draft.selectedParams || [];
+            var activeMatrix = getActiveMetFQMatrixValue();
+            var currentSelected = (draft.selectedParams || []).map(normalizeLabSelectedItem);
+            var preservedByKey = {};
+            currentSelected.forEach(function(item) {
+                var key = ((item.parametro || '') + '|' + (item.metodologia || '') + '|' + (item.laboratorios || item.laboratorio || '')).toLowerCase();
+                preservedByKey[key] = item;
+            });
+            var selected = getLabCatalogByMatrixFromStep2(activeMatrix).map(function(item) {
+                var key = ((item.parametro || '') + '|' + (item.metodologia || '') + '|' + (item.laboratorios || item.laboratorio || '')).toLowerCase();
+                var prev = preservedByKey[key];
+                if (!prev) return item;
+                return normalizeLabSelectedItem({
+                    parametro: item.parametro,
+                    unidad: item.unidad,
+                    limite: item.limite,
+                    metodologia: item.metodologia,
+                    laboratorios: item.laboratorios,
+                    laboratorio: item.laboratorio,
+                    afectaETFA: prev.afectaETFA || 'SI',
+                    etfaCode: prev.etfaCode || item.etfaCode || ''
+                });
+            }).map(function(item) {
+                if (!item.afectaETFA) item.afectaETFA = 'SI';
+                if (item.afectaETFA === 'SI' && !item.etfaCode) {
+                    item.etfaCode = generarCodigoEtfa(item.parametro, 2000000);
+                }
+                return item;
+            });
+            draft.selectedParams = selected;
             tbody.innerHTML = '';
             if (selected.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;">No hay parámetros seleccionados.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;">No hay análisis de laboratorio para esta matriz en el Paso 2.</td></tr>';
+                if (table) {
+                    table.querySelectorAll('.etfa-validation-col').forEach(function(cell) {
+                        cell.style.display = 'none';
+                    });
+                }
                 return;
             }
             selected.forEach(function(item, idx) {
                 var tr = document.createElement('tr');
                 tr.innerHTML =
+                    '<td>' + (idx + 1) + '</td>' +
                     '<td>' + (item.parametro || '—') + '</td>' +
-                    '<td>' + (item.unidad || '—') + '</td>' +
+                    '<td style="font-size:11px;color:#9a9a9a;">' + (item.metodologia || '—') + '</td>' +
                     '<td>' + (item.limite || '—') + '</td>' +
-                    '<td>' + (item.metodologia || '—') + '</td>' +
-                    '<td>' + (item.laboratorios || '—') + '</td>' +
-                    '<td><button class="btn btn-link btn-sm text-danger" data-fq-remove="' + idx + '" title="Quitar"><i class="fas fa-times"></i></button></td>';
+                    '<td>' + (item.unidad || '—') + '</td>' +
+                    '<td>' +
+                        '<label class="lab-etfa-inline" style="justify-content:center;"><input type="checkbox" data-fq-etfa="' + idx + '"' + (item.afectaETFA !== 'NO' ? ' checked' : '') + '> Sí</label>' +
+                    '</td>' +
+                    '<td class="etfa-validation-col" style="display:none;">' +
+                        (item.afectaETFA === 'SI' && activeMatrix
+                            ? '<span class="ok"><i class="fas fa-check-circle"></i> ' + (item.etfaCode || generarCodigoEtfa(item.parametro, 2000000)) + '</span>'
+                            : '<span class="na">-</span>') +
+                    '</td>' +
+                    '<td>' + (item.laboratorios || item.laboratorio || '—') + '</td>';
                 tbody.appendChild(tr);
             });
-            tbody.querySelectorAll('button[data-fq-remove]').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    var i = parseInt(this.getAttribute('data-fq-remove'), 10);
-                    if (isNaN(i)) return;
-                    techDrafts.metodologias_fq.selectedParams.splice(i, 1);
+            tbody.querySelectorAll('input[data-fq-etfa]').forEach(function(el) {
+                el.addEventListener('change', function() {
+                    var i = parseInt(this.getAttribute('data-fq-etfa'), 10);
+                    if (isNaN(i) || !techDrafts.metodologias_fq.selectedParams[i]) return;
+                    techDrafts.metodologias_fq.selectedParams[i].afectaETFA = this.checked ? 'SI' : 'NO';
+                    if (this.checked
+                        && activeMatrix
+                        && !techDrafts.metodologias_fq.selectedParams[i].etfaCode) {
+                        techDrafts.metodologias_fq.selectedParams[i].etfaCode = generarCodigoEtfa(techDrafts.metodologias_fq.selectedParams[i].parametro, 2000000);
+                    }
                     techDrafts.metodologias_fq.dirty = true;
+                    syncRootToActiveMetFQGroup();
                     updateTechStatus('Cambios sin guardar');
                     renderMetFQTable();
                     renderTechDocView();
                     renderTechDocFull();
                 });
             });
+
+            var showEtfaValidation = selected.some(function(item) { return item.afectaETFA === 'SI'; });
+            if (table) {
+                table.querySelectorAll('.etfa-validation-col').forEach(function(cell) {
+                    cell.style.display = showEtfaValidation ? 'table-cell' : 'none';
+                });
+            }
+            syncRootToActiveMetFQGroup();
         }
 
         function renderMetFQProtocolTable() {
-            var tbody = document.getElementById('techMetFQProtocolTableBody');
+            var tbody = document.getElementById('techFQEstacionesBody');
+            var countEl = document.getElementById('techFQCountPuntos');
+            var totalEl = document.getElementById('techFQTotalMuestras');
             if (!tbody) return;
             var draft = techDrafts.metodologias_fq || {};
             if (!Array.isArray(draft.protocolo_puntos)) draft.protocolo_puntos = [];
-            if (draft.protocolo_puntos.length === 0) {
-                for (var i = 0; i < 5; i++) {
-                    draft.protocolo_puntos.push({ estacion: '', lugar: '', coordenadas: '', matriz: '' });
-                }
-            }
 
             tbody.innerHTML = '';
+            var totalMuestras = 0;
             draft.protocolo_puntos.forEach(function(punto, idx) {
+                var estratos = parseInt(punto.estratos, 10) || 1;
+                var replicas = parseInt(punto.replicas, 10) || 1;
+                var muestras = estratos * replicas;
+                totalMuestras += muestras;
                 var tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td>' + (idx + 1) + '</td>' +
-                    '<td><input type="text" class="form-control input-sm" data-fq-proto-field="estacion" data-fq-proto-idx="' + idx + '" value="' + (punto.estacion || '') + '"></td>' +
-                    '<td><input type="text" class="form-control input-sm" data-fq-proto-field="lugar" data-fq-proto-idx="' + idx + '" value="' + (punto.lugar || '') + '"></td>' +
-                    '<td><input type="text" class="form-control input-sm" data-fq-proto-field="coordenadas" data-fq-proto-idx="' + idx + '" value="' + (punto.coordenadas || '') + '"></td>' +
-                    '<td><input type="text" class="form-control input-sm" data-fq-proto-field="matriz" data-fq-proto-idx="' + idx + '" value="' + (punto.matriz || '') + '"></td>' +
-                    '<td><button class="btn btn-link btn-sm text-danger" data-fq-proto-remove="' + idx + '" title="Quitar"><i class="fas fa-times"></i></button></td>';
+                    '<td><input type="text" class="fq-inline" data-fq-field="nombre" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.nombre || punto.estacion || '') + '"></td>' +
+                    '<td><input type="text" class="fq-inline" data-fq-field="lugar" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.lugar || '') + '"></td>' +
+                    '<td><input type="text" class="fq-inline" data-fq-field="latitud" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.latitud || punto.coordenadas || '') + '"></td>' +
+                    '<td><input type="text" class="fq-inline" data-fq-field="longitud" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.longitud || '') + '"></td>' +
+                    '<td><input type="text" class="fq-inline" data-fq-field="datum" data-fq-idx="' + idx + '" value="' + escapeHtml(punto.datum || '') + '"></td>' +
+                    '<td><input type="number" class="fq-inline fq-inline-num fq-est-estratos" data-fq-idx="' + idx + '" value="' + estratos + '" min="1"></td>' +
+                    '<td><input type="number" class="fq-inline fq-inline-num fq-est-replicas" data-fq-idx="' + idx + '" value="' + replicas + '" min="1"></td>' +
+                    '<td class="fq-muestras-cell">' + muestras + '</td>' +
+                    '<td><button class="fq-remove-btn" data-fq-remove="' + idx + '" title="Quitar"><i class="fas fa-times"></i></button></td>';
                 tbody.appendChild(tr);
             });
 
-            tbody.querySelectorAll('input[data-fq-proto-field]').forEach(function(inp) {
+            if (countEl) countEl.textContent = draft.protocolo_puntos.length;
+            if (totalEl) totalEl.textContent = totalMuestras;
+
+            tbody.querySelectorAll('input[data-fq-field]').forEach(function(inp) {
                 inp.addEventListener('input', function() {
-                    var i = parseInt(this.getAttribute('data-fq-proto-idx'), 10);
-                    var f = this.getAttribute('data-fq-proto-field');
-                    if (isNaN(i) || !f) return;
-                    if (!techDrafts.metodologias_fq.protocolo_puntos[i]) return;
+                    var i = parseInt(this.getAttribute('data-fq-idx'), 10);
+                    var f = this.getAttribute('data-fq-field');
+                    if (isNaN(i) || !f || !techDrafts.metodologias_fq.protocolo_puntos[i]) return;
                     techDrafts.metodologias_fq.protocolo_puntos[i][f] = this.value;
                     techDrafts.metodologias_fq.dirty = true;
                     updateTechStatus('Cambios sin guardar');
                     renderTechDocView();
-                    renderTechDocFull();
                 });
             });
 
-            tbody.querySelectorAll('button[data-fq-proto-remove]').forEach(function(btn) {
+            tbody.querySelectorAll('.fq-est-estratos, .fq-est-replicas').forEach(function(inp) {
+                inp.addEventListener('input', function() {
+                    var i = parseInt(this.getAttribute('data-fq-idx'), 10);
+                    if (isNaN(i) || !techDrafts.metodologias_fq.protocolo_puntos[i]) return;
+                    var row = this.closest('tr');
+                    var eEl = row.querySelector('.fq-est-estratos');
+                    var rEl = row.querySelector('.fq-est-replicas');
+                    var mEl = row.querySelector('.fq-muestras-cell');
+                    var e = Math.max(1, parseInt(eEl ? eEl.value : '1', 10) || 1);
+                    var r = Math.max(1, parseInt(rEl ? rEl.value : '1', 10) || 1);
+                    var m = e * r;
+                    if (eEl) eEl.value = e;
+                    if (rEl) rEl.value = r;
+                    if (mEl) mEl.textContent = m;
+                    techDrafts.metodologias_fq.protocolo_puntos[i].estratos = e;
+                    techDrafts.metodologias_fq.protocolo_puntos[i].replicas = r;
+                    techDrafts.metodologias_fq.protocolo_puntos[i].muestras = m;
+                    techDrafts.metodologias_fq.dirty = true;
+                    updateTechStatus('Cambios sin guardar');
+                    var total = 0;
+                    tbody.querySelectorAll('.fq-muestras-cell').forEach(function(c) { total += parseInt(c.textContent, 10) || 0; });
+                    if (totalEl) totalEl.textContent = total;
+                });
+            });
+
+            tbody.querySelectorAll('button[data-fq-remove]').forEach(function(btn) {
                 btn.addEventListener('click', function() {
-                    var i = parseInt(this.getAttribute('data-fq-proto-remove'), 10);
+                    var i = parseInt(this.getAttribute('data-fq-remove'), 10);
                     if (isNaN(i)) return;
                     techDrafts.metodologias_fq.protocolo_puntos.splice(i, 1);
-                    if (techDrafts.metodologias_fq.protocolo_puntos.length === 0) {
-                        techDrafts.metodologias_fq.protocolo_puntos.push({ estacion: '', lugar: '', coordenadas: '', matriz: '' });
-                    }
                     techDrafts.metodologias_fq.dirty = true;
                     updateTechStatus('Cambios sin guardar');
                     renderMetFQProtocolTable();
                     renderTechDocView();
-                    renderTechDocFull();
+                });
+            });
+        }
+
+        function getActiveMetBioProtocolConfig() {
+            if (activeMetBioSubsection === 'protocolo_transectas') {
+                return { key: 'transectas', intro: 'transectas_intro', puntos: 'transectas_puntos', imagen: 'transectas_imagen', imagen_name: 'transectas_imagen_name', descripcion: 'transectas_descripcion' };
+            }
+            return { key: 'protocolo', intro: 'protocolo_intro', puntos: 'protocolo_puntos', imagen: 'protocolo_imagen', imagen_name: 'protocolo_imagen_name', descripcion: 'protocolo_descripcion' };
+        }
+
+        function renderMetBioProtocolTable() {
+            var tbody = document.getElementById('techBioEstacionesBody');
+            var countEl = document.getElementById('techBioCountPuntos');
+            var totalEl = document.getElementById('techBioTotalMuestras');
+            if (!tbody) return;
+            var draft = techDrafts.metodologias_bio || {};
+            var cfg = getActiveMetBioProtocolConfig();
+            if (!Array.isArray(draft[cfg.puntos])) draft[cfg.puntos] = [];
+
+            tbody.innerHTML = '';
+            var totalMuestras = 0;
+            draft[cfg.puntos].forEach(function(punto, idx) {
+                var estratos = parseInt(punto.estratos, 10) || 1;
+                var replicas = parseInt(punto.replicas, 10) || 1;
+                var muestras = estratos * replicas;
+                totalMuestras += muestras;
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + (idx + 1) + '</td>' +
+                    '<td><input type="text" class="fq-inline" data-bio-field="nombre" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.nombre || punto.estacion || '') + '"></td>' +
+                    '<td><input type="text" class="fq-inline" data-bio-field="lugar" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.lugar || '') + '"></td>' +
+                    '<td><input type="text" class="fq-inline" data-bio-field="latitud" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.latitud || punto.coordenadas || '') + '"></td>' +
+                    '<td><input type="text" class="fq-inline" data-bio-field="longitud" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.longitud || '') + '"></td>' +
+                    '<td><input type="text" class="fq-inline" data-bio-field="datum" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.datum || '') + '"></td>' +
+                    '<td><input type="number" class="fq-inline fq-inline-num bio-est-estratos" data-bio-idx="' + idx + '" value="' + estratos + '" min="1"></td>' +
+                    '<td><input type="number" class="fq-inline fq-inline-num bio-est-replicas" data-bio-idx="' + idx + '" value="' + replicas + '" min="1"></td>' +
+                    '<td class="bio-muestras-cell">' + muestras + '</td>' +
+                    '<td><button class="fq-remove-btn" data-bio-remove="' + idx + '" title="Quitar"><i class="fas fa-times"></i></button></td>';
+                tbody.appendChild(tr);
+            });
+
+            if (countEl) countEl.textContent = draft[cfg.puntos].length;
+            if (totalEl) totalEl.textContent = totalMuestras;
+
+            tbody.querySelectorAll('input[data-bio-field]').forEach(function(inp) {
+                inp.addEventListener('input', function() {
+                    var i = parseInt(this.getAttribute('data-bio-idx'), 10);
+                    var f = this.getAttribute('data-bio-field');
+                    if (isNaN(i) || !f || !techDrafts.metodologias_bio[cfg.puntos] || !techDrafts.metodologias_bio[cfg.puntos][i]) return;
+                    techDrafts.metodologias_bio[cfg.puntos][i][f] = this.value;
+                    techDrafts.metodologias_bio.dirty = true;
+                    syncRootToActiveMetBioGroup();
+                    updateTechStatus('Cambios sin guardar');
+                    renderTechDocView();
+                });
+            });
+
+            tbody.querySelectorAll('.bio-est-estratos, .bio-est-replicas').forEach(function(inp) {
+                inp.addEventListener('input', function() {
+                    var i = parseInt(this.getAttribute('data-bio-idx'), 10);
+                    if (isNaN(i) || !techDrafts.metodologias_bio[cfg.puntos] || !techDrafts.metodologias_bio[cfg.puntos][i]) return;
+                    var row = this.closest('tr');
+                    var eEl = row.querySelector('.bio-est-estratos');
+                    var rEl = row.querySelector('.bio-est-replicas');
+                    var mEl = row.querySelector('.bio-muestras-cell');
+                    var e = Math.max(1, parseInt(eEl ? eEl.value : '1', 10) || 1);
+                    var r = Math.max(1, parseInt(rEl ? rEl.value : '1', 10) || 1);
+                    var m = e * r;
+                    if (eEl) eEl.value = e;
+                    if (rEl) rEl.value = r;
+                    if (mEl) mEl.textContent = m;
+                    techDrafts.metodologias_bio[cfg.puntos][i].estratos = e;
+                    techDrafts.metodologias_bio[cfg.puntos][i].replicas = r;
+                    techDrafts.metodologias_bio[cfg.puntos][i].muestras = m;
+                    techDrafts.metodologias_bio.dirty = true;
+                    syncRootToActiveMetBioGroup();
+                    updateTechStatus('Cambios sin guardar');
+                    var total = 0;
+                    tbody.querySelectorAll('.bio-muestras-cell').forEach(function(c) { total += parseInt(c.textContent, 10) || 0; });
+                    if (totalEl) totalEl.textContent = total;
+                });
+            });
+
+            tbody.querySelectorAll('button[data-bio-remove]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-bio-remove'), 10);
+                    if (isNaN(i)) return;
+                    techDrafts.metodologias_bio[cfg.puntos].splice(i, 1);
+                    techDrafts.metodologias_bio.dirty = true;
+                    syncRootToActiveMetBioGroup();
+                    updateTechStatus('Cambios sin guardar');
+                    renderMetBioProtocolTable();
+                    renderTechDocView();
                 });
             });
         }
 
         function renderMetFQInSituTable() {
             var tbody = document.getElementById('techMetFQInSituTableBody');
+            var table = document.getElementById('techMetFQInSituTable');
             if (!tbody) return;
             var draft = techDrafts.metodologias_fq || {};
-            var selected = draft.in_situ_selected || [];
+            var activeMatrix = getActiveMetFQMatrixValue();
+            var selected = (draft.in_situ_selected || []).map(normalizeFieldSelectedItem);
+            draft.in_situ_selected = selected;
             tbody.innerHTML = '';
             if (selected.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#aaa;">No hay parámetros de terreno seleccionados.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#aaa;">No hay parámetros seleccionados. Use el botón "Seleccionar parámetros de terreno" para agregar.</td></tr>';
+                if (table) {
+                    table.querySelectorAll('.etfa-validation-col').forEach(function(cell) {
+                        cell.style.display = 'none';
+                    });
+                }
                 return;
             }
             selected.forEach(function(item, idx) {
                 var tr = document.createElement('tr');
                 tr.innerHTML =
+                    '<td>' + (idx + 1) + '</td>' +
                     '<td>' + (item.parametro || '—') + '</td>' +
-                    '<td>' + (item.metodo || '—') + '</td>' +
-                    '<td><button class="btn btn-link btn-sm text-danger" data-insitu-remove="' + idx + '" title="Quitar"><i class="fas fa-times"></i></button></td>';
+                    '<td style="font-size:11px;color:#9a9a9a;">' + (item.metodo || '—') + '</td>' +
+                    '<td>' +
+                        '<select class="form-control-inline" data-insitu-idx="' + idx + '" data-field="afectaETFA">' +
+                            '<option value="">Seleccionar</option>' +
+                            '<option value="SI"' + (item.afectaETFA === 'SI' ? ' selected' : '') + '>Sí</option>' +
+                            '<option value="NO"' + (item.afectaETFA === 'NO' ? ' selected' : '') + '>No</option>' +
+                        '</select>' +
+                    '</td>' +
+                    '<td class="etfa-validation-col" style="display:none;">' +
+                        (item.afectaETFA === 'SI' && activeMatrix
+                            ? '<span class="ok"><i class="fas fa-check-circle"></i> ' + (item.etfaCode || generarCodigoEtfa(item.parametro, 1000000)) + '</span>'
+                            : '<span class="na">-</span>') +
+                    '</td>' +
+                    '<td>' +
+                        '<select class="form-control-inline" data-insitu-idx="' + idx + '" data-field="instrumento">' +
+                            '<option value="">Seleccionar</option>' +
+                            '<option value="CTDO"' + (item.instrumento === 'CTDO' ? ' selected' : '') + '>CTDO</option>' +
+                            '<option value="MEDIDOR_TURBIDEZ"' + (item.instrumento === 'MEDIDOR_TURBIDEZ' ? ' selected' : '') + '>Medidor de turbidez</option>' +
+                            '<option value="MULTIPARAMETRO"' + (item.instrumento === 'MULTIPARAMETRO' ? ' selected' : '') + '>Multiparámetro</option>' +
+                            '<option value="POTENCIOMETROS"' + (item.instrumento === 'POTENCIOMETROS' ? ' selected' : '') + '>Potenciómetros (pH y ORP)</option>' +
+                            '<option value="CLORIMETRO"' + (item.instrumento === 'CLORIMETRO' ? ' selected' : '') + '>Clorímetro</option>' +
+                            '<option value="CORRENTOMETRO"' + (item.instrumento === 'CORRENTOMETRO' ? ' selected' : '') + '>Correntómetro</option>' +
+                            '<option value="ADCP"' + (item.instrumento === 'ADCP' ? ' selected' : '') + '>ADCP</option>' +
+                            '<option value="ESTACION_MET"' + (item.instrumento === 'ESTACION_MET' ? ' selected' : '') + '>Estación meteorológica</option>' +
+                            '<option value="MAREOGRAFO"' + (item.instrumento === 'MAREOGRAFO' ? ' selected' : '') + '>Mareógrafo</option>' +
+                            '<option value="GPS"' + (item.instrumento === 'GPS' ? ' selected' : '') + '>GPS</option>' +
+                            '<option value="ROV"' + (item.instrumento === 'ROV' ? ' selected' : '') + '>ROV</option>' +
+                            '<option value="ECOSONDA_MULTIHAZ"' + (item.instrumento === 'ECOSONDA_MULTIHAZ' ? ' selected' : '') + '>Ecosonda Multihaz</option>' +
+                        '</select>' +
+                    '</td>' +
+                    '<td><button class="btn-remove" data-insitu-remove="' + idx + '" title="Quitar"><i class="fas fa-times"></i></button></td>';
                 tbody.appendChild(tr);
+            });
+            tbody.querySelectorAll('select[data-insitu-idx]').forEach(function(el) {
+                el.addEventListener('change', function() {
+                    var i = parseInt(this.getAttribute('data-insitu-idx'), 10);
+                    var field = this.getAttribute('data-field');
+                    if (isNaN(i) || !field || !techDrafts.metodologias_fq.in_situ_selected[i]) return;
+                    techDrafts.metodologias_fq.in_situ_selected[i][field] = this.value;
+                    if (field === 'afectaETFA'
+                        && techDrafts.metodologias_fq.in_situ_selected[i].afectaETFA === 'SI'
+                        && activeMatrix
+                        && !techDrafts.metodologias_fq.in_situ_selected[i].etfaCode) {
+                        techDrafts.metodologias_fq.in_situ_selected[i].etfaCode = generarCodigoEtfa(techDrafts.metodologias_fq.in_situ_selected[i].parametro, 1000000);
+                    }
+                    techDrafts.metodologias_fq.dirty = true;
+                    syncRootToActiveMetFQGroup();
+                    updateTechStatus('Cambios sin guardar');
+                    if (field === 'afectaETFA') {
+                        renderMetFQInSituTable();
+                    }
+                    renderTechDocView();
+                    renderTechDocFull();
+                });
             });
             tbody.querySelectorAll('button[data-insitu-remove]').forEach(function(btn) {
                 btn.addEventListener('click', function() {
@@ -4038,15 +6141,78 @@
                     if (isNaN(i)) return;
                     techDrafts.metodologias_fq.in_situ_selected.splice(i, 1);
                     techDrafts.metodologias_fq.dirty = true;
+                    syncRootToActiveMetFQGroup();
                     updateTechStatus('Cambios sin guardar');
                     renderMetFQInSituTable();
                     renderTechDocView();
                     renderTechDocFull();
                 });
             });
+
+            var showEtfaValidation = selected.some(function(item) { return item.afectaETFA === 'SI'; });
+            if (table) {
+                table.querySelectorAll('.etfa-validation-col').forEach(function(cell) {
+                    cell.style.display = showEtfaValidation ? 'table-cell' : 'none';
+                });
+            }
+            syncRootToActiveMetFQGroup();
+        }
+
+        function renderMetFQMatrixSummary() {
+            var panel = document.getElementById('techMetFQSummaryPanel');
+            if (!panel) return;
+            var draft = techDrafts.metodologias_fq || {};
+            var matrixLabel = getMetFQMatrixLabel(getActiveMetFQMatrixValue());
+            var puntos = Array.isArray(draft.protocolo_puntos) ? draft.protocolo_puntos : [];
+            var analisisLab = Array.isArray(draft.selectedParams) ? draft.selectedParams : [];
+            var analisisTerreno = Array.isArray(draft.in_situ_selected) ? draft.in_situ_selected : [];
+            var totalMuestras = puntos.reduce(function(acc, p) {
+                var v = parseInt(p.muestras, 10);
+                if (!isNaN(v) && v > 0) return acc + v;
+                var e = Math.max(1, parseInt(p.estratos, 10) || 1);
+                var r = Math.max(1, parseInt(p.replicas, 10) || 1);
+                return acc + (e * r);
+            }, 0);
+            var etfaLab = analisisLab.filter(function(i) { return i.afectaETFA === 'SI'; }).length;
+            var etfaTerreno = analisisTerreno.filter(function(i) { return i.afectaETFA === 'SI'; }).length;
+
+            function toList(items, getter) {
+                if (!items.length) return '<div class="tech-editor-hint">Sin registros para esta matriz.</div>';
+                return '<ul class="tech-metfq-summary-list">' + items.slice(0, 4).map(function(item) {
+                    return '<li>' + escapeHtml(getter(item)) + '</li>';
+                }).join('') + '</ul>';
+            }
+
+            panel.innerHTML =
+                '<div class="tech-metfq-summary-head">' +
+                    '<div class="tech-metfq-summary-title">' + escapeHtml(matrixLabel) + '</div>' +
+                    '<div class="tech-metfq-summary-hint">Resumen consolidado por matriz</div>' +
+                '</div>' +
+                '<div class="tech-metfq-summary-kpis">' +
+                    '<div class="tech-metfq-kpi"><span class="tech-metfq-kpi-label">Puntos</span><span class="tech-metfq-kpi-value">' + puntos.length + '</span></div>' +
+                    '<div class="tech-metfq-kpi"><span class="tech-metfq-kpi-label">Muestras</span><span class="tech-metfq-kpi-value">' + totalMuestras + '</span></div>' +
+                    '<div class="tech-metfq-kpi"><span class="tech-metfq-kpi-label">Análisis Lab</span><span class="tech-metfq-kpi-value">' + analisisLab.length + '</span></div>' +
+                    '<div class="tech-metfq-kpi"><span class="tech-metfq-kpi-label">Parámetros Terreno</span><span class="tech-metfq-kpi-value">' + analisisTerreno.length + '</span></div>' +
+                '</div>' +
+                '<div class="tech-metfq-summary-grid">' +
+                    '<div class="tech-metfq-summary-box">' +
+                        '<div class="tech-metfq-summary-box-title">Protocolo de muestreo</div>' +
+                        toList(puntos, function(p) { return p.nombre || p.estacion || 'Punto'; }) +
+                    '</div>' +
+                    '<div class="tech-metfq-summary-box">' +
+                        '<div class="tech-metfq-summary-box-title">Laboratorio (ETFA: ' + etfaLab + ')</div>' +
+                        toList(analisisLab, function(p) { return p.parametro || 'Parámetro'; }) +
+                    '</div>' +
+                    '<div class="tech-metfq-summary-box">' +
+                        '<div class="tech-metfq-summary-box-title">Terreno (ETFA: ' + etfaTerreno + ')</div>' +
+                        toList(analisisTerreno, function(p) { return p.parametro || 'Parámetro'; }) +
+                    '</div>' +
+                '</div>';
         }
 
         function renderMetFQSubsectionPanel() {
+            var matrixRow = document.getElementById('techMetFQMatrixGroupRow');
+            var resumenRow = document.getElementById('techMetFQResumenRow');
             var protocoloRow = document.getElementById('techMetFQProtocoloRow');
             var protocoloTableRow = document.getElementById('techMetFQProtocoloTableRow');
             var protocoloImgRow = document.getElementById('techMetFQProtocoloImgRow');
@@ -4057,10 +6223,23 @@
             var inSituIntroRow = document.getElementById('techMetFQInSituIntroRow');
             var inSituControlRow = document.getElementById('techMetFQInSituControlRow');
             var inSituFinalRow = document.getElementById('techMetFQInSituFinalRow');
-            [protocoloRow, protocoloTableRow, protocoloImgRow, protocoloDescRow, paramsIntroRow, paramsControlRow, finalRow, inSituIntroRow, inSituControlRow, inSituFinalRow].forEach(function(row) {
+            [matrixRow, resumenRow, protocoloRow, protocoloTableRow, protocoloImgRow, protocoloDescRow, paramsIntroRow, paramsControlRow, finalRow, inSituIntroRow, inSituControlRow, inSituFinalRow].forEach(function(row) {
                 if (row) row.style.display = 'none';
             });
 
+            if (!activeMetFQSubsection) {
+                if (matrixRow) matrixRow.style.display = '';
+                if (resumenRow) resumenRow.style.display = '';
+                renderMetFQMatrixSummary();
+                return;
+            }
+            if (activeMetFQSubsection === 'protocolo_estudio') {
+                if (protocoloRow) protocoloRow.style.display = '';
+                if (protocoloTableRow) protocoloTableRow.style.display = '';
+                if (protocoloImgRow) protocoloImgRow.style.display = '';
+                if (protocoloDescRow) protocoloDescRow.style.display = '';
+                return;
+            }
             if (activeMetFQSubsection === 'parametros_laboratorios') {
                 if (paramsIntroRow) paramsIntroRow.style.display = '';
                 if (paramsControlRow) paramsControlRow.style.display = '';
@@ -4073,10 +6252,44 @@
                 if (inSituFinalRow) inSituFinalRow.style.display = '';
                 return;
             }
-            if (protocoloRow) protocoloRow.style.display = '';
-            if (protocoloTableRow) protocoloTableRow.style.display = '';
-            if (protocoloImgRow) protocoloImgRow.style.display = '';
-            if (protocoloDescRow) protocoloDescRow.style.display = '';
+        }
+
+        function renderMetBioSubsectionPanel() {
+            var matrixRow = document.getElementById('techMetBioMatrixGroupRow');
+            var protocoloRow = document.getElementById('techMetBioProtocoloRow');
+            var protocoloTableRow = document.getElementById('techMetBioProtocoloTableRow');
+            var protocoloImgRow = document.getElementById('techMetBioProtocoloImgRow');
+            var protocoloDescRow = document.getElementById('techMetBioProtocoloDescRow');
+            var especificacionesRow = document.getElementById('techMetBioEspecificacionesRow');
+            var especificacionesDescRow = document.getElementById('techMetBioEspecificacionesDescRow');
+            [matrixRow, protocoloRow, protocoloTableRow, protocoloImgRow, protocoloDescRow, especificacionesRow, especificacionesDescRow].forEach(function(row) {
+                if (row) row.style.display = 'none';
+            });
+
+            if (!activeMetBioSubsection) {
+                if (matrixRow) matrixRow.style.display = '';
+                return;
+            }
+            if (activeMetBioSubsection === 'protocolo_estudio' || activeMetBioSubsection === 'protocolo_transectas') {
+                if (protocoloRow) protocoloRow.style.display = '';
+                if (protocoloTableRow) protocoloTableRow.style.display = '';
+                if (protocoloImgRow) protocoloImgRow.style.display = '';
+                if (protocoloDescRow) protocoloDescRow.style.display = '';
+                return;
+            }
+            if (activeMetBioSubsection === 'especificaciones') {
+                if (especificacionesRow) especificacionesRow.style.display = '';
+                if (especificacionesDescRow) especificacionesDescRow.style.display = '';
+                var fitoMatrixWrap = document.getElementById('techMetBioFitoplanctonMatrixWrap');
+                var zooIctioMatrixWrap = document.getElementById('techMetBioZooIctioMatrixWrap');
+                var censoMatrixWrap = document.getElementById('techMetBioCensoMatrixWrap');
+                var isFitoplancton = getActiveMetBioMatrixValue() === 'FITOPLANCTON';
+                var isZooIctio = (getActiveMetBioMatrixValue() === 'ZOOPLANCTON' || getActiveMetBioMatrixValue() === 'ICTIOPLANCTON');
+                var isCenso = getActiveMetBioMatrixValue() === 'CENSO_AVES_MAM_REP';
+                if (fitoMatrixWrap) fitoMatrixWrap.style.display = isFitoplancton ? '' : 'none';
+                if (zooIctioMatrixWrap) zooIctioMatrixWrap.style.display = isZooIctio ? '' : 'none';
+                if (censoMatrixWrap) censoMatrixWrap.style.display = isCenso ? '' : 'none';
+            }
         }
 
         function syncActiveDraft(markDirty) {
@@ -4109,10 +6322,49 @@
                 techDrafts[activeTechId].texto_final = getQuillHTML('techEditorMetFQFinal');
                 techDrafts[activeTechId].in_situ_intro = getQuillHTML('techEditorMetFQInSituIntro');
                 techDrafts[activeTechId].in_situ_final = getQuillHTML('techEditorMetFQInSituFinal');
+                syncRootToActiveMetFQGroup();
+            } else if (activeTechId === 'metodologias_bio') {
+                var bioCfg = getActiveMetBioProtocolConfig();
+                techDrafts[activeTechId][bioCfg.intro] = getQuillHTML('techEditorMetBioProtocolo');
+                techDrafts[activeTechId][bioCfg.descripcion] = getQuillHTML('techEditorMetBioProtocoloDesc');
+                techDrafts[activeTechId].especificaciones_descripcion = getQuillHTML('techEditorMetBioEspecificacionesDesc');
+                var fitoCualitativo = document.getElementById('techMetBioFitoCualitativo');
+                var fitoCuantitativo = document.getElementById('techMetBioFitoCuantitativo');
+                var zooIctioVertDiurno = document.getElementById('techMetBioZooIctioVertDiurno');
+                var zooIctioVertNocturno = document.getElementById('techMetBioZooIctioVertNocturno');
+                var zooIctioHorDiurno = document.getElementById('techMetBioZooIctioHorDiurno');
+                var zooIctioHorNocturno = document.getElementById('techMetBioZooIctioHorNocturno');
+                var censoMarDiurno = document.getElementById('techMetBioCensoMarDiurno');
+                var censoMarNocturno = document.getElementById('techMetBioCensoMarNocturno');
+                var censoTierraDiurno = document.getElementById('techMetBioCensoTierraDiurno');
+                var censoTierraNocturno = document.getElementById('techMetBioCensoTierraNocturno');
+                techDrafts[activeTechId].fitoplancton_cualitativo = !!(fitoCualitativo && fitoCualitativo.checked);
+                techDrafts[activeTechId].fitoplancton_cuantitativo = !!(fitoCuantitativo && fitoCuantitativo.checked);
+                techDrafts[activeTechId].zoo_ictio_vertical_diurno = !!(zooIctioVertDiurno && zooIctioVertDiurno.checked);
+                techDrafts[activeTechId].zoo_ictio_vertical_nocturno = !!(zooIctioVertNocturno && zooIctioVertNocturno.checked);
+                techDrafts[activeTechId].zoo_ictio_horizontal_diurno = !!(zooIctioHorDiurno && zooIctioHorDiurno.checked);
+                techDrafts[activeTechId].zoo_ictio_horizontal_nocturno = !!(zooIctioHorNocturno && zooIctioHorNocturno.checked);
+                techDrafts[activeTechId].censo_mar_diurno = !!(censoMarDiurno && censoMarDiurno.checked);
+                techDrafts[activeTechId].censo_mar_nocturno = !!(censoMarNocturno && censoMarNocturno.checked);
+                techDrafts[activeTechId].censo_tierra_diurno = !!(censoTierraDiurno && censoTierraDiurno.checked);
+                techDrafts[activeTechId].censo_tierra_nocturno = !!(censoTierraNocturno && censoTierraNocturno.checked);
+                syncRootToActiveMetBioGroup();
             } else {
                 techDrafts[activeTechId].summary = getQuillHTML('techEditorSummary');
                 techDrafts[activeTechId].content = getQuillHTML('techEditorContent');
                 techDrafts[activeTechId].notes = getQuillHTML('techEditorNotes');
+            }
+
+            // Guardar campos extra de secciones de plantilla
+            var syncSection = getSectionById(activeTechId);
+            if (syncSection && !syncSection.isCustom && (syncSection.extraFields || []).length) {
+                if (!techDrafts[activeTechId].extraFields) techDrafts[activeTechId].extraFields = {};
+                syncSection.extraFields.forEach(function(field, idx) {
+                    var editorId = 'techExtraQuill_' + idx;
+                    if (quillEditors[editorId]) {
+                        techDrafts[activeTechId].extraFields[field] = getQuillHTML(editorId);
+                    }
+                });
             }
 
             if (markDirty) {
@@ -4123,15 +6375,49 @@
             renderTechDocFull();
         }
 
-        function selectTechItem(id) {
+        function selectTechItem(id, options) {
             if (!id) return;
 
-            syncActiveDraft(false);
+            if (!(options && options.skipSyncCurrent)) {
+                syncActiveDraft(false);
+            }
             activeTechId = id;
 
             var section = getAllSections().find(function(s) { return s.id === id; });
             var titleEl = document.getElementById('techEditorTitle');
-            if (titleEl && section) titleEl.textContent = section.title;
+            var subSepEl = document.getElementById('techEditorSubSep');
+            var subTitleEl = document.getElementById('techEditorSubTitle');
+            if (titleEl && section) {
+                titleEl.textContent = section.title;
+            }
+            if (subSepEl) subSepEl.style.display = 'none';
+            if (subTitleEl) {
+                subTitleEl.style.display = 'none';
+                subTitleEl.textContent = '';
+            }
+            if (section && section.id === 'metodologias_fq' && activeMetFQSubsection) {
+                var activeSub = techMetFQSubsections.find(function(sub) { return sub.id === activeMetFQSubsection; });
+                var draftForBreadcrumb = techDrafts.metodologias_fq || {};
+                var activeGroup = (draftForBreadcrumb.matrix_groups || []).find(function(g) { return g.id === activeMetFQMatrixId; });
+                var matrixLabel = activeGroup ? getMetFQMatrixLabel(activeGroup.matriz) : '';
+                var subLabel = activeSub ? activeSub.title : activeMetFQSubsection;
+                if (subSepEl) subSepEl.style.display = '';
+                if (subTitleEl) {
+                    subTitleEl.style.display = '';
+                    subTitleEl.textContent = matrixLabel ? (matrixLabel + ' / ' + subLabel) : subLabel;
+                }
+            } else if (section && section.id === 'metodologias_bio' && activeMetBioSubsection) {
+                var activeBioSub = getMetBioSubsectionsForMatrix(getActiveMetBioMatrixValue()).find(function(sub) { return sub.id === activeMetBioSubsection; });
+                var draftForBioBreadcrumb = techDrafts.metodologias_bio || {};
+                var activeBioGroup = (draftForBioBreadcrumb.matrix_groups || []).find(function(g) { return g.id === activeMetBioMatrixId; });
+                var bioMatrixLabel = activeBioGroup ? getMetBioMatrixLabel(activeBioGroup.matriz) : '';
+                var bioSubLabel = activeBioSub ? activeBioSub.title : activeMetBioSubsection;
+                if (subSepEl) subSepEl.style.display = '';
+                if (subTitleEl) {
+                    subTitleEl.style.display = '';
+                    subTitleEl.textContent = bioMatrixLabel ? (bioMatrixLabel + ' / ' + bioSubLabel) : bioSubLabel;
+                }
+            }
 
             if (!techDrafts[id]) {
                 techDrafts[id] = { summary: '', content: '', notes: '', updatedAt: '' };
@@ -4151,11 +6437,17 @@
             var coordinacionesFields = document.getElementById('techEditorCoordinacionesFields');
             var autorizacionesFields = document.getElementById('techEditorAutorizacionesFields');
             var metFQFields = document.getElementById('techEditorMetFQFields');
+            var metBioFields = document.getElementById('techEditorMetBioFields');
             var customFields = document.getElementById('techEditorCustomFields');
             var customContainer = document.getElementById('techCustomFieldsContainer');
+            var extraFieldsContainer = document.getElementById('techExtraFieldsContainer');
+            var extraFieldsEl = document.getElementById('techExtraFields');
 
-            var allPanels = [defaultFields, objetivosFields, normasFields, ubicacionFields, profesionalesFields, coordinacionesFields, autorizacionesFields, metFQFields, customFields];
+            var allPanels = [defaultFields, objetivosFields, normasFields, ubicacionFields, profesionalesFields, coordinacionesFields, autorizacionesFields, metFQFields, metBioFields, customFields, extraFieldsContainer];
             allPanels.forEach(function(p) { if (p) p.style.display = 'none'; });
+            Object.keys(quillEditors).forEach(function(key) {
+                if (key.indexOf('techExtraQuill_') === 0) delete quillEditors[key];
+            });
 
             suppressQuillSync = true;
 
@@ -4196,6 +6488,7 @@
                 setQuillHTML('techEditorAutorizacionesIntro', draft.intro || '');
                 renderAutorizacionesList();
             } else if (activeTechId === 'metodologias_fq') {
+                ensureMetFQMatrixGroups();
                 if (metFQFields) metFQFields.style.display = '';
                 setQuillHTML('techEditorMetFQProtocolo', draft.protocolo_intro || '');
                 setQuillHTML('techEditorMetFQProtocoloDesc', draft.protocolo_descripcion || '');
@@ -4214,10 +6507,66 @@
                     if (protocolImgPreview) protocolImgPreview.style.display = 'none';
                     if (protocolImgUpload) protocolImgUpload.style.display = '';
                 }
+                renderMetFQMatrixGroups();
                 renderMetFQSubsectionPanel();
                 renderMetFQProtocolTable();
                 renderMetFQTable();
                 renderMetFQInSituTable();
+            } else if (activeTechId === 'metodologias_bio') {
+                ensureMetBioMatrixGroups();
+                var allowedBioSubs = getMetBioSubsectionsForMatrix(getActiveMetBioMatrixValue()).map(function(sub) { return sub.id; });
+                if (activeMetBioSubsection && allowedBioSubs.indexOf(activeMetBioSubsection) === -1) {
+                    activeMetBioSubsection = '';
+                }
+                if (metBioFields) metBioFields.style.display = '';
+                var bioCfgLoad = getActiveMetBioProtocolConfig();
+                setQuillHTML('techEditorMetBioProtocolo', draft[bioCfgLoad.intro] || '');
+                setQuillHTML('techEditorMetBioProtocoloDesc', draft[bioCfgLoad.descripcion] || '');
+                var bioProtocolImgPreview = document.getElementById('techMetBioProtocolImgPreview');
+                var bioProtocolImgUpload = document.getElementById('techMetBioProtocolImgUpload');
+                var bioProtocolImgTag = document.getElementById('techMetBioProtocolImgTag');
+                if (draft[bioCfgLoad.imagen]) {
+                    if (bioProtocolImgTag) bioProtocolImgTag.src = draft[bioCfgLoad.imagen];
+                    if (bioProtocolImgPreview) bioProtocolImgPreview.style.display = '';
+                    if (bioProtocolImgUpload) bioProtocolImgUpload.style.display = 'none';
+                } else {
+                    if (bioProtocolImgPreview) bioProtocolImgPreview.style.display = 'none';
+                    if (bioProtocolImgUpload) bioProtocolImgUpload.style.display = '';
+                }
+                setQuillHTML('techEditorMetBioEspecificacionesDesc', draft.especificaciones_descripcion || '');
+                var fitoMatrixWrap = document.getElementById('techMetBioFitoplanctonMatrixWrap');
+                var zooIctioMatrixWrap = document.getElementById('techMetBioZooIctioMatrixWrap');
+                var censoMatrixWrap = document.getElementById('techMetBioCensoMatrixWrap');
+                var activeBioMatrix = getActiveMetBioMatrixValue();
+                var isFitoSpecs = (activeBioMatrix === 'FITOPLANCTON' && activeMetBioSubsection === 'especificaciones');
+                var isZooIctioSpecs = ((activeBioMatrix === 'ZOOPLANCTON' || activeBioMatrix === 'ICTIOPLANCTON') && activeMetBioSubsection === 'especificaciones');
+                var isCensoSpecs = (activeBioMatrix === 'CENSO_AVES_MAM_REP' && activeMetBioSubsection === 'especificaciones');
+                if (fitoMatrixWrap) fitoMatrixWrap.style.display = isFitoSpecs ? '' : 'none';
+                if (zooIctioMatrixWrap) zooIctioMatrixWrap.style.display = isZooIctioSpecs ? '' : 'none';
+                if (censoMatrixWrap) censoMatrixWrap.style.display = isCensoSpecs ? '' : 'none';
+                var fitoCualitativo = document.getElementById('techMetBioFitoCualitativo');
+                var fitoCuantitativo = document.getElementById('techMetBioFitoCuantitativo');
+                if (fitoCualitativo) fitoCualitativo.checked = !!draft.fitoplancton_cualitativo;
+                if (fitoCuantitativo) fitoCuantitativo.checked = !!draft.fitoplancton_cuantitativo;
+                var zooIctioVertDiurno = document.getElementById('techMetBioZooIctioVertDiurno');
+                var zooIctioVertNocturno = document.getElementById('techMetBioZooIctioVertNocturno');
+                var zooIctioHorDiurno = document.getElementById('techMetBioZooIctioHorDiurno');
+                var zooIctioHorNocturno = document.getElementById('techMetBioZooIctioHorNocturno');
+                if (zooIctioVertDiurno) zooIctioVertDiurno.checked = !!draft.zoo_ictio_vertical_diurno;
+                if (zooIctioVertNocturno) zooIctioVertNocturno.checked = !!draft.zoo_ictio_vertical_nocturno;
+                if (zooIctioHorDiurno) zooIctioHorDiurno.checked = !!draft.zoo_ictio_horizontal_diurno;
+                if (zooIctioHorNocturno) zooIctioHorNocturno.checked = !!draft.zoo_ictio_horizontal_nocturno;
+                var censoMarDiurno = document.getElementById('techMetBioCensoMarDiurno');
+                var censoMarNocturno = document.getElementById('techMetBioCensoMarNocturno');
+                var censoTierraDiurno = document.getElementById('techMetBioCensoTierraDiurno');
+                var censoTierraNocturno = document.getElementById('techMetBioCensoTierraNocturno');
+                if (censoMarDiurno) censoMarDiurno.checked = !!draft.censo_mar_diurno;
+                if (censoMarNocturno) censoMarNocturno.checked = !!draft.censo_mar_nocturno;
+                if (censoTierraDiurno) censoTierraDiurno.checked = !!draft.censo_tierra_diurno;
+                if (censoTierraNocturno) censoTierraNocturno.checked = !!draft.censo_tierra_nocturno;
+                renderMetBioMatrixGroups();
+                renderMetBioSubsectionPanel();
+                renderMetBioProtocolTable();
             } else if (section && section.isCustom) {
                 if (customFields) customFields.style.display = '';
                 if (customContainer) {
@@ -4253,6 +6602,34 @@
                 setQuillHTML('techEditorNotes', draft.notes || '');
             }
 
+            // Renderizar campos extra de secciones de plantilla
+            if (section && !section.isCustom && (section.extraFields || []).length > 0) {
+                if (extraFieldsContainer) extraFieldsContainer.style.display = '';
+                if (extraFieldsEl) {
+                    extraFieldsEl.innerHTML = section.extraFields.map(function(field, idx) {
+                        return '<div class="tech-editor-row">' +
+                            '<label>' + escapeHtml(field) + '</label>' +
+                            '<div class="quill-editor" id="techExtraQuill_' + idx + '" data-extra-field="' + escapeHtml(field) + '"></div>' +
+                        '</div>';
+                    }).join('');
+                    section.extraFields.forEach(function(field, idx) {
+                        var editorId = 'techExtraQuill_' + idx;
+                        var value = (draft.extraFields && draft.extraFields[field]) ? draft.extraFields[field] : '';
+                        var quill = initQuillEditor(editorId, '', 3);
+                        if (quill && value) setQuillHTML(editorId, value);
+                        if (quill) {
+                            quill.on('text-change', function(delta, oldDelta, source) {
+                                if (suppressQuillSync || source !== 'user') return;
+                                if (!techDrafts[activeTechId].extraFields) techDrafts[activeTechId].extraFields = {};
+                                techDrafts[activeTechId].extraFields[field] = getQuillHTML(editorId);
+                                updateTechStatus('Cambios sin guardar');
+                                renderTechDocFull();
+                            });
+                        }
+                    });
+                }
+            }
+
             suppressQuillSync = false;
 
             if (draft.updatedAt) {
@@ -4284,7 +6661,10 @@
                 ['techEditorMetFQParamsIntro', 'Texto introductorio para el control de análisis de laboratorio', 4],
                 ['techEditorMetFQFinal', 'Texto final de cierre para la sección', 4],
                 ['techEditorMetFQInSituIntro', 'Texto introductorio para parámetros medidos in situ', 4],
-                ['techEditorMetFQInSituFinal', 'Texto final para parámetros medidos in situ', 4]
+                ['techEditorMetFQInSituFinal', 'Texto final para parámetros medidos in situ', 4],
+                ['techEditorMetBioProtocolo', 'Describe el protocolo de muestreo biológico', 4],
+                ['techEditorMetBioProtocoloDesc', 'Descripción del protocolo de muestreo biológico', 4],
+                ['techEditorMetBioEspecificacionesDesc', 'Descripción de especificaciones por matriz', 4]
             ];
             editorConfigs.forEach(function(cfg) {
                 var quill = initQuillEditor(cfg[0], cfg[1], cfg[2]);
@@ -4299,18 +6679,137 @@
             if (mapCaptionInput) {
                 mapCaptionInput.addEventListener('input', function() { syncActiveDraft(true); });
             }
+            var fitoCualitativo = document.getElementById('techMetBioFitoCualitativo');
+            var fitoCuantitativo = document.getElementById('techMetBioFitoCuantitativo');
+            if (fitoCualitativo) fitoCualitativo.addEventListener('change', function() { syncActiveDraft(true); });
+            if (fitoCuantitativo) fitoCuantitativo.addEventListener('change', function() { syncActiveDraft(true); });
+            var zooIctioVertDiurno = document.getElementById('techMetBioZooIctioVertDiurno');
+            var zooIctioVertNocturno = document.getElementById('techMetBioZooIctioVertNocturno');
+            var zooIctioHorDiurno = document.getElementById('techMetBioZooIctioHorDiurno');
+            var zooIctioHorNocturno = document.getElementById('techMetBioZooIctioHorNocturno');
+            var censoMarDiurno = document.getElementById('techMetBioCensoMarDiurno');
+            var censoMarNocturno = document.getElementById('techMetBioCensoMarNocturno');
+            var censoTierraDiurno = document.getElementById('techMetBioCensoTierraDiurno');
+            var censoTierraNocturno = document.getElementById('techMetBioCensoTierraNocturno');
+            if (zooIctioVertDiurno) zooIctioVertDiurno.addEventListener('change', function() { syncActiveDraft(true); });
+            if (zooIctioVertNocturno) zooIctioVertNocturno.addEventListener('change', function() { syncActiveDraft(true); });
+            if (zooIctioHorDiurno) zooIctioHorDiurno.addEventListener('change', function() { syncActiveDraft(true); });
+            if (zooIctioHorNocturno) zooIctioHorNocturno.addEventListener('change', function() { syncActiveDraft(true); });
+            if (censoMarDiurno) censoMarDiurno.addEventListener('change', function() { syncActiveDraft(true); });
+            if (censoMarNocturno) censoMarNocturno.addEventListener('change', function() { syncActiveDraft(true); });
+            if (censoTierraDiurno) censoTierraDiurno.addEventListener('change', function() { syncActiveDraft(true); });
+            if (censoTierraNocturno) censoTierraNocturno.addEventListener('change', function() { syncActiveDraft(true); });
 
-            var metFQAddProtocolPointBtn = document.getElementById('techMetFQAddProtocolPoint');
-            if (metFQAddProtocolPointBtn) {
-                metFQAddProtocolPointBtn.addEventListener('click', function(e) {
+            var techFQAddPointBtn = document.getElementById('techFQAddPointBtn');
+            var techFQToggleAddPointBtn = document.getElementById('techFQToggleAddPointBtn');
+            var techFQCancelAddPointBtn = document.getElementById('techFQCancelAddPointBtn');
+            var techFQAddPointForm = document.getElementById('techFQAddPointForm');
+
+            function setFQAddPointFormOpen(isOpen) {
+                if (techFQAddPointForm) techFQAddPointForm.style.display = isOpen ? '' : 'none';
+                if (techFQToggleAddPointBtn) techFQToggleAddPointBtn.style.display = isOpen ? 'none' : '';
+            }
+
+            setFQAddPointFormOpen(false);
+
+            if (techFQToggleAddPointBtn && techFQAddPointForm) {
+                techFQToggleAddPointBtn.addEventListener('click', function(e) {
                     e.preventDefault();
+                    setFQAddPointFormOpen(true);
+                    var firstInput = document.getElementById('techFQNewNombre');
+                    if (firstInput) firstInput.focus();
+                });
+            }
+            if (techFQCancelAddPointBtn && techFQAddPointForm) {
+                techFQCancelAddPointBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    ['techFQNewNombre', 'techFQNewLugar', 'techFQNewLatitud', 'techFQNewLongitud', 'techFQNewDatum'].forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) el.value = '';
+                    });
+                    var newEstratosEl = document.getElementById('techFQNewEstratos');
+                    var newReplicasEl = document.getElementById('techFQNewReplicas');
+                    if (newEstratosEl) newEstratosEl.value = '1';
+                    if (newReplicasEl) newReplicasEl.value = '1';
+                    setFQAddPointFormOpen(false);
+                });
+            }
+            var techMetFQMatrixSelect = document.getElementById('techMetFQMatrixSelect');
+            var techMetFQMatrixAddBtn = document.getElementById('techMetFQMatrixAddBtn');
+            if (techMetFQMatrixAddBtn) {
+                techMetFQMatrixAddBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (!techMetFQMatrixSelect) return;
+                    ensureMetFQMatrixGroups();
+                    syncActiveDraft(true);
+                    var draft = techDrafts.metodologias_fq;
+                    var matrixValue = techMetFQMatrixSelect.value || 'AGUA_MAR_E';
+                    var existing = (draft.matrix_groups || []).find(function(g) { return g.matriz === matrixValue; });
+                    if (existing) {
+                        activeMetFQMatrixId = existing.id;
+                        activeMetFQSubsection = '';
+                        draft.active_matrix_id = existing.id;
+                        applyMetFQGroupToRoot(existing, draft);
+                        buildTechTree();
+                        selectTechItem('metodologias_fq', { skipSyncCurrent: true });
+                        return;
+                    }
+                    var newId = 'matrix_' + Date.now();
+                    draft.matrix_groups.push({
+                        id: newId,
+                        matriz: matrixValue,
+                        protocolo_intro: '',
+                        protocolo_puntos: [],
+                        protocolo_imagen: '',
+                        protocolo_imagen_name: '',
+                        protocolo_descripcion: '',
+                        selectedParams: [],
+                        params_intro: '',
+                        texto_final: '',
+                        in_situ_intro: '',
+                        in_situ_selected: [],
+                        in_situ_final: '',
+                        updatedAt: ''
+                    });
+                    activeMetFQMatrixId = newId;
+                    activeMetFQSubsection = '';
+                    draft.active_matrix_id = newId;
+                    applyMetFQGroupToRoot(draft.matrix_groups[draft.matrix_groups.length - 1], draft);
+                    draft.dirty = true;
+                    updateTechStatus('Cambios sin guardar');
+                    buildTechTree();
+                    selectTechItem('metodologias_fq', { skipSyncCurrent: true });
+                });
+            }
+            if (techFQAddPointBtn) {
+                techFQAddPointBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var nombre = (document.getElementById('techFQNewNombre') || {}).value || '';
+                    var lugar = (document.getElementById('techFQNewLugar') || {}).value || '';
+                    var matriz = getMetFQMatrixLabel(getActiveMetFQMatrixValue());
+                    var latitud = (document.getElementById('techFQNewLatitud') || {}).value || '';
+                    var longitud = (document.getElementById('techFQNewLongitud') || {}).value || '';
+                    var datum = (document.getElementById('techFQNewDatum') || {}).value || '';
+                    var estratos = Math.max(1, parseInt((document.getElementById('techFQNewEstratos') || {}).value, 10) || 1);
+                    var replicas = Math.max(1, parseInt((document.getElementById('techFQNewReplicas') || {}).value, 10) || 1);
+                    var muestras = estratos * replicas;
+                    if (!nombre.trim() && !lugar.trim()) return;
                     if (!techDrafts.metodologias_fq.protocolo_puntos) techDrafts.metodologias_fq.protocolo_puntos = [];
-                    techDrafts.metodologias_fq.protocolo_puntos.push({ estacion: '', lugar: '', coordenadas: '', matriz: '' });
+                    techDrafts.metodologias_fq.protocolo_puntos.push({ nombre: nombre.trim(), lugar: lugar.trim(), matriz: matriz, latitud: latitud.trim(), longitud: longitud.trim(), datum: datum.trim(), estratos: estratos, replicas: replicas, muestras: muestras });
                     techDrafts.metodologias_fq.dirty = true;
                     updateTechStatus('Cambios sin guardar');
+                    ['techFQNewNombre', 'techFQNewLugar', 'techFQNewLatitud', 'techFQNewLongitud', 'techFQNewDatum'].forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) el.value = '';
+                    });
+                    var newEstratosEl = document.getElementById('techFQNewEstratos');
+                    var newReplicasEl = document.getElementById('techFQNewReplicas');
+                    if (newEstratosEl) newEstratosEl.value = '1';
+                    if (newReplicasEl) newReplicasEl.value = '1';
+                    var firstInput = document.getElementById('techFQNewNombre');
+                    if (firstInput) firstInput.focus();
                     renderMetFQProtocolTable();
                     renderTechDocView();
-                    renderTechDocFull();
                 });
             }
 
@@ -4354,6 +6853,178 @@
                     renderTechDocFull();
                 });
             }
+
+            var techBioAddPointBtn = document.getElementById('techBioAddPointBtn');
+            var techBioToggleAddPointBtn = document.getElementById('techBioToggleAddPointBtn');
+            var techBioCancelAddPointBtn = document.getElementById('techBioCancelAddPointBtn');
+            var techBioAddPointForm = document.getElementById('techBioAddPointForm');
+
+            function setBioAddPointFormOpen(isOpen) {
+                if (techBioAddPointForm) techBioAddPointForm.style.display = isOpen ? '' : 'none';
+                if (techBioToggleAddPointBtn) techBioToggleAddPointBtn.style.display = isOpen ? 'none' : '';
+            }
+
+            setBioAddPointFormOpen(false);
+
+            if (techBioToggleAddPointBtn && techBioAddPointForm) {
+                techBioToggleAddPointBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    setBioAddPointFormOpen(true);
+                    var firstInput = document.getElementById('techBioNewNombre');
+                    if (firstInput) firstInput.focus();
+                });
+            }
+            if (techBioCancelAddPointBtn && techBioAddPointForm) {
+                techBioCancelAddPointBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    ['techBioNewNombre', 'techBioNewLugar', 'techBioNewLatitud', 'techBioNewLongitud', 'techBioNewDatum'].forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) el.value = '';
+                    });
+                    var newEstratosEl = document.getElementById('techBioNewEstratos');
+                    var newReplicasEl = document.getElementById('techBioNewReplicas');
+                    if (newEstratosEl) newEstratosEl.value = '1';
+                    if (newReplicasEl) newReplicasEl.value = '1';
+                    setBioAddPointFormOpen(false);
+                });
+            }
+            var techMetBioMatrixSelect = document.getElementById('techMetBioMatrixSelect');
+            var techMetBioMatrixAddBtn = document.getElementById('techMetBioMatrixAddBtn');
+            if (techMetBioMatrixAddBtn) {
+                techMetBioMatrixAddBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (!techMetBioMatrixSelect) return;
+                    ensureMetBioMatrixGroups();
+                    syncActiveDraft(true);
+                    var draft = techDrafts.metodologias_bio;
+                    var matrixValue = techMetBioMatrixSelect.value || 'FITOPLANCTON';
+                    var existing = (draft.matrix_groups || []).find(function(g) { return g.matriz === matrixValue; });
+                    if (existing) {
+                        activeMetBioMatrixId = existing.id;
+                        activeMetBioSubsection = '';
+                        draft.active_matrix_id = existing.id;
+                        applyMetBioGroupToRoot(existing, draft);
+                        buildTechTree();
+                        selectTechItem('metodologias_bio', { skipSyncCurrent: true });
+                        return;
+                    }
+                    var newId = 'matrix_bio_' + Date.now();
+                    draft.matrix_groups.push({
+                        id: newId,
+                        matriz: matrixValue,
+                        protocolo_intro: '',
+                        protocolo_puntos: [],
+                        protocolo_imagen: '',
+                        protocolo_imagen_name: '',
+                        protocolo_descripcion: '',
+                        transectas_intro: '',
+                        transectas_puntos: [],
+                        transectas_imagen: '',
+                        transectas_imagen_name: '',
+                        transectas_descripcion: '',
+                        especificaciones_texto: '',
+                        especificaciones_descripcion: '',
+                        fitoplancton_cualitativo: false,
+                        fitoplancton_cuantitativo: false,
+                        zoo_ictio_vertical_diurno: false,
+                        zoo_ictio_vertical_nocturno: false,
+                        zoo_ictio_horizontal_diurno: false,
+                        zoo_ictio_horizontal_nocturno: false,
+                        censo_mar_diurno: false,
+                        censo_mar_nocturno: false,
+                        censo_tierra_diurno: false,
+                        censo_tierra_nocturno: false,
+                        updatedAt: ''
+                    });
+                    activeMetBioMatrixId = newId;
+                    activeMetBioSubsection = '';
+                    draft.active_matrix_id = newId;
+                    applyMetBioGroupToRoot(draft.matrix_groups[draft.matrix_groups.length - 1], draft);
+                    draft.dirty = true;
+                    updateTechStatus('Cambios sin guardar');
+                    buildTechTree();
+                    selectTechItem('metodologias_bio', { skipSyncCurrent: true });
+                });
+            }
+            if (techBioAddPointBtn) {
+                techBioAddPointBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var nombre = (document.getElementById('techBioNewNombre') || {}).value || '';
+                    var lugar = (document.getElementById('techBioNewLugar') || {}).value || '';
+                    var matriz = getMetBioMatrixLabel(getActiveMetBioMatrixValue());
+                    var latitud = (document.getElementById('techBioNewLatitud') || {}).value || '';
+                    var longitud = (document.getElementById('techBioNewLongitud') || {}).value || '';
+                    var datum = (document.getElementById('techBioNewDatum') || {}).value || '';
+                    var estratos = Math.max(1, parseInt((document.getElementById('techBioNewEstratos') || {}).value, 10) || 1);
+                    var replicas = Math.max(1, parseInt((document.getElementById('techBioNewReplicas') || {}).value, 10) || 1);
+                    var muestras = estratos * replicas;
+                    var bioCfg = getActiveMetBioProtocolConfig();
+                    if (!nombre.trim() && !lugar.trim()) return;
+                    if (!techDrafts.metodologias_bio[bioCfg.puntos]) techDrafts.metodologias_bio[bioCfg.puntos] = [];
+                    techDrafts.metodologias_bio[bioCfg.puntos].push({ nombre: nombre.trim(), lugar: lugar.trim(), matriz: matriz, latitud: latitud.trim(), longitud: longitud.trim(), datum: datum.trim(), estratos: estratos, replicas: replicas, muestras: muestras });
+                    techDrafts.metodologias_bio.dirty = true;
+                    syncRootToActiveMetBioGroup();
+                    updateTechStatus('Cambios sin guardar');
+                    ['techBioNewNombre', 'techBioNewLugar', 'techBioNewLatitud', 'techBioNewLongitud', 'techBioNewDatum'].forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) el.value = '';
+                    });
+                    var newEstratosEl = document.getElementById('techBioNewEstratos');
+                    var newReplicasEl = document.getElementById('techBioNewReplicas');
+                    if (newEstratosEl) newEstratosEl.value = '1';
+                    if (newReplicasEl) newReplicasEl.value = '1';
+                    var firstInput = document.getElementById('techBioNewNombre');
+                    if (firstInput) firstInput.focus();
+                    renderMetBioProtocolTable();
+                    renderTechDocView();
+                });
+            }
+
+            var bioProtocolImgUploadDiv = document.getElementById('techMetBioProtocolImgUpload');
+            var bioProtocolImgFileInput = document.getElementById('techMetBioProtocolImgInput');
+            var bioProtocolImgRemoveBtn = document.getElementById('techMetBioProtocolImgRemove');
+            if (bioProtocolImgUploadDiv && bioProtocolImgFileInput) {
+                bioProtocolImgUploadDiv.addEventListener('click', function() { bioProtocolImgFileInput.click(); });
+                bioProtocolImgFileInput.addEventListener('change', function() {
+                    var file = this.files && this.files[0];
+                    if (!file) return;
+                    var bioCfg = getActiveMetBioProtocolConfig();
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        techDrafts.metodologias_bio[bioCfg.imagen] = e.target.result;
+                        techDrafts.metodologias_bio[bioCfg.imagen_name] = file.name;
+                        techDrafts.metodologias_bio.dirty = true;
+                        syncRootToActiveMetBioGroup();
+                        updateTechStatus('Cambios sin guardar');
+                        var tag = document.getElementById('techMetBioProtocolImgTag');
+                        var prev = document.getElementById('techMetBioProtocolImgPreview');
+                        if (tag) tag.src = e.target.result;
+                        if (prev) prev.style.display = '';
+                        bioProtocolImgUploadDiv.style.display = 'none';
+                        renderTechDocView();
+                        renderTechDocFull();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            if (bioProtocolImgRemoveBtn) {
+                bioProtocolImgRemoveBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var bioCfg = getActiveMetBioProtocolConfig();
+                    techDrafts.metodologias_bio[bioCfg.imagen] = '';
+                    techDrafts.metodologias_bio[bioCfg.imagen_name] = '';
+                    techDrafts.metodologias_bio.dirty = true;
+                    syncRootToActiveMetBioGroup();
+                    updateTechStatus('Cambios sin guardar');
+                    var prev = document.getElementById('techMetBioProtocolImgPreview');
+                    if (prev) prev.style.display = 'none';
+                    if (bioProtocolImgUploadDiv) bioProtocolImgUploadDiv.style.display = '';
+                    if (bioProtocolImgFileInput) bioProtocolImgFileInput.value = '';
+                    renderTechDocView();
+                    renderTechDocFull();
+                });
+            }
+
 
             var editBtn = document.getElementById('techViewEditBtn');
             var docBtn = document.getElementById('techViewDocBtn');
@@ -4786,8 +7457,8 @@
             function renderFQParametrosModalList(filterText) {
                 if (!fqModalList) return;
                 var filter = (filterText || '').toLowerCase().trim();
-                var selected = techDrafts.metodologias_fq ? (techDrafts.metodologias_fq.selectedParams || []) : [];
-                var items = techFQParametroCatalog.slice();
+                var selected = techDrafts.metodologias_fq ? (techDrafts.metodologias_fq.selectedParams || []).map(normalizeLabSelectedItem) : [];
+                var items = syncSharedLabCatalogFromCotizacion();
                 if (filter) {
                     items = items.filter(function(item) {
                         return (item.parametro + ' ' + item.metodologia + ' ' + item.laboratorios).toLowerCase().indexOf(filter) !== -1;
@@ -4798,10 +7469,10 @@
                     return;
                 }
                 fqModalList.innerHTML = items.map(function(item, idx) {
-                    var checked = selected.some(function(sel) { return sel.parametro === item.parametro; }) ? ' checked' : '';
+                    var checked = selected.some(function(sel) { return sel.parametro === item.parametro && (sel.metodologia || '') === (item.metodologia || ''); }) ? ' checked' : '';
                     return '<label class="simple-modal-item">' +
                         '<input type="checkbox" data-modal-fq-param="' + idx + '"' + checked + '>' +
-                        '<span><strong>' + item.parametro + '</strong><br>' + item.unidad + ' | LD: ' + item.limite + '</span>' +
+                        '<span><strong>' + item.parametro + '</strong><br>' + (item.metodologia || '—') + '</span>' +
                     '</label>';
                 }).join('');
 
@@ -4810,11 +7481,14 @@
                         var index = parseInt(this.getAttribute('data-modal-fq-param'), 10);
                         if (isNaN(index)) return;
                         var param = items[index];
-                        var pos = selected.findIndex(function(sel) { return sel.parametro === param.parametro; });
-                        if (this.checked && pos === -1) selected.push(Object.assign({}, param));
+                        var pos = selected.findIndex(function(sel) { return sel.parametro === param.parametro && (sel.metodologia || '') === (param.metodologia || ''); });
+                        if (this.checked && pos === -1) {
+                            selected.push(normalizeLabSelectedItem(param));
+                        }
                         if (!this.checked && pos !== -1) selected.splice(pos, 1);
                         techDrafts.metodologias_fq.selectedParams = selected;
                         techDrafts.metodologias_fq.dirty = true;
+                        syncRootToActiveMetFQGroup();
                         renderMetFQTable();
                         updateTechStatus('Cambios sin guardar');
                         renderTechDocView();
@@ -4872,7 +7546,7 @@
             function renderInSituModalList(filterText) {
                 if (!inSituModalList) return;
                 var filter = (filterText || '').toLowerCase().trim();
-                var selected = techDrafts.metodologias_fq ? (techDrafts.metodologias_fq.in_situ_selected || []) : [];
+                var selected = techDrafts.metodologias_fq ? (techDrafts.metodologias_fq.in_situ_selected || []).map(normalizeFieldSelectedItem) : [];
                 var items = techInSituCatalog.slice();
                 if (filter) {
                     items = items.filter(function(item) {
@@ -4884,7 +7558,7 @@
                     return;
                 }
                 inSituModalList.innerHTML = items.map(function(item, idx) {
-                    var checked = selected.some(function(sel) { return sel.parametro === item.parametro; }) ? ' checked' : '';
+                    var checked = selected.some(function(sel) { return sel.parametro === item.parametro && (sel.metodo || '') === (item.metodo || ''); }) ? ' checked' : '';
                     return '<label class="simple-modal-item">' +
                         '<input type="checkbox" data-modal-insitu-param="' + idx + '"' + checked + '>' +
                         '<span><strong>' + item.parametro + '</strong><br>' + item.metodo + '</span>' +
@@ -4896,11 +7570,21 @@
                         var index = parseInt(this.getAttribute('data-modal-insitu-param'), 10);
                         if (isNaN(index)) return;
                         var item = items[index];
-                        var pos = selected.findIndex(function(sel) { return sel.parametro === item.parametro; });
-                        if (this.checked && pos === -1) selected.push(Object.assign({}, item));
+                        var pos = selected.findIndex(function(sel) { return sel.parametro === item.parametro && (sel.metodo || '') === (item.metodo || ''); });
+                        if (this.checked && pos === -1) {
+                            selected.push(normalizeFieldSelectedItem({
+                                parametro: item.parametro,
+                                metodo: item.metodo,
+                                afectaETFA: '',
+                                etfaCode: generarCodigoEtfa(item.parametro, 1000000),
+                                matriz: '',
+                                instrumento: ''
+                            }));
+                        }
                         if (!this.checked && pos !== -1) selected.splice(pos, 1);
                         techDrafts.metodologias_fq.in_situ_selected = selected;
                         techDrafts.metodologias_fq.dirty = true;
+                        syncRootToActiveMetFQGroup();
                         renderMetFQInSituTable();
                         updateTechStatus('Cambios sin guardar');
                         renderTechDocView();
