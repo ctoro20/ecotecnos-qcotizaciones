@@ -5302,6 +5302,24 @@
             color: #9a9a9a;
         }
 
+        .tech-editor-status.status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            border: 1px solid transparent;
+        }
+
+        .tech-editor-status.status-badge.status-etfa-unaffected {
+            color: #1f6f43;
+            background: #e8f7ee;
+            border-color: #b9e6c9;
+        }
+
         .tech-editor-actions {
             display: flex;
             gap: 8px;
@@ -6303,6 +6321,12 @@
         }
         .tech-fq-protocol-table .fq-inline:focus { outline: none; border-color: #ef8157; background: #fff; }
         .tech-fq-protocol-table .fq-inline-num { width: 44px; text-align: center; }
+        .tech-fq-protocol-table input[data-bio-field="distancia_transectas"],
+        .tech-fq-protocol-table input[data-bio-field="longitud_transecta"] {
+            width: 100%;
+            min-width: 140px;
+            text-align: left;
+        }
         .tech-fq-protocol-table .fq-inline.is-readonly {
             background: transparent;
             border-color: transparent;

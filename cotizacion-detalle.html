@@ -1725,18 +1725,18 @@
                                                 <label>Puntos de muestreo</label>
                                                 <div class="tech-fq-proto-counters">
                                                     <div class="tech-fq-proto-counter-item">
-                                                        <span class="tech-fq-proto-counter-label">Puntos</span>
+                                                        <span class="tech-fq-proto-counter-label" id="techBioCountLabel">Puntos</span>
                                                         <span class="tech-fq-proto-counter-val" id="techBioCountPuntos">0</span>
                                                     </div>
                                                     <div class="tech-fq-proto-counter-item">
-                                                        <span class="tech-fq-proto-counter-label">Muestras</span>
+                                                        <span class="tech-fq-proto-counter-label" id="techBioTotalLabel">Muestras</span>
                                                         <span class="tech-fq-proto-counter-val" id="techBioTotalMuestras">0</span>
                                                     </div>
                                                 </div>
                                                 <div class="table-responsive">
                                                     <table class="tech-fq-protocol-table">
-                                                        <thead>
-                                                            <tr>
+                                                        <thead id="techBioProtocolTableHead">
+                                                            <tr id="techBioProtocolHeadRow">
                                                                 <th style="width:48px;">#</th>
                                                                 <th>Punto de Muestreo / Estación</th>
                                                                 <th>Lugar de Muestreo</th>
@@ -1977,6 +1977,10 @@
                                 <button class="btn btn-default btn-sm" id="econOpenConsideracionesModal"><i class="fas fa-search"></i> Seleccionar consideraciones</button>
                             </div>
                             <div class="tech-consider-list" id="econConsideracionesList"></div>
+                            <div class="compact-form-group" style="margin-top:12px;">
+                                <label for="econConsideracionesEspecificas">Consideraciones específicas de esta cotización</label>
+                                <textarea class="form-control" id="econConsideracionesEspecificas" rows="3" placeholder="Describa consideraciones particulares para esta cotización..."></textarea>
+                            </div>
                         </div>
 
                         <div class="action-buttons">

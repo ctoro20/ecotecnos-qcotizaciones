@@ -4337,6 +4337,7 @@
                 in_situ_intro: '',
                 in_situ_selected: [],
                 in_situ_final: '',
+                customSubsections: [],
                 updatedAt: ''
             };
         }
@@ -4358,6 +4359,33 @@
                 in_situ_final: draft.in_situ_final || '',
                 updatedAt: draft.updatedAt || ''
             };
+        }
+
+        function ensureMetFQGroupCustomSubsections(group) {
+            if (!group) return;
+            if (!Array.isArray(group.customSubsections)) group.customSubsections = [];
+            group.customSubsections.forEach(function(sub) {
+                if (!Array.isArray(sub.fields)) sub.fields = [];
+                if (!sub.fieldValues || typeof sub.fieldValues !== 'object') sub.fieldValues = {};
+            });
+        }
+
+        function getActiveMetFQGroup(draft) {
+            var target = draft || techDrafts.metodologias_fq;
+            if (!target || !Array.isArray(target.matrix_groups) || !target.matrix_groups.length) return null;
+            var group = target.matrix_groups.find(function(g) { return g.id === activeMetFQMatrixId; }) || target.matrix_groups[0];
+            if (group) ensureMetFQGroupCustomSubsections(group);
+            return group;
+        }
+
+        function getMetFQStandardSubsectionById(id) {
+            return techMetFQSubsections.find(function(sub) { return sub.id === id; }) || null;
+        }
+
+        function getActiveMetFQCustomSubsection(draft) {
+            var group = getActiveMetFQGroup(draft);
+            if (!group) return null;
+            return (group.customSubsections || []).find(function(sub) { return sub.id === activeMetFQSubsection; }) || null;
         }
 
         function applyMetFQGroupToRoot(group, draft) {
@@ -4396,6 +4424,10 @@
                 if (!existing) {
                     draft.matrix_groups.push(buildEmptyMetFQGroup('matrix_' + matrixValue, matrixValue));
                 }
+            });
+
+            draft.matrix_groups.forEach(function(group) {
+                ensureMetFQGroupCustomSubsections(group);
             });
 
             if (!draft.active_matrix_id || !draft.matrix_groups.some(function(g) { return g.id === draft.active_matrix_id; })) {
@@ -5247,6 +5279,12 @@
                             html += '<div class="tech-tree-item tech-tree-subsection' + groupActive + '" data-tech-id="metodologias_fq" data-metfq-group-id="' + group.id + '">' +
                                 '<i class="fas fa-layer-group"></i>' +
                                 '<span class="tech-tree-name tech-tree-matrix-name">' + getMetFQMatrixLabel(group.matriz) + '</span>' +
+                                '<div class="tech-tree-menu" data-menu-metfq-group="' + group.id + '">' +
+                                    '<button class="tech-tree-menu-btn" data-menu-metfq-group-btn="' + group.id + '"><i class="fas fa-ellipsis-v"></i></button>' +
+                                    '<div class="tech-tree-menu-content">' +
+                                        '<button data-menu-add-metfq-subsection="' + group.id + '"><i class="fas fa-plus"></i> Agregar subsección</button>' +
+                                    '</div>' +
+                                '</div>' +
                             '</div>';
                             html += '<div class="tech-tree-subfields">';
                             techMetFQSubsections.forEach(function(sub) {
@@ -5255,6 +5293,39 @@
                                     '<i class="fas fa-file-alt"></i>' +
                                     '<span class="tech-tree-name">' + sub.title + '</span>' +
                                 '</div>';
+                            });
+                            ensureMetFQGroupCustomSubsections(group);
+                            (group.customSubsections || []).forEach(function(customSub) {
+                                var customActive = (activeTechId === 'metodologias_fq' && activeMetFQMatrixId === group.id && activeMetFQSubsection === customSub.id) ? ' active' : '';
+                                html += '<div class="tech-tree-item tech-tree-subsection' + customActive + '" data-tech-id="metodologias_fq" data-metfq-group-id="' + group.id + '" data-metfq-subsection="' + customSub.id + '">' +
+                                    '<i class="fas fa-file-alt"></i>' +
+                                    '<span class="tech-tree-name">' + escapeHtml(customSub.title) + '</span>' +
+                                    '<div class="tech-tree-menu" data-menu-metfq-custom-sub="' + group.id + '" data-menu-metfq-custom-sub-id="' + customSub.id + '">' +
+                                        '<button class="tech-tree-menu-btn" data-menu-metfq-custom-sub-btn="' + group.id + '" data-menu-metfq-custom-sub-id="' + customSub.id + '"><i class="fas fa-ellipsis-v"></i></button>' +
+                                        '<div class="tech-tree-menu-content">' +
+                                            '<button data-menu-add-metfq-field="' + group.id + '" data-menu-metfq-sub-id="' + customSub.id + '"><i class="fas fa-plus"></i> Agregar campo</button>' +
+                                            '<button data-menu-metfq-sub-edit="' + group.id + '" data-menu-metfq-sub-id="' + customSub.id + '"><i class="fas fa-pen"></i> Editar subsección</button>' +
+                                            '<button data-menu-metfq-sub-delete="' + group.id + '" data-menu-metfq-sub-id="' + customSub.id + '"><i class="fas fa-trash"></i> Eliminar subsección</button>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>';
+                                if ((customSub.fields || []).length) {
+                                    html += '<div class="tech-tree-subfields">';
+                                    (customSub.fields || []).forEach(function(fieldName) {
+                                        html += '<div class="tech-tree-field" data-metfq-group-field-parent="' + group.id + '" data-metfq-subsection-field-parent="' + customSub.id + '" data-metfq-group-field-name="' + escapeHtml(fieldName) + '">' +
+                                            '<i class="fas fa-file-alt" style="color:#b5b0a8;"></i>' +
+                                            '<span class="tech-tree-field-name">' + escapeHtml(fieldName) + '</span>' +
+                                            '<div class="tech-tree-menu" data-menu-metfq-field="' + group.id + '" data-menu-metfq-sub-id="' + customSub.id + '" data-menu-metfq-field-name="' + escapeHtml(fieldName) + '">' +
+                                                '<button class="tech-tree-menu-btn" data-menu-metfq-field-btn="' + group.id + '" data-menu-metfq-sub-id="' + customSub.id + '" data-menu-metfq-field-name="' + escapeHtml(fieldName) + '"><i class="fas fa-ellipsis-v"></i></button>' +
+                                                '<div class="tech-tree-menu-content">' +
+                                                    '<button data-menu-metfq-field-edit="' + group.id + '" data-menu-metfq-sub-id="' + customSub.id + '" data-menu-metfq-field-name="' + escapeHtml(fieldName) + '"><i class="fas fa-pen"></i> Editar</button>' +
+                                                    '<button data-menu-metfq-field-delete="' + group.id + '" data-menu-metfq-sub-id="' + customSub.id + '" data-menu-metfq-field-name="' + escapeHtml(fieldName) + '"><i class="fas fa-trash"></i> Eliminar</button>' +
+                                                '</div>' +
+                                            '</div>' +
+                                        '</div>';
+                                    });
+                                    html += '</div>';
+                                }
                             });
                             html += '</div>';
                         });
@@ -5401,6 +5472,33 @@
                 });
             });
 
+            tree.querySelectorAll('button[data-menu-metfq-group-btn]').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var id = this.getAttribute('data-menu-metfq-group-btn');
+                    tree.querySelectorAll('.tech-tree-menu.open').forEach(function(m) {
+                        if (m.getAttribute('data-menu-metfq-group') !== id) m.classList.remove('open');
+                    });
+                    var menu = tree.querySelector('.tech-tree-menu[data-menu-metfq-group="' + id + '"]');
+                    if (menu) menu.classList.toggle('open');
+                });
+            });
+
+            tree.querySelectorAll('button[data-menu-metfq-custom-sub-btn]').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var groupId = this.getAttribute('data-menu-metfq-custom-sub-btn');
+                    var subId = this.getAttribute('data-menu-metfq-custom-sub-id');
+                    tree.querySelectorAll('.tech-tree-menu.open').forEach(function(m) {
+                        if (m.getAttribute('data-menu-metfq-custom-sub') !== groupId || m.getAttribute('data-menu-metfq-custom-sub-id') !== subId) {
+                            m.classList.remove('open');
+                        }
+                    });
+                    var menu = tree.querySelector('.tech-tree-menu[data-menu-metfq-custom-sub="' + groupId + '"][data-menu-metfq-custom-sub-id="' + subId + '"]');
+                    if (menu) menu.classList.toggle('open');
+                });
+            });
+
             tree.querySelectorAll('button[data-menu-edit]').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -5453,6 +5551,56 @@
                 });
             });
 
+            tree.querySelectorAll('button[data-menu-add-metfq-subsection]').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var groupId = this.getAttribute('data-menu-add-metfq-subsection');
+                    ensureMetFQMatrixGroups();
+                    var draft = techDrafts.metodologias_fq || {};
+                    var group = (draft.matrix_groups || []).find(function(g) { return g.id === groupId; });
+                    if (!group) return;
+                    ensureMetFQGroupCustomSubsections(group);
+                    var subId = 'fq_custom_' + Date.now();
+                    group.customSubsections.push({
+                        id: subId,
+                        title: 'Nueva subsección',
+                        fields: [],
+                        fieldValues: {}
+                    });
+                    activeMetFQMatrixId = group.id;
+                    activeMetFQSubsection = subId;
+                    draft.active_matrix_id = group.id;
+                    buildTechTree();
+                    selectTechItem('metodologias_fq', { skipSyncCurrent: true });
+                    updateTechStatus('Cambios sin guardar');
+                });
+            });
+
+            tree.querySelectorAll('button[data-menu-add-metfq-field]').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var groupId = this.getAttribute('data-menu-add-metfq-field');
+                    var subId = this.getAttribute('data-menu-metfq-sub-id');
+                    ensureMetFQMatrixGroups();
+                    var draft = techDrafts.metodologias_fq || {};
+                    var group = (draft.matrix_groups || []).find(function(g) { return g.id === groupId; });
+                    if (!group || !subId) return;
+                    ensureMetFQGroupCustomSubsections(group);
+                    var sub = (group.customSubsections || []).find(function(s) { return s.id === subId; });
+                    if (!sub) return;
+                    sub.fields = sub.fields || [];
+                    sub.fieldValues = sub.fieldValues || {};
+                    sub.fields.push('Nuevo campo');
+                    sub.fieldValues['Nuevo campo'] = sub.fieldValues['Nuevo campo'] || '';
+                    activeMetFQMatrixId = group.id;
+                    activeMetFQSubsection = sub.id;
+                    draft.active_matrix_id = group.id;
+                    buildTechTree();
+                    selectTechItem('metodologias_fq', { skipSyncCurrent: true });
+                    updateTechStatus('Cambios sin guardar');
+                });
+            });
+
             tree.querySelectorAll('button[data-menu-delete]').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -5481,6 +5629,75 @@
                     });
                     var menu = tree.querySelector('.tech-tree-menu[data-menu-field="' + id + '"][data-menu-field-name="' + name + '"]');
                     if (menu) menu.classList.toggle('open');
+                });
+            });
+
+            tree.querySelectorAll('button[data-menu-metfq-field-btn]').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var id = this.getAttribute('data-menu-metfq-field-btn');
+                    var subId = this.getAttribute('data-menu-metfq-sub-id');
+                    var name = this.getAttribute('data-menu-metfq-field-name');
+                    tree.querySelectorAll('.tech-tree-menu.open').forEach(function(m) {
+                        if (m.getAttribute('data-menu-metfq-field') !== id || m.getAttribute('data-menu-metfq-sub-id') !== subId || m.getAttribute('data-menu-metfq-field-name') !== name) {
+                            m.classList.remove('open');
+                        }
+                    });
+                    var menu = tree.querySelector('.tech-tree-menu[data-menu-metfq-field="' + id + '"][data-menu-metfq-sub-id="' + subId + '"][data-menu-metfq-field-name="' + name + '"]');
+                    if (menu) menu.classList.toggle('open');
+                });
+            });
+
+            tree.querySelectorAll('button[data-menu-metfq-sub-edit]').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var groupId = this.getAttribute('data-menu-metfq-sub-edit');
+                    var subId = this.getAttribute('data-menu-metfq-sub-id');
+                    ensureMetFQMatrixGroups();
+                    var draft = techDrafts.metodologias_fq || {};
+                    var group = (draft.matrix_groups || []).find(function(g) { return g.id === groupId; });
+                    if (!group || !subId) return;
+                    ensureMetFQGroupCustomSubsections(group);
+                    var sub = (group.customSubsections || []).find(function(s) { return s.id === subId; });
+                    if (!sub) return;
+                    var rowName = tree.querySelector('.tech-tree-item[data-tech-id="metodologias_fq"][data-metfq-group-id="' + groupId + '"][data-metfq-subsection="' + subId + '"] .tech-tree-name');
+                    if (!rowName) return;
+                    var input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = sub.title || 'Nueva subsección';
+                    input.className = 'tech-map-caption-input';
+                    rowName.replaceWith(input);
+                    input.focus();
+                    function save() {
+                        sub.title = (input.value || '').trim() || sub.title || 'Nueva subsección';
+                        buildTechTree();
+                        selectTechItem('metodologias_fq', { skipSyncCurrent: true });
+                    }
+                    input.addEventListener('blur', save);
+                    input.addEventListener('keydown', function(ev) {
+                        if (ev.key === 'Enter') {
+                            ev.preventDefault();
+                            input.blur();
+                        }
+                    });
+                });
+            });
+
+            tree.querySelectorAll('button[data-menu-metfq-sub-delete]').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var groupId = this.getAttribute('data-menu-metfq-sub-delete');
+                    var subId = this.getAttribute('data-menu-metfq-sub-id');
+                    ensureMetFQMatrixGroups();
+                    var draft = techDrafts.metodologias_fq || {};
+                    var group = (draft.matrix_groups || []).find(function(g) { return g.id === groupId; });
+                    if (!group || !subId) return;
+                    ensureMetFQGroupCustomSubsections(group);
+                    group.customSubsections = (group.customSubsections || []).filter(function(s) { return s.id !== subId; });
+                    if (activeMetFQSubsection === subId) activeMetFQSubsection = '';
+                    buildTechTree();
+                    selectTechItem('metodologias_fq', { skipSyncCurrent: true });
+                    updateTechStatus('Cambios sin guardar');
                 });
             });
 
@@ -5524,6 +5741,48 @@
                 });
             });
 
+            tree.querySelectorAll('button[data-menu-metfq-field-edit]').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var groupId = this.getAttribute('data-menu-metfq-field-edit');
+                    var subId = this.getAttribute('data-menu-metfq-sub-id');
+                    var name = this.getAttribute('data-menu-metfq-field-name');
+                    ensureMetFQMatrixGroups();
+                    var draft = techDrafts.metodologias_fq || {};
+                    var group = (draft.matrix_groups || []).find(function(g) { return g.id === groupId; });
+                    if (!group || !subId) return;
+                    ensureMetFQGroupCustomSubsections(group);
+                    var sub = (group.customSubsections || []).find(function(s) { return s.id === subId; });
+                    if (!sub) return;
+                    var fieldEl = tree.querySelector('.tech-tree-field[data-metfq-group-field-parent="' + groupId + '"][data-metfq-subsection-field-parent="' + subId + '"][data-metfq-group-field-name="' + name + '"] .tech-tree-field-name');
+                    if (!fieldEl) return;
+                    var input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = name;
+                    input.className = 'tech-map-caption-input';
+                    fieldEl.replaceWith(input);
+                    input.focus();
+                    function save() {
+                        var newVal = (input.value || '').trim() || name;
+                        var idx = (sub.fields || []).indexOf(name);
+                        if (idx >= 0) sub.fields[idx] = newVal;
+                        if (name !== newVal && Object.prototype.hasOwnProperty.call(sub.fieldValues || {}, name)) {
+                            sub.fieldValues[newVal] = sub.fieldValues[name];
+                            delete sub.fieldValues[name];
+                        }
+                        buildTechTree();
+                        selectTechItem('metodologias_fq', { skipSyncCurrent: true });
+                    }
+                    input.addEventListener('blur', save);
+                    input.addEventListener('keydown', function(ev) {
+                        if (ev.key === 'Enter') {
+                            ev.preventDefault();
+                            input.blur();
+                        }
+                    });
+                });
+            });
+
             tree.querySelectorAll('button[data-menu-field-delete]').forEach(function(btn) {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -5538,6 +5797,29 @@
                     }
                     buildTechTree();
                     if (activeTechId === id) selectTechItem(id);
+                });
+            });
+
+            tree.querySelectorAll('button[data-menu-metfq-field-delete]').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var groupId = this.getAttribute('data-menu-metfq-field-delete');
+                    var subId = this.getAttribute('data-menu-metfq-sub-id');
+                    var name = this.getAttribute('data-menu-metfq-field-name');
+                    ensureMetFQMatrixGroups();
+                    var draft = techDrafts.metodologias_fq || {};
+                    var group = (draft.matrix_groups || []).find(function(g) { return g.id === groupId; });
+                    if (!group || !subId) return;
+                    ensureMetFQGroupCustomSubsections(group);
+                    var sub = (group.customSubsections || []).find(function(s) { return s.id === subId; });
+                    if (!sub) return;
+                    sub.fields = (sub.fields || []).filter(function(f) { return f !== name; });
+                    if (sub.fieldValues && Object.prototype.hasOwnProperty.call(sub.fieldValues, name)) {
+                        delete sub.fieldValues[name];
+                    }
+                    buildTechTree();
+                    selectTechItem('metodologias_fq', { skipSyncCurrent: true });
+                    updateTechStatus('Cambios sin guardar');
                 });
             });
 
@@ -5659,9 +5941,22 @@
             });
         }
 
+        function getTechStatusText(text) {
+            var etfaUnaffectedSections = ['metodologias_bio', 'metodologias_fis'];
+            if (text === 'Sin cambios' && etfaUnaffectedSections.indexOf(activeTechId) !== -1) {
+                return 'No Afecta a ETFA';
+            }
+            return text;
+        }
+
         function updateTechStatus(text) {
             var statusEl = document.getElementById('techEditorStatus');
-            if (statusEl) statusEl.textContent = text;
+            if (!statusEl) return;
+            var displayText = getTechStatusText(text);
+            statusEl.textContent = displayText;
+            var isEtfaUnaffected = displayText === 'No Afecta a ETFA';
+            statusEl.classList.toggle('status-badge', isEtfaUnaffected);
+            statusEl.classList.toggle('status-etfa-unaffected', isEtfaUnaffected);
         }
 
         function renderTechDocView() {
@@ -6310,14 +6605,45 @@
             return { key: 'protocolo', intro: 'protocolo_intro', puntos: 'protocolo_puntos', imagen: 'protocolo_imagen', imagen_name: 'protocolo_imagen_name', descripcion: 'protocolo_descripcion' };
         }
 
+        function isActiveMetBioTransectas() {
+            return activeMetBioSubsection === 'protocolo_transectas';
+        }
+
         function renderMetBioProtocolTable() {
             var tbody = document.getElementById('techBioEstacionesBody');
+            var headRow = document.getElementById('techBioProtocolHeadRow');
             var countEl = document.getElementById('techBioCountPuntos');
             var totalEl = document.getElementById('techBioTotalMuestras');
+            var countLabelEl = document.getElementById('techBioCountLabel');
+            var totalLabelEl = document.getElementById('techBioTotalLabel');
             if (!tbody) return;
             var draft = techDrafts.metodologias_bio || {};
             var cfg = getActiveMetBioProtocolConfig();
+            var isTransectas = isActiveMetBioTransectas();
             if (!Array.isArray(draft[cfg.puntos])) draft[cfg.puntos] = [];
+
+            if (headRow) {
+                headRow.innerHTML = isTransectas
+                    ? '<th style="width:48px;">#</th>' +
+                      '<th style="width:140px;">N° Transectas</th>' +
+                      '<th style="width:180px;">Distancia entre transectas (m)</th>' +
+                      '<th>Coordenadas de Inicio</th>' +
+                      '<th style="width:140px;">Longitud (m)</th>' +
+                      '<th style="width:140px;">N° de Estaciones</th>' +
+                      '<th style="width:70px;"></th>'
+                    : '<th style="width:48px;">#</th>' +
+                      '<th>Punto de Muestreo / Estación</th>' +
+                      '<th>Lugar de Muestreo</th>' +
+                      '<th style="width:130px;">Latitud</th>' +
+                      '<th style="width:130px;">Longitud</th>' +
+                      '<th style="width:120px;">Datum</th>' +
+                      '<th style="width:90px;">Estratos</th>' +
+                      '<th style="width:90px;">Réplicas</th>' +
+                      '<th style="width:90px;">Muestras</th>' +
+                      '<th style="width:70px;">Acción</th>';
+            }
+            if (countLabelEl) countLabelEl.textContent = isTransectas ? 'Transectas' : 'Puntos';
+            if (totalLabelEl) totalLabelEl.textContent = isTransectas ? 'Estaciones' : 'Muestras';
 
             tbody.innerHTML = '';
             var totalMuestras = 0;
@@ -6328,32 +6654,52 @@
                 renderTechDocView();
             }
             draft[cfg.puntos].forEach(function(punto, idx) {
-                var estratos = parseInt(punto.estratos, 10) || 1;
-                var replicas = parseInt(punto.replicas, 10) || 1;
-                var muestras = estratos * replicas;
-                punto.estratos = estratos;
-                punto.replicas = replicas;
-                punto.muestras = muestras;
-                totalMuestras += muestras;
                 var isEditing = !!punto._isEditing;
                 var tr = document.createElement('tr');
-                tr.innerHTML =
-                    '<td>' + (idx + 1) + '</td>' +
-                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="nombre" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.nombre || punto.estacion || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
-                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="lugar" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.lugar || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
-                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="latitud" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.latitud || punto.coordenadas || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
-                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="longitud" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.longitud || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
-                    '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="datum" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.datum || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
-                    '<td><input type="number" class="fq-inline fq-inline-num bio-est-estratos' + (isEditing ? '' : ' is-readonly') + '" data-bio-idx="' + idx + '" value="' + estratos + '" min="1"' + (isEditing ? '' : ' disabled') + '></td>' +
-                    '<td><input type="number" class="fq-inline fq-inline-num bio-est-replicas' + (isEditing ? '' : ' is-readonly') + '" data-bio-idx="' + idx + '" value="' + replicas + '" min="1"' + (isEditing ? '' : ' disabled') + '></td>' +
-                    '<td class="bio-muestras-cell">' + muestras + '</td>' +
-                    '<td>' +
-                        (isEditing
-                            ? '<button class="fq-row-action fq-row-save" data-bio-save="' + idx + '" title="Guardar"><i class="fas fa-save"></i></button>' +
-                              '<button class="fq-row-action fq-row-cancel" data-bio-cancel="' + idx + '" title="Cancelar"><i class="fas fa-times"></i></button>'
-                            : '<button class="fq-row-action fq-row-edit" data-bio-edit="' + idx + '" title="Editar"><i class="fas fa-edit"></i></button>' +
-                              '<button class="fq-row-action fq-row-delete" data-bio-remove="' + idx + '" title="Eliminar"><i class="fas fa-trash"></i></button>') +
-                    '</td>';
+                if (isTransectas) {
+                    var estaciones = Math.max(0, parseInt(punto.estaciones, 10) || 0);
+                    punto.estaciones = estaciones;
+                    totalMuestras += estaciones;
+                    tr.innerHTML =
+                        '<td>' + (idx + 1) + '</td>' +
+                        '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="numero_transecta" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.numero_transecta || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                        '<td><input type="number" step="0.01" min="0" class="fq-inline fq-inline-num' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="distancia_transectas" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.distancia_transectas || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                        '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="coordenadas_inicio" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.coordenadas_inicio || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                        '<td><input type="number" step="0.01" min="0" class="fq-inline fq-inline-num' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="longitud_transecta" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.longitud_transecta || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                        '<td><input type="number" class="fq-inline fq-inline-num' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="estaciones" data-bio-idx="' + idx + '" value="' + estaciones + '" min="0"' + (isEditing ? '' : ' disabled') + '></td>' +
+                        '<td>' +
+                            (isEditing
+                                ? '<button class="fq-row-action fq-row-save" data-bio-save="' + idx + '" title="Guardar"><i class="fas fa-save"></i></button>' +
+                                  '<button class="fq-row-action fq-row-cancel" data-bio-cancel="' + idx + '" title="Cancelar"><i class="fas fa-times"></i></button>'
+                                : '<button class="fq-row-action fq-row-edit" data-bio-edit="' + idx + '" title="Editar"><i class="fas fa-edit"></i></button>' +
+                                  '<button class="fq-row-action fq-row-delete" data-bio-remove="' + idx + '" title="Eliminar"><i class="fas fa-trash"></i></button>') +
+                        '</td>';
+                } else {
+                    var estratos = parseInt(punto.estratos, 10) || 1;
+                    var replicas = parseInt(punto.replicas, 10) || 1;
+                    var muestras = estratos * replicas;
+                    punto.estratos = estratos;
+                    punto.replicas = replicas;
+                    punto.muestras = muestras;
+                    totalMuestras += muestras;
+                    tr.innerHTML =
+                        '<td>' + (idx + 1) + '</td>' +
+                        '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="nombre" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.nombre || punto.estacion || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                        '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="lugar" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.lugar || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                        '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="latitud" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.latitud || punto.coordenadas || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                        '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="longitud" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.longitud || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                        '<td><input type="text" class="fq-inline' + (isEditing ? '' : ' is-readonly') + '" data-bio-field="datum" data-bio-idx="' + idx + '" value="' + escapeHtml(punto.datum || '') + '"' + (isEditing ? '' : ' disabled') + '></td>' +
+                        '<td><input type="number" class="fq-inline fq-inline-num bio-est-estratos' + (isEditing ? '' : ' is-readonly') + '" data-bio-idx="' + idx + '" value="' + estratos + '" min="1"' + (isEditing ? '' : ' disabled') + '></td>' +
+                        '<td><input type="number" class="fq-inline fq-inline-num bio-est-replicas' + (isEditing ? '' : ' is-readonly') + '" data-bio-idx="' + idx + '" value="' + replicas + '" min="1"' + (isEditing ? '' : ' disabled') + '></td>' +
+                        '<td class="bio-muestras-cell">' + muestras + '</td>' +
+                        '<td>' +
+                            (isEditing
+                                ? '<button class="fq-row-action fq-row-save" data-bio-save="' + idx + '" title="Guardar"><i class="fas fa-save"></i></button>' +
+                                  '<button class="fq-row-action fq-row-cancel" data-bio-cancel="' + idx + '" title="Cancelar"><i class="fas fa-times"></i></button>'
+                                : '<button class="fq-row-action fq-row-edit" data-bio-edit="' + idx + '" title="Editar"><i class="fas fa-edit"></i></button>' +
+                                  '<button class="fq-row-action fq-row-delete" data-bio-remove="' + idx + '" title="Eliminar"><i class="fas fa-trash"></i></button>') +
+                        '</td>';
+                }
                 tbody.appendChild(tr);
             });
 
@@ -6370,44 +6716,54 @@
                 });
             });
 
-            tbody.querySelectorAll('.bio-est-estratos, .bio-est-replicas').forEach(function(inp) {
-                inp.addEventListener('input', function() {
-                    var i = parseInt(this.getAttribute('data-bio-idx'), 10);
-                    if (isNaN(i) || !techDrafts.metodologias_bio[cfg.puntos] || !techDrafts.metodologias_bio[cfg.puntos][i]) return;
-                    var row = this.closest('tr');
-                    var eEl = row.querySelector('.bio-est-estratos');
-                    var rEl = row.querySelector('.bio-est-replicas');
-                    var mEl = row.querySelector('.bio-muestras-cell');
-                    var e = Math.max(1, parseInt(eEl ? eEl.value : '1', 10) || 1);
-                    var r = Math.max(1, parseInt(rEl ? rEl.value : '1', 10) || 1);
-                    var m = e * r;
-                    if (eEl) eEl.value = e;
-                    if (rEl) rEl.value = r;
-                    if (mEl) mEl.textContent = m;
-                    techDrafts.metodologias_bio[cfg.puntos][i].estratos = e;
-                    techDrafts.metodologias_bio[cfg.puntos][i].replicas = r;
-                    techDrafts.metodologias_bio[cfg.puntos][i].muestras = m;
-                    markBioProtocolDirty();
-                    var total = 0;
-                    tbody.querySelectorAll('.bio-muestras-cell').forEach(function(c) { total += parseInt(c.textContent, 10) || 0; });
-                    if (totalEl) totalEl.textContent = total;
+            if (!isTransectas) {
+                tbody.querySelectorAll('.bio-est-estratos, .bio-est-replicas').forEach(function(inp) {
+                    inp.addEventListener('input', function() {
+                        var i = parseInt(this.getAttribute('data-bio-idx'), 10);
+                        if (isNaN(i) || !techDrafts.metodologias_bio[cfg.puntos] || !techDrafts.metodologias_bio[cfg.puntos][i]) return;
+                        var row = this.closest('tr');
+                        var eEl = row.querySelector('.bio-est-estratos');
+                        var rEl = row.querySelector('.bio-est-replicas');
+                        var mEl = row.querySelector('.bio-muestras-cell');
+                        var e = Math.max(1, parseInt(eEl ? eEl.value : '1', 10) || 1);
+                        var r = Math.max(1, parseInt(rEl ? rEl.value : '1', 10) || 1);
+                        var m = e * r;
+                        if (eEl) eEl.value = e;
+                        if (rEl) rEl.value = r;
+                        if (mEl) mEl.textContent = m;
+                        techDrafts.metodologias_bio[cfg.puntos][i].estratos = e;
+                        techDrafts.metodologias_bio[cfg.puntos][i].replicas = r;
+                        techDrafts.metodologias_bio[cfg.puntos][i].muestras = m;
+                        markBioProtocolDirty();
+                        var total = 0;
+                        tbody.querySelectorAll('.bio-muestras-cell').forEach(function(c) { total += parseInt(c.textContent, 10) || 0; });
+                        if (totalEl) totalEl.textContent = total;
+                    });
                 });
-            });
+            }
 
             tbody.querySelectorAll('button[data-bio-edit]').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     var i = parseInt(this.getAttribute('data-bio-edit'), 10);
                     var row = techDrafts.metodologias_bio[cfg.puntos][i];
                     if (isNaN(i) || !row) return;
-                    row._snapshot = {
-                        nombre: row.nombre || row.estacion || '',
-                        lugar: row.lugar || '',
-                        latitud: row.latitud || row.coordenadas || '',
-                        longitud: row.longitud || '',
-                        datum: row.datum || '',
-                        estratos: parseInt(row.estratos, 10) || 1,
-                        replicas: parseInt(row.replicas, 10) || 1
-                    };
+                    row._snapshot = isTransectas
+                        ? {
+                            numero_transecta: row.numero_transecta || '',
+                            distancia_transectas: row.distancia_transectas || '',
+                            coordenadas_inicio: row.coordenadas_inicio || '',
+                            longitud_transecta: row.longitud_transecta || '',
+                            estaciones: Math.max(0, parseInt(row.estaciones, 10) || 0)
+                        }
+                        : {
+                            nombre: row.nombre || row.estacion || '',
+                            lugar: row.lugar || '',
+                            latitud: row.latitud || row.coordenadas || '',
+                            longitud: row.longitud || '',
+                            datum: row.datum || '',
+                            estratos: parseInt(row.estratos, 10) || 1,
+                            replicas: parseInt(row.replicas, 10) || 1
+                        };
                     row._isEditing = true;
                     renderMetBioProtocolTable();
                 });
@@ -6434,14 +6790,22 @@
                     if (row._isNew) {
                         techDrafts.metodologias_bio[cfg.puntos].splice(i, 1);
                     } else if (row._snapshot) {
-                        row.nombre = row._snapshot.nombre;
-                        row.lugar = row._snapshot.lugar;
-                        row.latitud = row._snapshot.latitud;
-                        row.longitud = row._snapshot.longitud;
-                        row.datum = row._snapshot.datum;
-                        row.estratos = row._snapshot.estratos;
-                        row.replicas = row._snapshot.replicas;
-                        row.muestras = row._snapshot.estratos * row._snapshot.replicas;
+                        if (isTransectas) {
+                            row.numero_transecta = row._snapshot.numero_transecta;
+                            row.distancia_transectas = row._snapshot.distancia_transectas;
+                            row.coordenadas_inicio = row._snapshot.coordenadas_inicio;
+                            row.longitud_transecta = row._snapshot.longitud_transecta;
+                            row.estaciones = row._snapshot.estaciones;
+                        } else {
+                            row.nombre = row._snapshot.nombre;
+                            row.lugar = row._snapshot.lugar;
+                            row.latitud = row._snapshot.latitud;
+                            row.longitud = row._snapshot.longitud;
+                            row.datum = row._snapshot.datum;
+                            row.estratos = row._snapshot.estratos;
+                            row.replicas = row._snapshot.replicas;
+                            row.muestras = row._snapshot.estratos * row._snapshot.replicas;
+                        }
                         row._isEditing = false;
                         delete row._snapshot;
                     } else {
@@ -6657,6 +7021,9 @@
                 if (inSituFinalRow) inSituFinalRow.style.display = '';
                 return;
             }
+            if (!getMetFQStandardSubsectionById(activeMetFQSubsection)) {
+                return;
+            }
         }
 
         function renderMetBioSubsectionPanel() {
@@ -6727,6 +7094,18 @@
                 techDrafts[activeTechId].texto_final = getQuillHTML('techEditorMetFQFinal');
                 techDrafts[activeTechId].in_situ_intro = getQuillHTML('techEditorMetFQInSituIntro');
                 techDrafts[activeTechId].in_situ_final = getQuillHTML('techEditorMetFQInSituFinal');
+                var activeFQCustomSub = getActiveMetFQCustomSubsection(techDrafts[activeTechId]);
+                if (activeFQCustomSub && Array.isArray(activeFQCustomSub.fields)) {
+                    activeFQCustomSub.fields.forEach(function(field, idx) {
+                        var editorId = 'techMetFQExtraQuill_' + idx;
+                        var quill = quillEditors[editorId];
+                        if (!quill) return;
+                        if (!activeFQCustomSub.fieldValues || typeof activeFQCustomSub.fieldValues !== 'object') {
+                            activeFQCustomSub.fieldValues = {};
+                        }
+                        activeFQCustomSub.fieldValues[field] = getQuillHTML(editorId);
+                    });
+                }
                 syncRootToActiveMetFQGroup();
             } else if (activeTechId === 'metodologias_bio') {
                 var bioCfg = getActiveMetBioProtocolConfig();
@@ -6801,11 +7180,12 @@
                 subTitleEl.textContent = '';
             }
             if (section && section.id === 'metodologias_fq' && activeMetFQSubsection) {
-                var activeSub = techMetFQSubsections.find(function(sub) { return sub.id === activeMetFQSubsection; });
                 var draftForBreadcrumb = techDrafts.metodologias_fq || {};
                 var activeGroup = (draftForBreadcrumb.matrix_groups || []).find(function(g) { return g.id === activeMetFQMatrixId; });
+                var activeSub = getMetFQStandardSubsectionById(activeMetFQSubsection);
+                var activeCustomSub = activeGroup ? (activeGroup.customSubsections || []).find(function(sub) { return sub.id === activeMetFQSubsection; }) : null;
                 var matrixLabel = activeGroup ? getMetFQMatrixLabel(activeGroup.matriz) : '';
-                var subLabel = activeSub ? activeSub.title : activeMetFQSubsection;
+                var subLabel = activeSub ? activeSub.title : (activeCustomSub ? activeCustomSub.title : activeMetFQSubsection);
                 if (subSepEl) subSepEl.style.display = '';
                 if (subTitleEl) {
                     subTitleEl.style.display = '';
@@ -7008,7 +7388,47 @@
             }
 
             // Renderizar campos extra de secciones de plantilla
-            if (section && !section.isCustom && (section.extraFields || []).length > 0) {
+            var renderedMatrixExtra = false;
+            if (activeTechId === 'metodologias_fq') {
+                var matrixCustomSub = getActiveMetFQCustomSubsection(draft);
+                if (matrixCustomSub) {
+                    renderedMatrixExtra = true;
+                    if (extraFieldsContainer) extraFieldsContainer.style.display = '';
+                    if (extraFieldsEl) {
+                        var fields = matrixCustomSub.fields || [];
+                        if (!fields.length) {
+                            extraFieldsEl.innerHTML = '<div class="tech-editor-hint">No hay campos en esta subsección. Usa el menú de la subsección para agregar campos.</div>';
+                        } else {
+                            extraFieldsEl.innerHTML = fields.map(function(field, idx) {
+                                return '<div class="tech-editor-row">' +
+                                    '<label>' + escapeHtml(field) + '</label>' +
+                                    '<div class="quill-editor" id="techMetFQExtraQuill_' + idx + '" data-metfq-extra-field="' + escapeHtml(field) + '"></div>' +
+                                '</div>';
+                            }).join('');
+                            fields.forEach(function(field, idx) {
+                                var editorId = 'techMetFQExtraQuill_' + idx;
+                                var value = (matrixCustomSub.fieldValues && matrixCustomSub.fieldValues[field]) ? matrixCustomSub.fieldValues[field] : '';
+                                var quill = initQuillEditor(editorId, '', 3);
+                                if (quill && value) setQuillHTML(editorId, value);
+                                if (quill) {
+                                    quill.on('text-change', function(delta, oldDelta, source) {
+                                        if (suppressQuillSync || source !== 'user') return;
+                                        var activeSub = getActiveMetFQCustomSubsection(techDrafts.metodologias_fq);
+                                        if (!activeSub) return;
+                                        if (!activeSub.fieldValues || typeof activeSub.fieldValues !== 'object') {
+                                            activeSub.fieldValues = {};
+                                        }
+                                        activeSub.fieldValues[field] = getQuillHTML(editorId);
+                                        updateTechStatus('Cambios sin guardar');
+                                        renderTechDocFull();
+                                    });
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            if (!renderedMatrixExtra && section && !section.isCustom && (section.extraFields || []).length > 0) {
                 if (extraFieldsContainer) extraFieldsContainer.style.display = '';
                 if (extraFieldsEl) {
                     extraFieldsEl.innerHTML = section.extraFields.map(function(field, idx) {
@@ -7170,6 +7590,7 @@
                         in_situ_intro: '',
                         in_situ_selected: [],
                         in_situ_final: '',
+                        customSubsections: [],
                         updatedAt: ''
                     });
                     activeMetFQMatrixId = newId;
@@ -7227,8 +7648,17 @@
             var techBioToggleAddPointBtn = document.getElementById('techBioToggleAddPointBtn');
             function addBioPointInline() {
                 var bioCfg = getActiveMetBioProtocolConfig();
+                var isTransectas = isActiveMetBioTransectas();
                 if (!techDrafts.metodologias_bio[bioCfg.puntos]) techDrafts.metodologias_bio[bioCfg.puntos] = [];
-                techDrafts.metodologias_bio[bioCfg.puntos].push({
+                techDrafts.metodologias_bio[bioCfg.puntos].push(isTransectas ? {
+                    numero_transecta: '',
+                    distancia_transectas: '',
+                    coordenadas_inicio: '',
+                    longitud_transecta: '',
+                    estaciones: 0,
+                    _isEditing: true,
+                    _isNew: true
+                } : {
                     nombre: '',
                     lugar: '',
                     latitud: '',
@@ -7246,7 +7676,8 @@
                 renderMetBioProtocolTable();
                 renderTechDocView();
                 setTimeout(function() {
-                    var lastInput = document.querySelector('#techBioEstacionesBody tr:last-child input[data-bio-field=\"nombre\"]');
+                    var firstField = isTransectas ? 'numero_transecta' : 'nombre';
+                    var lastInput = document.querySelector('#techBioEstacionesBody tr:last-child input[data-bio-field=\"' + firstField + '\"]');
                     if (lastInput) lastInput.focus();
                 }, 0);
             }
