@@ -497,6 +497,30 @@
             accent-color: #ef8157;
         }
 
+        /* PROTOCOL TABLE (replica de cotizacion-detalle) */
+        .tech-fq-protocol-table { width:100%; border-collapse:collapse; font-size:12px; border:1px solid #e9e9e9; border-radius:6px; overflow:hidden; }
+        .tech-fq-protocol-table th, .tech-fq-protocol-table td { border-bottom:1px solid #e6e6e6; padding:10px 8px; text-align:left; vertical-align:middle; }
+        .tech-fq-protocol-table th { font-size:11px; font-weight:500; color:#66615b; background:#fafafa; }
+        .tech-fq-protocol-table td { background:#fff; }
+        .tech-fq-protocol-table td:first-child { color:#a2853f; width:48px; }
+        .tech-fq-proto-counters { display:flex; align-items:center; gap:14px; padding:7px 12px; background:#f7f6f4; border:1px solid #eee; border-radius:6px; }
+        .tech-fq-proto-counter-item { display:flex; align-items:center; gap:6px; }
+        .tech-fq-proto-counter-label { font-size:10px; font-weight:700; color:#9a9a9a; text-transform:uppercase; letter-spacing:0.3px; }
+        .tech-fq-proto-counter-val { font-size:13px; font-weight:700; color:#ef8157; }
+        .tech-fq-protocol-table .fq-inline { padding:3px 5px; font-size:11px; border:1px solid #e8e8e8; border-radius:3px; background:#fafafa; font-family:inherit; width:100%; box-sizing:border-box; color:#66615b; }
+        .tech-fq-protocol-table .fq-inline:focus { outline:none; border-color:#ef8157; background:#fff; }
+        .tech-fq-protocol-table .fq-inline-num { width:44px; text-align:center; }
+        .tech-fq-protocol-table input[data-transecta-field="distancia_transectas"],
+        .tech-fq-protocol-table input[data-transecta-field="longitud_transecta"] { width:100%; min-width:120px; text-align:left; }
+        .tech-fq-protocol-table .fq-inline.is-readonly { background:transparent; border-color:transparent; color:#66615b; padding-left:0; padding-right:0; cursor:default; }
+        .tech-fq-protocol-table .fq-muestras-cell { text-align:center; font-weight:700; color:#ef8157; }
+        .tech-fq-protocol-table .fq-row-action { background:none; border:none; padding:2px 4px; font-size:12px; color:#8a8178; cursor:pointer; transition:color 0.15s ease; }
+        .tech-fq-protocol-table .fq-row-action:hover { color:#ef8157; }
+        .tech-fq-protocol-table .fq-row-save { color:#57c08d; }
+        .tech-fq-protocol-table .fq-row-save:hover { color:#3ea877; }
+        .tech-fq-protocol-table .fq-row-cancel { color:#7f7f7f; }
+        .tech-fq-protocol-table .fq-row-cancel:hover { color:#5f5f5f; }
+
         /* INSTRUMENT ROW */
         .instrument-row {
             display: flex;
@@ -1384,6 +1408,15 @@
                 <h4 class="section-title"><i class="fas fa-bullseye"></i> Alcances del Servicio</h4>
                 <div class="form-section-card">
                     <div class="form-grid">
+                        <div class="compact-form-group">
+                            <label>Fecha de inicio</label>
+                            <input type="date" class="form-control" id="FechaInicioCampana">
+                        </div>
+                        <div class="compact-form-group">
+                            <label>Fecha de término</label>
+                            <input type="date" class="form-control" id="FechaTerminoCampana">
+                        </div>
+                        <div class="compact-form-group span-2"></div>
                         <div class="compact-form-group span-2">
                             <label>Frecuencia de la campaña</label>
                             <select class="form-control" id="FrecuenciaCampana">
@@ -1407,6 +1440,16 @@
                                 <label for="etfaSi">Sí</label>
                                 <input type="radio" name="AfectaETFA" value="NO" id="etfaNo" checked>
                                 <label for="etfaNo">No</label>
+                            </div>
+                        </div>
+                        <div class="compact-form-group span-4"></div>
+                        <div class="compact-form-group">
+                            <label>¿Requiere Acreditación de Personal?</label>
+                            <div class="radio-toggle">
+                                <input type="radio" name="RequiereAcreditacion" value="SI" id="acreditacionSi">
+                                <label for="acreditacionSi">Sí</label>
+                                <input type="radio" name="RequiereAcreditacion" value="NO" id="acreditacionNo" checked>
+                                <label for="acreditacionNo">No</label>
                             </div>
                         </div>
                     </div>
@@ -1450,40 +1493,13 @@
 
                     <hr class="section-divider">
 
-                    <!-- Componentes y Matrices -->
-                    <div class="card-subtitle">Componentes y Matrices</div>
+                    <!-- Componentes -->
+                    <div class="card-subtitle">Componentes</div>
 
-                    <div class="form-grid cols-3">
-                        <div class="compact-form-group">
-                            <label>Componente químico</label>
-                            <select class="form-control" id="ComponenteQuimico">
-                                <option value="NO_APLICA">No aplica</option>
-                                <option value="AGUA">Agua</option>
-                                <option value="SUELO">Suelo</option>
-                                <option value="AIRE">Aire</option>
-                                <option value="SEDIMENTO">Sedimento</option>
-                            </select>
-                        </div>
-                        <div class="compact-form-group">
-                            <label>Componente biológico</label>
-                            <select class="form-control" id="ComponenteBiologico">
-                                <option value="NO_APLICA">No aplica</option>
-                                <option value="FLORA">Flora</option>
-                                <option value="FAUNA">Fauna</option>
-                                <option value="HIDROBIOLOGIA">Hidrobiología</option>
-                                <option value="LIMNOLOGIA">Limnología</option>
-                            </select>
-                        </div>
-                        <div class="compact-form-group">
-                            <label>Componente físico</label>
-                            <select class="form-control" id="ComponenteFisico">
-                                <option value="NO_APLICA">No aplica</option>
-                                <option value="RUIDO">Ruido</option>
-                                <option value="VIBRACIONES">Vibraciones</option>
-                                <option value="LUMINOSIDAD">Luminosidad</option>
-                                <option value="GEOMORFOLOGIA">Geomorfología</option>
-                            </select>
-                        </div>
+                    <div class="checkbox-group" style="gap:24px;">
+                        <label><input type="checkbox" id="ComponenteQuimico" value="FISICO_QUIMICO"> Físico-Químico</label>
+                        <label><input type="checkbox" id="ComponenteBiologico" value="BIOLOGICO"> Biológico</label>
+                        <label><input type="checkbox" id="ComponenteFisico" value="FISICO"> Físico</label>
                     </div>
                 </div>
 
@@ -1520,6 +1536,11 @@
                         </tbody>
                     </table>
 
+                    <div class="compact-form-group" style="margin-top:10px;">
+                        <label>Observaciones parámetros de terreno</label>
+                        <textarea class="form-control" id="ObsParametrosTerreno" rows="3" placeholder="Ingrese observaciones sobre los parámetros de terreno..."></textarea>
+                    </div>
+
                     <hr class="section-divider">
 
                     <!-- Lista de Parámetros / Laboratorio -->
@@ -1549,111 +1570,56 @@
                         </tbody>
                     </table>
 
+                    <div class="compact-form-group" style="margin-top:10px;">
+                        <label>Observaciones parámetros de laboratorio</label>
+                        <textarea class="form-control" id="ObsParametrosLaboratorio" rows="3" placeholder="Ingrese observaciones sobre los análisis de laboratorio..."></textarea>
+                    </div>
+
                     <hr class="section-divider">
 
                     <!-- Lista de Puntos de Muestreo / Estaciones -->
                     <div class="card-subtitle">Lista de Puntos de Muestreo / Estaciones</div>
 
-                    <div class="form-grid cols-3 sampling-inputs" style="margin-bottom:15px;">
-                        <div class="compact-form-group">
-                            <label>Número de puntos de muestreo</label>
-                            <input type="number" class="form-control" id="numPuntos" value="2" min="1" onchange="calcularMuestras()">
+                    <div class="tech-fq-proto-counters" style="margin-bottom:10px;">
+                        <div class="tech-fq-proto-counter-item">
+                            <span class="tech-fq-proto-counter-label">Puntos</span>
+                            <span class="tech-fq-proto-counter-val" id="fichaCountPuntos">0</span>
                         </div>
-                        <div class="compact-form-group">
-                            <label>Número de estratos</label>
-                            <input type="number" class="form-control" id="numEstratos" value="1" min="1" onchange="calcularMuestras()">
-                        </div>
-                        <div class="compact-form-group">
-                            <label>Número de réplicas</label>
-                            <input type="number" class="form-control" id="numReplicas" value="1" min="1" onchange="calcularMuestras()">
+                        <div class="tech-fq-proto-counter-item">
+                            <span class="tech-fq-proto-counter-label">Total Muestras</span>
+                            <span class="tech-fq-proto-counter-val" id="fichaTotalMuestras">0</span>
                         </div>
                     </div>
 
-                    <div class="totals-box">
-                        <span class="totals-label">Cantidad de Muestras (Estaciones &times; Estratos &times; Réplicas):</span>
-                        <span class="totals-value" id="cantidadMuestras">2</span>
+                    <div class="table-responsive">
+                        <table class="tech-fq-protocol-table" id="fichaEstacionesTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:48px;">#</th>
+                                    <th>Punto de Muestreo / Estación</th>
+                                    <th>Lugar de Muestreo</th>
+                                    <th style="width:120px;">Datum</th>
+                                    <th style="width:130px;">Latitud</th>
+                                    <th style="width:130px;">Longitud</th>
+                                    <th style="width:90px;">Estratos</th>
+                                    <th style="width:90px;">Réplicas</th>
+                                    <th style="width:90px;">Muestras</th>
+                                    <th style="width:60px;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fichaEstacionesTableBody"></tbody>
+                        </table>
                     </div>
 
-                    <table class="ficha-table" id="tablaEstaciones">
-                        <thead>
-                            <tr>
-                                <th style="width:40px;">#</th>
-                                <th>Nombre del punto muestreo/estacion</th>
-                                <th>Lugar de Muestreo</th>
-                                <th style="width:180px;">Matriz</th>
-                                <th>Latitud</th>
-                                <th>Longitud</th>
-                                <th style="width:90px;">Estratos</th>
-                                <th style="width:90px;">Réplicas</th>
-                                <th style="width:90px;">Muestras</th>
-                                <th style="width:60px;">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>1</td>
-                                <td>EST-01</td>
-                                <td>Punto de descarga principal</td>
-                                <td>Agua Superficial (D)</td>
-                                <td>-33.4569</td>
-                                <td>-70.6483</td>
-                                <td><input type="number" class="form-control-inline est-estratos-input" value="1" min="1" onchange="actualizarMuestrasFila(this)"></td>
-                                <td><input type="number" class="form-control-inline est-replicas-input" value="1" min="1" onchange="actualizarMuestrasFila(this)"></td>
-                                <td class="est-muestras">1</td>
-                                <td><button class="btn-remove" onclick="removeEstacion(this)"><i class="fas fa-times"></i></button></td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>EST-02</td>
-                                <td>Aguas arriba (control)</td>
-                                <td>Agua de Mar (E)</td>
-                                <td>-33.4512</td>
-                                <td>-70.6501</td>
-                                <td><input type="number" class="form-control-inline est-estratos-input" value="1" min="1" onchange="actualizarMuestrasFila(this)"></td>
-                                <td><input type="number" class="form-control-inline est-replicas-input" value="1" min="1" onchange="actualizarMuestrasFila(this)"></td>
-                                <td class="est-muestras">1</td>
-                                <td><button class="btn-remove" onclick="removeEstacion(this)"><i class="fas fa-times"></i></button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <!-- Agregar Nuevo Punto -->
-                    <div class="card-subtitle">Agregar Nuevo Punto de Muestreo / Estación</div>
-                    <div class="add-row">
-                        <div class="compact-form-group" style="flex:1;">
-                            <label>Nombre estación *</label>
-                            <input type="text" class="form-control" id="newEstNombre" placeholder="Ej: EST-03">
-                        </div>
-                        <div class="compact-form-group" style="flex:1;">
-                            <label>Lugar de muestreo *</label>
-                            <input type="text" class="form-control" id="newEstLugar" placeholder="Ej: Punto de control sur">
-                        </div>
-                        <div class="compact-form-group" style="flex:1;">
-                            <label>Matriz *</label>
-                            <select class="form-control" id="newEstMatriz">
-                                <option value="">Seleccionar</option>
-                                <option value="Agua de Mar (E)">Agua de Mar (E)</option>
-                                <option value="Agua para fines industriales (G)">Agua para fines industriales (G)</option>
-                                <option value="Agua Residual (F)">Agua Residual (F)</option>
-                                <option value="Agua Superficial (D)">Agua Superficial (D)</option>
-                                <option value="Biotas (U)">Biotas (U)</option>
-                                <option value="Sedimentos Acuáticos Submareales">Sedimentos Acuáticos Submareales</option>
-                                <option value="Sedimentos Acuáticos Intermareales">Sedimentos Acuáticos Intermareales</option>
-                                <option value="Sedimentos Marinos Submareales">Sedimentos Marinos Submareales</option>
-                                <option value="Sedimentos Marinos Intermareales">Sedimentos Marinos Intermareales</option>
-                            </select>
-                        </div>
-                        <div class="compact-form-group" style="flex:1;">
-                            <label>Latitud</label>
-                            <input type="text" class="form-control" id="newEstLatitud" placeholder="Ej: -33.4569">
-                        </div>
-                        <div class="compact-form-group" style="flex:1;">
-                            <label>Longitud</label>
-                            <input type="text" class="form-control" id="newEstLongitud" placeholder="Ej: -70.6483">
-                        </div>
-                        <button class="btn btn-danger btn-sm" onclick="agregarEstacion()">
-                            <i class="fas fa-plus"></i> Agregar
+                    <div style="margin-top:8px;">
+                        <button class="btn btn-danger btn-sm" id="fichaAddPuntoBtn" type="button">
+                            <i class="fas fa-plus"></i> Agregar punto
                         </button>
+                    </div>
+
+                    <div class="compact-form-group" style="margin-top:14px;">
+                        <label>Observaciones puntos de muestreo</label>
+                        <textarea class="form-control" id="ObsPuntosMuestreo" rows="3" placeholder="Ingrese observaciones sobre los puntos de muestreo / estaciones..."></textarea>
                     </div>
 
                     <hr class="section-divider">
@@ -1663,7 +1629,23 @@
 
                     <div class="totals-box">
                         <span class="totals-label">Total de Muestras Asociadas a este Servicio:</span>
-                        <span class="totals-value" id="totalMuestrasServicio">2</span>
+                        <span class="totals-value" id="totalMuestrasServicio">0</span>
+                    </div>
+
+                    <div class="card-subtitle" style="margin-top:14px;">Materiales</div>
+                    <div style="margin-bottom:8px;">
+                        <button class="btn btn-danger btn-sm" data-open-material="FQ">
+                            <i class="fas fa-search"></i> Seleccionar materiales
+                        </button>
+                    </div>
+                    <table class="ficha-table" id="tablaMaterialesFQ">
+                        <thead><tr><th style="width:40px;">#</th><th>Material</th><th style="width:60px;">Acción</th></tr></thead>
+                        <tbody id="tablaMaterialesFQBody"></tbody>
+                    </table>
+
+                    <div class="compact-form-group" style="margin-top:14px;">
+                        <label>Observación general Alcance Físico-Químico</label>
+                        <textarea class="form-control" id="ObsGeneralFisicoQuimico" rows="3" placeholder="Ingrese observaciones generales sobre el alcance físico-químico..."></textarea>
                     </div>
 
                 </div>
@@ -1750,6 +1732,102 @@
                             </table>
                         </div>
                     </div>
+
+                    <hr class="section-divider">
+
+                    <div class="card-subtitle">Puntos de Muestreo / Estaciones</div>
+
+                    <div class="tech-fq-proto-counters" style="margin-bottom:10px;">
+                        <div class="tech-fq-proto-counter-item">
+                            <span class="tech-fq-proto-counter-label">Puntos</span>
+                            <span class="tech-fq-proto-counter-val" id="fichaCountPuntosBio">0</span>
+                        </div>
+                        <div class="tech-fq-proto-counter-item">
+                            <span class="tech-fq-proto-counter-label">Total Muestras</span>
+                            <span class="tech-fq-proto-counter-val" id="fichaTotalMuestrasBio">0</span>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="tech-fq-protocol-table" id="fichaEstacionesBioTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:48px;">#</th>
+                                    <th>Punto de Muestreo / Estación</th>
+                                    <th>Lugar de Muestreo</th>
+                                    <th style="width:120px;">Datum</th>
+                                    <th style="width:130px;">Latitud</th>
+                                    <th style="width:130px;">Longitud</th>
+                                    <th style="width:90px;">Estratos</th>
+                                    <th style="width:90px;">Réplicas</th>
+                                    <th style="width:90px;">Muestras</th>
+                                    <th style="width:60px;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fichaEstacionesBioTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top:8px;">
+                        <button class="btn btn-danger btn-sm" id="fichaAddPuntoBioBtn" type="button">
+                            <i class="fas fa-plus"></i> Agregar punto
+                        </button>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <div class="card-subtitle">Transectas</div>
+
+                    <div class="tech-fq-proto-counters" style="margin-bottom:10px;">
+                        <div class="tech-fq-proto-counter-item">
+                            <span class="tech-fq-proto-counter-label">Transectas</span>
+                            <span class="tech-fq-proto-counter-val" id="fichaCountTransectas">0</span>
+                        </div>
+                        <div class="tech-fq-proto-counter-item">
+                            <span class="tech-fq-proto-counter-label">Estaciones</span>
+                            <span class="tech-fq-proto-counter-val" id="fichaTotalEstacionesTransectas">0</span>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="tech-fq-protocol-table" id="fichaTransectasTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:48px;">#</th>
+                                    <th style="width:140px;">N° Transecta</th>
+                                    <th style="width:180px;">Distancia entre transectas (m)</th>
+                                    <th>Coordenadas de Inicio</th>
+                                    <th style="width:140px;">Longitud (m)</th>
+                                    <th style="width:140px;">N° de Estaciones</th>
+                                    <th style="width:70px;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fichaTransectasTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top:8px;">
+                        <button class="btn btn-danger btn-sm" id="fichaAddTransectaBtn" type="button">
+                            <i class="fas fa-plus"></i> Agregar transecta
+                        </button>
+                    </div>
+
+                    <div class="card-subtitle" style="margin-top:14px;">Materiales</div>
+                    <div style="margin-bottom:8px;">
+                        <button class="btn btn-danger btn-sm" data-open-material="Bio">
+                            <i class="fas fa-search"></i> Seleccionar materiales
+                        </button>
+                    </div>
+                    <table class="ficha-table" id="tablaMaterialesBio">
+                        <thead><tr><th style="width:40px;">#</th><th>Material</th><th style="width:60px;">Acción</th></tr></thead>
+                        <tbody id="tablaMaterialesBioBody"></tbody>
+                    </table>
+
+                    <div class="compact-form-group" style="margin-top:14px;">
+                        <label>Observación general Alcance Biológicos</label>
+                        <textarea class="form-control" id="ObsGeneralBiologicos" rows="3" placeholder="Ingrese observaciones generales sobre el alcance biológico..."></textarea>
+                    </div>
+
                 </div>
 
                 <!-- ================================================
@@ -1758,34 +1836,39 @@
                 <h4 class="section-title"><i class="fas fa-wind"></i> Alcance Fisico</h4>
                 <div class="form-section-card">
                     <div class="compact-form-group">
+                        <label>Matrices asociadas</label>
+                        <div class="checkbox-group" style="flex-wrap:wrap; gap:10px 24px; margin-top:4px;">
+                            <label><input type="checkbox" name="MatrizFisico" value="RUIDO"> Ruido</label>
+                            <label><input type="checkbox" name="MatrizFisico" value="VIBRACIONES"> Vibraciones</label>
+                            <label><input type="checkbox" name="MatrizFisico" value="LUMINOSIDAD"> Luminosidad</label>
+                            <label><input type="checkbox" name="MatrizFisico" value="GEOMORFOLOGIA"> Geomorfología</label>
+                            <label><input type="checkbox" name="MatrizFisico" value="CALIDAD_AIRE"> Calidad del aire</label>
+                            <label><input type="checkbox" name="MatrizFisico" value="CLIMA"> Clima</label>
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <div class="compact-form-group">
                         <label>Modelaciones (describir)</label>
                         <textarea class="form-control" id="ModelacionesFisico" placeholder="Describa las modelaciones físicas requeridas"></textarea>
                     </div>
-                </div>
 
-                <!-- ================================================
-                     SECCIÓN 6: MATERIALES
-                     ================================================ -->
-                <h4 class="section-title"><i class="fas fa-boxes"></i> Materiales</h4>
-                <div class="form-section-card">
-                    <div style="margin-bottom:12px;">
-                        <button class="btn btn-danger btn-sm" id="btnOpenMaterialModal">
+                    <div class="card-subtitle" style="margin-top:14px;">Materiales</div>
+                    <div style="margin-bottom:8px;">
+                        <button class="btn btn-danger btn-sm" data-open-material="Fis">
                             <i class="fas fa-search"></i> Seleccionar materiales
                         </button>
                     </div>
-
-                    <table class="ficha-table" id="tablaMateriales">
-                        <thead>
-                            <tr>
-                                <th style="width:40px;">#</th>
-                                <th>Material</th>
-                                <th style="width:60px;">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaMaterialesBody">
-                            <!-- Se llena dinámicamente desde el modal -->
-                        </tbody>
+                    <table class="ficha-table" id="tablaMaterialesFis">
+                        <thead><tr><th style="width:40px;">#</th><th>Material</th><th style="width:60px;">Acción</th></tr></thead>
+                        <tbody id="tablaMaterialesFisBody"></tbody>
                     </table>
+
+                    <div class="compact-form-group" style="margin-top:14px;">
+                        <label>Observación general Alcance Físico</label>
+                        <textarea class="form-control" id="ObsGeneralFisico" rows="3" placeholder="Ingrese observaciones generales sobre el alcance físico..."></textarea>
+                    </div>
                 </div>
 
                 <!-- ================================================
@@ -2164,7 +2247,430 @@
             { nombre: 'Cronometro' }
         ];
 
-        var materialesSeleccionados = [];
+        var materialesSeleccionados = []; // legacy (no usado)
+
+        // =============================================
+        // PUNTOS DE MUESTREO / ESTACIONES (FQ)
+        // =============================================
+        var fichaEstacionesPuntos = [];
+
+        function escapeHtmlFicha(str) {
+            return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function renderFichaEstacionesTable() {
+            var tbody   = document.getElementById('fichaEstacionesTableBody');
+            var countEl = document.getElementById('fichaCountPuntos');
+            var totalEl = document.getElementById('fichaTotalMuestras');
+            var totalSrvEl = document.getElementById('totalMuestrasServicio');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            var totalMuestras = 0;
+
+            fichaEstacionesPuntos.forEach(function(punto, idx) {
+                var estratos = Math.max(1, parseInt(punto.estratos, 10) || 1);
+                var replicas = Math.max(1, parseInt(punto.replicas, 10) || 1);
+                var muestras = estratos * replicas;
+                punto.estratos = estratos;
+                punto.replicas = replicas;
+                punto.muestras = muestras;
+                totalMuestras += muestras;
+                var isEditing = !!punto._isEditing;
+                var cls = function(extra) { return 'fq-inline' + (isEditing ? '' : ' is-readonly') + (extra ? ' ' + extra : ''); };
+                var dis = isEditing ? '' : ' disabled';
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + (idx + 1) + '</td>' +
+                    '<td><input type="text" class="' + cls() + '" data-ficha-field="nombre" data-ficha-idx="' + idx + '" value="' + escapeHtmlFicha(punto.nombre) + '"' + dis + '></td>' +
+                    '<td><input type="text" class="' + cls() + '" data-ficha-field="lugar" data-ficha-idx="' + idx + '" value="' + escapeHtmlFicha(punto.lugar) + '"' + dis + '></td>' +
+                    '<td><input type="text" class="' + cls() + '" data-ficha-field="datum" data-ficha-idx="' + idx + '" value="' + escapeHtmlFicha(punto.datum) + '"' + dis + '></td>' +
+                    '<td><input type="text" class="' + cls() + '" data-ficha-field="latitud" data-ficha-idx="' + idx + '" value="' + escapeHtmlFicha(punto.latitud) + '"' + dis + '></td>' +
+                    '<td><input type="text" class="' + cls() + '" data-ficha-field="longitud" data-ficha-idx="' + idx + '" value="' + escapeHtmlFicha(punto.longitud) + '"' + dis + '></td>' +
+                    '<td><input type="number" class="' + cls('fq-inline-num ficha-est-estratos') + '" data-ficha-idx="' + idx + '" value="' + estratos + '" min="1"' + dis + '></td>' +
+                    '<td><input type="number" class="' + cls('fq-inline-num ficha-est-replicas') + '" data-ficha-idx="' + idx + '" value="' + replicas + '" min="1"' + dis + '></td>' +
+                    '<td class="fq-muestras-cell">' + muestras + '</td>' +
+                    '<td>' + (isEditing
+                        ? '<button class="fq-row-action fq-row-save" data-ficha-save="' + idx + '" title="Guardar"><i class="fas fa-save"></i></button>' +
+                          '<button class="fq-row-action fq-row-cancel" data-ficha-cancel="' + idx + '" title="Cancelar"><i class="fas fa-times"></i></button>'
+                        : '<button class="fq-row-action fq-row-edit" data-ficha-edit="' + idx + '" title="Editar"><i class="fas fa-edit"></i></button>' +
+                          '<button class="fq-row-action fq-row-delete" data-ficha-remove="' + idx + '" title="Eliminar"><i class="fas fa-trash"></i></button>') +
+                    '</td>';
+                tbody.appendChild(tr);
+            });
+
+            if (countEl) countEl.textContent = fichaEstacionesPuntos.length;
+            if (totalEl)  totalEl.textContent  = totalMuestras;
+            if (totalSrvEl) totalSrvEl.textContent = totalMuestras;
+
+            // Campos de texto
+            tbody.querySelectorAll('input[data-ficha-field]').forEach(function(inp) {
+                inp.addEventListener('input', function() {
+                    var i = parseInt(this.getAttribute('data-ficha-idx'), 10);
+                    var f = this.getAttribute('data-ficha-field');
+                    if (!isNaN(i) && f && fichaEstacionesPuntos[i]) fichaEstacionesPuntos[i][f] = this.value;
+                });
+            });
+
+            // Estratos / Réplicas → recalcular muestras en vivo
+            tbody.querySelectorAll('.ficha-est-estratos, .ficha-est-replicas').forEach(function(inp) {
+                inp.addEventListener('input', function() {
+                    var i = parseInt(this.getAttribute('data-ficha-idx'), 10);
+                    if (isNaN(i) || !fichaEstacionesPuntos[i]) return;
+                    var row = this.closest('tr');
+                    var eEl = row.querySelector('.ficha-est-estratos');
+                    var rEl = row.querySelector('.ficha-est-replicas');
+                    var mEl = row.querySelector('.fq-muestras-cell');
+                    var e = Math.max(1, parseInt(eEl ? eEl.value : 1, 10) || 1);
+                    var r = Math.max(1, parseInt(rEl ? rEl.value : 1, 10) || 1);
+                    var m = e * r;
+                    if (mEl) mEl.textContent = m;
+                    fichaEstacionesPuntos[i].estratos = e;
+                    fichaEstacionesPuntos[i].replicas = r;
+                    fichaEstacionesPuntos[i].muestras = m;
+                    var total = 0;
+                    tbody.querySelectorAll('.fq-muestras-cell').forEach(function(c) { total += parseInt(c.textContent, 10) || 0; });
+                    if (totalEl) totalEl.textContent = total;
+                    if (totalSrvEl) totalSrvEl.textContent = total;
+                });
+            });
+
+            // Editar
+            tbody.querySelectorAll('button[data-ficha-edit]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-ficha-edit'), 10);
+                    var row = fichaEstacionesPuntos[i];
+                    if (isNaN(i) || !row) return;
+                    row._snapshot = { nombre: row.nombre, lugar: row.lugar, datum: row.datum, latitud: row.latitud, longitud: row.longitud, estratos: row.estratos, replicas: row.replicas };
+                    row._isEditing = true;
+                    renderFichaEstacionesTable();
+                });
+            });
+
+            // Guardar
+            tbody.querySelectorAll('button[data-ficha-save]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-ficha-save'), 10);
+                    var row = fichaEstacionesPuntos[i];
+                    if (isNaN(i) || !row) return;
+                    row._isEditing = false;
+                    delete row._isNew;
+                    delete row._snapshot;
+                    renderFichaEstacionesTable();
+                });
+            });
+
+            // Cancelar
+            tbody.querySelectorAll('button[data-ficha-cancel]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-ficha-cancel'), 10);
+                    var row = fichaEstacionesPuntos[i];
+                    if (isNaN(i) || !row) return;
+                    if (row._isNew) {
+                        fichaEstacionesPuntos.splice(i, 1);
+                    } else if (row._snapshot) {
+                        Object.assign(row, row._snapshot);
+                        row.muestras = row.estratos * row.replicas;
+                        row._isEditing = false;
+                        delete row._snapshot;
+                    } else {
+                        row._isEditing = false;
+                    }
+                    renderFichaEstacionesTable();
+                });
+            });
+
+            // Eliminar
+            tbody.querySelectorAll('button[data-ficha-remove]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-ficha-remove'), 10);
+                    if (!isNaN(i)) {
+                        fichaEstacionesPuntos.splice(i, 1);
+                        renderFichaEstacionesTable();
+                    }
+                });
+            });
+        }
+
+        // =============================================
+        // PUNTOS DE MUESTREO / ESTACIONES (Bio)
+        // =============================================
+        var fichaEstacionesPuntosBio = [];
+
+        function renderFichaEstacionesBioTable() {
+            var tbody   = document.getElementById('fichaEstacionesBioTableBody');
+            var countEl = document.getElementById('fichaCountPuntosBio');
+            var totalEl = document.getElementById('fichaTotalMuestrasBio');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            var totalMuestras = 0;
+
+            fichaEstacionesPuntosBio.forEach(function(punto, idx) {
+                var estratos = Math.max(1, parseInt(punto.estratos, 10) || 1);
+                var replicas = Math.max(1, parseInt(punto.replicas, 10) || 1);
+                var muestras = estratos * replicas;
+                punto.estratos = estratos; punto.replicas = replicas; punto.muestras = muestras;
+                totalMuestras += muestras;
+                var isEditing = !!punto._isEditing;
+                var cls = function(extra) { return 'fq-inline' + (isEditing ? '' : ' is-readonly') + (extra ? ' ' + extra : ''); };
+                var dis = isEditing ? '' : ' disabled';
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + (idx + 1) + '</td>' +
+                    '<td><input type="text" class="' + cls() + '" data-bio-field="nombre" data-bio-idx="' + idx + '" value="' + escapeHtmlFicha(punto.nombre) + '"' + dis + '></td>' +
+                    '<td><input type="text" class="' + cls() + '" data-bio-field="lugar" data-bio-idx="' + idx + '" value="' + escapeHtmlFicha(punto.lugar) + '"' + dis + '></td>' +
+                    '<td><input type="text" class="' + cls() + '" data-bio-field="datum" data-bio-idx="' + idx + '" value="' + escapeHtmlFicha(punto.datum) + '"' + dis + '></td>' +
+                    '<td><input type="text" class="' + cls() + '" data-bio-field="latitud" data-bio-idx="' + idx + '" value="' + escapeHtmlFicha(punto.latitud) + '"' + dis + '></td>' +
+                    '<td><input type="text" class="' + cls() + '" data-bio-field="longitud" data-bio-idx="' + idx + '" value="' + escapeHtmlFicha(punto.longitud) + '"' + dis + '></td>' +
+                    '<td><input type="number" class="' + cls('fq-inline-num bio-est-estratos') + '" data-bio-idx="' + idx + '" value="' + estratos + '" min="1"' + dis + '></td>' +
+                    '<td><input type="number" class="' + cls('fq-inline-num bio-est-replicas') + '" data-bio-idx="' + idx + '" value="' + replicas + '" min="1"' + dis + '></td>' +
+                    '<td class="fq-muestras-cell">' + muestras + '</td>' +
+                    '<td>' + (isEditing
+                        ? '<button class="fq-row-action fq-row-save" data-bio-save="' + idx + '" title="Guardar"><i class="fas fa-save"></i></button>' +
+                          '<button class="fq-row-action fq-row-cancel" data-bio-cancel="' + idx + '" title="Cancelar"><i class="fas fa-times"></i></button>'
+                        : '<button class="fq-row-action fq-row-edit" data-bio-edit="' + idx + '" title="Editar"><i class="fas fa-edit"></i></button>' +
+                          '<button class="fq-row-action fq-row-delete" data-bio-remove="' + idx + '" title="Eliminar"><i class="fas fa-trash"></i></button>') +
+                    '</td>';
+                tbody.appendChild(tr);
+            });
+
+            if (countEl) countEl.textContent = fichaEstacionesPuntosBio.length;
+            if (totalEl) totalEl.textContent = totalMuestras;
+
+            tbody.querySelectorAll('input[data-bio-field]').forEach(function(inp) {
+                inp.addEventListener('input', function() {
+                    var i = parseInt(this.getAttribute('data-bio-idx'), 10);
+                    var f = this.getAttribute('data-bio-field');
+                    if (!isNaN(i) && f && fichaEstacionesPuntosBio[i]) fichaEstacionesPuntosBio[i][f] = this.value;
+                });
+            });
+
+            tbody.querySelectorAll('.bio-est-estratos, .bio-est-replicas').forEach(function(inp) {
+                inp.addEventListener('input', function() {
+                    var i = parseInt(this.getAttribute('data-bio-idx'), 10);
+                    if (isNaN(i) || !fichaEstacionesPuntosBio[i]) return;
+                    var row = this.closest('tr');
+                    var eEl = row.querySelector('.bio-est-estratos');
+                    var rEl = row.querySelector('.bio-est-replicas');
+                    var mEl = row.querySelector('.fq-muestras-cell');
+                    var e = Math.max(1, parseInt(eEl ? eEl.value : 1, 10) || 1);
+                    var r = Math.max(1, parseInt(rEl ? rEl.value : 1, 10) || 1);
+                    var m = e * r;
+                    if (mEl) mEl.textContent = m;
+                    fichaEstacionesPuntosBio[i].estratos = e; fichaEstacionesPuntosBio[i].replicas = r; fichaEstacionesPuntosBio[i].muestras = m;
+                    var total = 0;
+                    tbody.querySelectorAll('.fq-muestras-cell').forEach(function(c) { total += parseInt(c.textContent, 10) || 0; });
+                    if (totalEl) totalEl.textContent = total;
+                });
+            });
+
+            tbody.querySelectorAll('button[data-bio-edit]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-bio-edit'), 10);
+                    var row = fichaEstacionesPuntosBio[i];
+                    if (isNaN(i) || !row) return;
+                    row._snapshot = { nombre: row.nombre, lugar: row.lugar, datum: row.datum, latitud: row.latitud, longitud: row.longitud, estratos: row.estratos, replicas: row.replicas };
+                    row._isEditing = true;
+                    renderFichaEstacionesBioTable();
+                });
+            });
+
+            tbody.querySelectorAll('button[data-bio-save]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-bio-save'), 10);
+                    var row = fichaEstacionesPuntosBio[i];
+                    if (isNaN(i) || !row) return;
+                    row._isEditing = false; delete row._isNew; delete row._snapshot;
+                    renderFichaEstacionesBioTable();
+                });
+            });
+
+            tbody.querySelectorAll('button[data-bio-cancel]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-bio-cancel'), 10);
+                    var row = fichaEstacionesPuntosBio[i];
+                    if (isNaN(i) || !row) return;
+                    if (row._isNew) {
+                        fichaEstacionesPuntosBio.splice(i, 1);
+                    } else if (row._snapshot) {
+                        Object.assign(row, row._snapshot);
+                        row.muestras = row.estratos * row.replicas;
+                        row._isEditing = false; delete row._snapshot;
+                    } else {
+                        row._isEditing = false;
+                    }
+                    renderFichaEstacionesBioTable();
+                });
+            });
+
+            tbody.querySelectorAll('button[data-bio-remove]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-bio-remove'), 10);
+                    if (!isNaN(i)) { fichaEstacionesPuntosBio.splice(i, 1); renderFichaEstacionesBioTable(); }
+                });
+            });
+        }
+
+        // =============================================
+        // TRANSECTAS (Bio)
+        // =============================================
+        var fichaTransectasBio = [];
+
+        function renderFichaTransectasBioTable() {
+            var tbody   = document.getElementById('fichaTransectasTableBody');
+            var countEl = document.getElementById('fichaCountTransectas');
+            var totalEl = document.getElementById('fichaTotalEstacionesTransectas');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            var totalEstaciones = 0;
+
+            fichaTransectasBio.forEach(function(t, idx) {
+                var estaciones = Math.max(0, parseInt(t.estaciones, 10) || 0);
+                t.estaciones = estaciones;
+                totalEstaciones += estaciones;
+                var isEditing = !!t._isEditing;
+                var cls = function(extra) { return 'fq-inline' + (isEditing ? '' : ' is-readonly') + (extra ? ' ' + extra : ''); };
+                var dis = isEditing ? '' : ' disabled';
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + (idx + 1) + '</td>' +
+                    '<td><input type="text" class="' + cls() + '" data-transecta-field="numero_transecta" data-transecta-idx="' + idx + '" value="' + escapeHtmlFicha(t.numero_transecta) + '"' + dis + '></td>' +
+                    '<td><input type="number" step="0.01" min="0" class="' + cls() + '" data-transecta-field="distancia_transectas" data-transecta-idx="' + idx + '" value="' + escapeHtmlFicha(t.distancia_transectas) + '"' + dis + '></td>' +
+                    '<td><input type="text" class="' + cls() + '" data-transecta-field="coordenadas_inicio" data-transecta-idx="' + idx + '" value="' + escapeHtmlFicha(t.coordenadas_inicio) + '"' + dis + '></td>' +
+                    '<td><input type="number" step="0.01" min="0" class="' + cls() + '" data-transecta-field="longitud_transecta" data-transecta-idx="' + idx + '" value="' + escapeHtmlFicha(t.longitud_transecta) + '"' + dis + '></td>' +
+                    '<td><input type="number" class="' + cls('fq-inline-num') + '" data-transecta-field="estaciones" data-transecta-idx="' + idx + '" value="' + estaciones + '" min="0"' + dis + '></td>' +
+                    '<td>' + (isEditing
+                        ? '<button class="fq-row-action fq-row-save" data-transecta-save="' + idx + '" title="Guardar"><i class="fas fa-save"></i></button>' +
+                          '<button class="fq-row-action fq-row-cancel" data-transecta-cancel="' + idx + '" title="Cancelar"><i class="fas fa-times"></i></button>'
+                        : '<button class="fq-row-action fq-row-edit" data-transecta-edit="' + idx + '" title="Editar"><i class="fas fa-edit"></i></button>' +
+                          '<button class="fq-row-action fq-row-delete" data-transecta-remove="' + idx + '" title="Eliminar"><i class="fas fa-trash"></i></button>') +
+                    '</td>';
+                tbody.appendChild(tr);
+            });
+
+            if (countEl) countEl.textContent = fichaTransectasBio.length;
+            if (totalEl) totalEl.textContent = totalEstaciones;
+
+            // Inputs de texto/número
+            tbody.querySelectorAll('input[data-transecta-field]').forEach(function(inp) {
+                inp.addEventListener('input', function() {
+                    var i = parseInt(this.getAttribute('data-transecta-idx'), 10);
+                    var f = this.getAttribute('data-transecta-field');
+                    if (!isNaN(i) && f && fichaTransectasBio[i]) {
+                        fichaTransectasBio[i][f] = this.value;
+                        if (f === 'estaciones') {
+                            fichaTransectasBio[i].estaciones = Math.max(0, parseInt(this.value, 10) || 0);
+                            var total = 0;
+                            tbody.querySelectorAll('input[data-transecta-field="estaciones"]').forEach(function(el) { total += Math.max(0, parseInt(el.value, 10) || 0); });
+                            if (totalEl) totalEl.textContent = total;
+                        }
+                    }
+                });
+            });
+
+            // Editar
+            tbody.querySelectorAll('button[data-transecta-edit]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-transecta-edit'), 10);
+                    var row = fichaTransectasBio[i];
+                    if (isNaN(i) || !row) return;
+                    row._snapshot = { numero_transecta: row.numero_transecta, distancia_transectas: row.distancia_transectas, coordenadas_inicio: row.coordenadas_inicio, longitud_transecta: row.longitud_transecta, estaciones: row.estaciones };
+                    row._isEditing = true;
+                    renderFichaTransectasBioTable();
+                });
+            });
+
+            // Guardar
+            tbody.querySelectorAll('button[data-transecta-save]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-transecta-save'), 10);
+                    var row = fichaTransectasBio[i];
+                    if (isNaN(i) || !row) return;
+                    row._isEditing = false; delete row._isNew; delete row._snapshot;
+                    renderFichaTransectasBioTable();
+                });
+            });
+
+            // Cancelar
+            tbody.querySelectorAll('button[data-transecta-cancel]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-transecta-cancel'), 10);
+                    var row = fichaTransectasBio[i];
+                    if (isNaN(i) || !row) return;
+                    if (row._isNew) {
+                        fichaTransectasBio.splice(i, 1);
+                    } else if (row._snapshot) {
+                        Object.assign(row, row._snapshot);
+                        row._isEditing = false; delete row._snapshot;
+                    } else {
+                        row._isEditing = false;
+                    }
+                    renderFichaTransectasBioTable();
+                });
+            });
+
+            // Eliminar
+            tbody.querySelectorAll('button[data-transecta-remove]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var i = parseInt(this.getAttribute('data-transecta-remove'), 10);
+                    if (!isNaN(i)) { fichaTransectasBio.splice(i, 1); renderFichaTransectasBioTable(); }
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var addBtn = document.getElementById('fichaAddPuntoBtn');
+            if (addBtn) {
+                addBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    fichaEstacionesPuntos.push({ nombre: '', lugar: '', datum: '', latitud: '', longitud: '', estratos: 1, replicas: 1, muestras: 1, _isEditing: true, _isNew: true });
+                    renderFichaEstacionesTable();
+                    setTimeout(function() {
+                        var lastInput = document.querySelector('#fichaEstacionesTableBody tr:last-child input[data-ficha-field="nombre"]');
+                        if (lastInput) lastInput.focus();
+                    }, 0);
+                });
+            }
+            var addBtnBio = document.getElementById('fichaAddPuntoBioBtn');
+            if (addBtnBio) {
+                addBtnBio.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    fichaEstacionesPuntosBio.push({ nombre: '', lugar: '', datum: '', latitud: '', longitud: '', estratos: 1, replicas: 1, muestras: 1, _isEditing: true, _isNew: true });
+                    renderFichaEstacionesBioTable();
+                    setTimeout(function() {
+                        var lastInput = document.querySelector('#fichaEstacionesBioTableBody tr:last-child input[data-bio-field="nombre"]');
+                        if (lastInput) lastInput.focus();
+                    }, 0);
+                });
+            }
+            var addTransectaBtn = document.getElementById('fichaAddTransectaBtn');
+            if (addTransectaBtn) {
+                addTransectaBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    fichaTransectasBio.push({ numero_transecta: '', distancia_transectas: '', coordenadas_inicio: '', longitud_transecta: '', estaciones: 0, _isEditing: true, _isNew: true });
+                    renderFichaTransectasBioTable();
+                    setTimeout(function() {
+                        var lastInput = document.querySelector('#fichaTransectasTableBody tr:last-child input[data-transecta-field="numero_transecta"]');
+                        if (lastInput) lastInput.focus();
+                    }, 0);
+                });
+            }
+            renderFichaEstacionesTable();
+            renderFichaEstacionesBioTable();
+            renderFichaTransectasBioTable();
+        });
+        var materialesSeleccionadosFQ  = [];
+        var materialesSeleccionadosBio = [];
+        var materialesSeleccionadosFis = [];
+        var currentMaterialTarget = 'FQ';
+
+        function getMaterialesArray(target) {
+            if (target === 'Bio') return materialesSeleccionadosBio;
+            if (target === 'Fis') return materialesSeleccionadosFis;
+            return materialesSeleccionadosFQ;
+        }
 
         // =============================================
         // CATÁLOGO DE AUTORIZACIONES (PASO 3 TÉCNICO)
@@ -2401,7 +2907,8 @@
         var materialModalSearch = document.getElementById('materialModalSearch');
         var materialModalList = document.getElementById('materialModalList');
 
-        function openMaterialModal() {
+        function openMaterialModal(target) {
+            currentMaterialTarget = target || 'FQ';
             materialModal.style.display = 'flex';
             materialModalSearch.value = '';
             renderMaterialModalList('');
@@ -2425,8 +2932,9 @@
                 return;
             }
 
+            var arrActual = getMaterialesArray(currentMaterialTarget);
             materialModalList.innerHTML = items.map(function(item) {
-                var checked = materialesSeleccionados.some(function(sel) { return sel.nombre === item.nombre; }) ? ' checked' : '';
+                var checked = arrActual.some(function(sel) { return sel.nombre === item.nombre; }) ? ' checked' : '';
                 return '<label class="simple-modal-item">' +
                     '<input type="checkbox" data-material-name="' + item.nombre + '"' + checked + '>' +
                     '<span><strong>' + item.nombre + '</strong></span>' +
@@ -2436,20 +2944,23 @@
             materialModalList.querySelectorAll('input[type="checkbox"]').forEach(function(box) {
                 box.addEventListener('change', function() {
                     var materialName = this.getAttribute('data-material-name');
-                    var pos = materialesSeleccionados.findIndex(function(sel) { return sel.nombre === materialName; });
+                    var arr = getMaterialesArray(currentMaterialTarget);
+                    var pos = arr.findIndex(function(sel) { return sel.nombre === materialName; });
                     if (this.checked && pos === -1) {
-                        materialesSeleccionados.push({ nombre: materialName });
+                        arr.push({ nombre: materialName });
                     }
                     if (!this.checked && pos !== -1) {
-                        materialesSeleccionados.splice(pos, 1);
+                        arr.splice(pos, 1);
                     }
                 });
             });
         }
 
-        document.getElementById('btnOpenMaterialModal').addEventListener('click', function(e) {
-            e.preventDefault();
-            openMaterialModal();
+        document.querySelectorAll('button[data-open-material]').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                openMaterialModal(this.getAttribute('data-open-material'));
+            });
         });
 
         document.getElementById('materialModalClose').addEventListener('click', closeMaterialModal);
@@ -2464,8 +2975,9 @@
         });
 
         document.getElementById('materialModalApply').addEventListener('click', function() {
+            var target = currentMaterialTarget;
             closeMaterialModal();
-            renderMaterialesTable();
+            renderMaterialesTable(target);
         });
 
         // =============================================
@@ -2733,30 +3245,35 @@
         // =============================================
         // TABLA DE MATERIALES SELECCIONADOS
         // =============================================
-        function renderMaterialesTable() {
-            var tbody = document.getElementById('tablaMaterialesBody');
+        function renderMaterialesTable(target) {
+            target = target || 'FQ';
+            var tbodyId = 'tablaMateriales' + target + 'Body';
+            var tbody = document.getElementById(tbodyId);
+            if (!tbody) return;
+            var arr = getMaterialesArray(target);
             tbody.innerHTML = '';
 
-            if (materialesSeleccionados.length === 0) {
+            if (arr.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#aaa;padding:20px;">No hay materiales seleccionados. Use el botón "Seleccionar materiales" para agregar.</td></tr>';
                 return;
             }
 
-            materialesSeleccionados.forEach(function(item, idx) {
+            arr.forEach(function(item, idx) {
                 var tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td>' + (idx + 1) + '</td>' +
                     '<td>' + item.nombre + '</td>' +
-                    '<td><button class="btn-remove" data-remove-material="' + idx + '"><i class="fas fa-times"></i></button></td>';
+                    '<td><button class="btn-remove" data-remove-material="' + idx + '" data-target="' + target + '"><i class="fas fa-times"></i></button></td>';
                 tbody.appendChild(tr);
             });
 
             tbody.querySelectorAll('button[data-remove-material]').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     var idx = parseInt(this.getAttribute('data-remove-material'), 10);
+                    var t = this.getAttribute('data-target');
                     if (!isNaN(idx)) {
-                        materialesSeleccionados.splice(idx, 1);
-                        renderMaterialesTable();
+                        getMaterialesArray(t).splice(idx, 1);
+                        renderMaterialesTable(t);
                     }
                 });
             });
